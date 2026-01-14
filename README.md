@@ -5,11 +5,14 @@ SikhSituationBot is an AI-powered conversational agent designed to provide guida
 ## 🌟 Project Vision
 To bridge the gap between historical Sikh scripture and contemporary human experience by making Gurbani's wisdom accessible, age-appropriate, and actionable for the next generation.
 
-## 🎯 PoC Goals (4-Week Sprint)
-1. **Interactive UI**: A clean, calming chat interface.
-2. **Contextual Retrieval**: Search a curated local JSON database of 50-100 situational Shabads.
-3. **Adaptive Explanations**: Provide tiered meanings based on user persona (Child, Teen, Adult).
-4. **Authenticity**: Ensure Gurbani is presented correctly in Gurmukhi, Romanization, and English.
+## 🎯 PoC Success Criteria (The "Week 4" Bar)
+To consider the PoC a success, the bot must achieve the following by the final demo:
+1.  **Relevance**: In a test of 20 common queries (e.g., "I feel stressed," "Help with grief"), the bot must retrieve a contextually relevant Shabad 100% of the time.
+2.  **Persona Accuracy**: The LLM's explanation must pass a "vibe check" for the selected persona (e.g., Child mode must not use words like "metaphysical" or "existential").
+3.  **Performance**: The time from "Query Sent" to "Response Displayed" must be under **4 seconds**.
+4.  **Visual Fidelity**: Gurmukhi text must be rendered using a proper Gurbani font (Akhar/Anmol) with correct vowel placements.
+5.  **Robustness**: The app must handle empty searches or "gibberish" queries without crashing or throwing unhandled errors.
+
 
 ## 🚀 How to Run
 
