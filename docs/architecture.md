@@ -1,49 +1,26 @@
-# System Architecture - SikhSituationBot
+# Architecture & Data Flow
 
-This document outlines the technical components and data flow for the SikhSituationBot PoC.
+## 🏛️ System Overview
+The SikhSituationBot uses a **RAG (Retrieval-Augmented Generation)** architecture to ensure that the AI's responses are grounded in actual scripture rather than hallucinated text.
 
-## 🧱 Component Breakdown
+### Tech Stack Choice: Python/Flask
+We have selected **Python/Flask** for the backend because Python is the native language of AI and LLM development. It provides the best libraries (`langchain`, `sentence-transformers`, `openai`) for semantic search and prompt orchestration, which are critical for this project.
 
-### 1. User Interface (Frontend)
-- **Tech Stack**: Next.js (React) + Vanilla CSS.
-- **Responsibilities**: 
-    - Handle user input and demographic selection.
-    - Display Gurbani verses in Gurmukhi, Romanization, and English.
-    - Responsive mobile-first design for "on-the-go" spiritual help.
+## 🔄 Core Data Flow
 
-### 2. Backend Logic (API)
-- **Tech Stack**: Next.js API Routes (Node.js).
-- **Responsibilities**:
-    - Orchestrating the flow between the UI and the AI services.
-    - Managing prompt templates for different age groups.
+1. **User Request**: User selects a persona (e.g., "Child") and types: "I'm feeling afraid of the dark."
+2. **Preprocessing**: The Flask backend receives the query and converts it into a numerical vector (embedding).
+3. **Retrieval**: The system searches our `data/shabads.json` file for verses that are semantically close to "fear" and "protection" (e.g., *Tati Vao Na Lagi*).
+4. **Augmentation**: The backend constructs a prompt:
+   > "Using these Gurbani verses: [Verse 1, Verse 2], explain to a 10-year-old child how Guru's wisdom addresses their fear of the dark."
+5. **Generation**: An LLM (Gemini or OpenAI) generates a compassionate, age-appropriate response.
+6. **Delivery**: The React frontend displays the Shabad in high-quality typography alongside the AI's explanation.
 
-### 3. Retrieval Engine (RAG)
-- **Tech Stack**: Supabase Vector or Pinecone.
-- **Responsibilities**:
-    - **Vector Store**: Storage of Gurmukhi verses and their English embeddings.
-    - **Semantic Search**: Mapping user queries (e.g., "fear") to relevant verses (e.g., "Nirbhau").
-
-### 4. Data Layer
-- **Source**: JSON/CSV exports from BaniDB or Shabad OS.
-- **Processing**: A Python or Node script to chunk and embed the data into the Vector Store.
-
-### 5. AI Reasoning (LLM)
-- **Model**: Gemini 1.5 Flash (via Google AI Studio).
-- **Responsibilities**:
-    - Synthesizing retrieved context into a coherent explanation.
-    - Enforcing "Safety Rails" to ensure the AI doesn't give medical or legal advice.
-
-## 🔄 Core Workflow (The "Loop")
-
-1. **Query**: "I'm scared of failing my exam."
-2. **Embedding**: Convert query to a numerical vector using an embedding model ($e.g., text-embedding-004$).
-3. **Search**: Find the top 3 most relevant Shabads in the Vector DB based on cosine similarity.
-4. **Augment**: Create a prompt: 
-   > "Using these Shabads: [Verse 1, Verse 2], explain to a [Teenager] how to handle the fear of failure."
-5. **Generate**: LLM returns the final response.
-6. **Render**: UI displays the Shabad + The "Situation Guide".
-
-## 🛠️ Dev Tools for Students
-- **Cursor/Antigravity**: Used for rapid scaffolding and fixing RAG logic.
-- **Vercel**: For instant deployment and sharing the PoC link.
-- **Postman**: For testing API routes.
+## � Component Breakdown
+- **Frontend (Client)**: Manages state, handles "Persona" selection, and renders Gurbani with proper spacing and fonts.
+- **Backend (Server)**: Acts as the "Brain". It handles the logic for searching the local JSON data and communicating with the LLM API.
+- **Local Database (Data)**: A structured JSON file containing:
+    - `id`: Unique identifier.
+    - `gurmukhi`: The original verse.
+    - `translation`: Primary English meaning.
+    - `keywords`: Tags like 'courage', 'peace', 'anxiety' for simple matching.
