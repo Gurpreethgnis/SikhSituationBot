@@ -2,6 +2,25 @@
 
 SikhSituationBot is an AI-powered chatbot designed to provide guidance from Gurbani (Sikh scripture) for life's challenges. It offers tailored responses suitable for different age groups (children, teens, adults) and spiritual depths, leveraging authentic data sources like BaniDB.
 
+## Weekly Plan (Student View)
+
+Week 1: Foundation & Scaffold  
+- Set up project structure (frontend / backend)  
+- Create basic UI layout and confirm tools are working  
+
+Week 2: Data & Search  
+- Add curated Shabad dataset  
+- Implement basic search and display  
+
+Week 3: AI Integration  
+- Design prompts for Child / Teen / Adult personas  
+- Connect retrieval logic to the LLM  
+
+Week 4: Polish & Demo  
+- Improve UI/UX  
+- Test common scenarios  
+- Prepare demo deployment  
+
 ## 🗺️ Implementation Roadmap
 
 The project is divided into three main stages:
