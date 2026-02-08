@@ -1,6 +1,32 @@
-# SikhSituationBot
+# SikhSituationBot 🪯
 
-SikhSituationBot is an AI-powered chatbot designed to provide guidance from Gurbani (Sikh scripture) for life's challenges. It offers tailored responses suitable for different age groups (children, teens, adults) and spiritual depths, leveraging authentic data sources like BaniDB.
+SikhSituationBot is an AI-powered conversational agent designed to provide guidance from Gurbani for modern life's challenges. It helps users find relevant Shabads (verses) based on their emotional state or life situation.
+
+## 🌟 Project Vision
+To bridge the gap between historical Sikh scripture and contemporary human experience by making Gurbani's wisdom accessible, age-appropriate, and actionable for the next generation.
+
+## ✅ Project Progress Tracker
+
+**Current Phase: Stage 1 (PoC)**
+`[██░░░░░░░░] 20%`
+
+### 🛠️ Active Tasks
+- [x] **Repo Setup & README** (Completed by @sbindra-ai on 2026-02-08)
+- [ ] **Frontend Setup (Vite+React)**
+    - [ ] Initialize project
+    - [ ] Create basic "Hello World" component
+- [ ] **Backend Setup (Flask)**
+    - [ ] Initialize Flask app
+    - [ ] Create simple API route
+- [ ] **Data Ingestion**
+    - [ ] Create `data/shabads.json` (Partial: Anxiety dataset added)
+    - [ ] Write `scripts/clean_data.py`
+
+### 📝 Contribution Log
+| Task | Contributor | Date | Status |
+| :--- | :--- | :--- | :--- |
+| Added Anxiety Dataset | @Gurpreethgnis | 2026-02-08 | ✅ Done |
+| Initial Repo Setup | @sbindra-ai | 2026-02-08 | ✅ Done |
 
 ## 📅 Weekly Plan (Student View)
 
@@ -36,7 +62,7 @@ The project is divided into three main stages:
 **Goal:** A scalable, feature-rich platform.
 *   **Features:** Audio responses (TTS), user history, personalization, mobile apps, analytics.
 
-## 🛠️ Contribution Workflow
+## 🤝 Contribution Workflow
 
 **IMPORTANT:** The `main` branch is protected and should never be pushed to directly.
 
