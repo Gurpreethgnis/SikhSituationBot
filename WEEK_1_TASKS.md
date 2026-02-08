@@ -5,17 +5,15 @@ Welcome team! Our goal this week is to set up the "skeleton" of SikhSituationBot
 ## 🚀 Priority Tasks
 
 ### 1. Environment & Repo Setup
-- [ ] **Clone & Branch**: Ensure everyone has the repo and is working on a `feature/` branch.
-- [ ] **Next.js Init**: Initialize a Next.js project in the `/src` folder.
-- [ ] **API Keys**: Set up shared keys for:
-    - Google AI Studio (Gemini)
-    - Supabase (for Database)
-- [ ] **Hello World**: Deploy a basic "Hello SikhSituationBot" page to Vercel/Netlify.
+- [x] **Clone & Branch**: Done. Team is using feature branches and merging to main.
+- [ ] **Next.js Init**: Initialize a Next.js project in the `/client` folder (Changed from `/src` to align with repo structure).
+- [ ] **API Keys**: Set up shared keys for Gemini and Supabase.
+- [ ] **Hello World**: Deploy a basic "Hello SikhSituationBot" page.
 
 ### 2. Data Sourcing (The Core)
-- [ ] **Locate Data**: Download a JSON export of common situational Shabads from [BaniDB](https://banidb.com).
-- [ ] **Data Cleaning**: Create a small script `scripts/clean_data.py` to extract just the Gurmukhi and English translation for 50-100 Shabads.
-- [ ] **Schema Design**: Define what a "Shabad object" looks like in our DB (id, gurmukhi, english, tags like 'stress').
+- [x] **Locate Data**: Done. Initial `data/shabad.json` created by @sbindra-ai.
+- [ ] **Data Cleaning**: Create `scripts/clean_data.py`.
+- [x] **Schema Design**: Done. Proposed in `docs/data-strategy.md` by @sarnazb.
 
 ### 3. Basic UI Scaffolding
 - [ ] **Chat Input**: Create a search bar/input field that feels premium.
