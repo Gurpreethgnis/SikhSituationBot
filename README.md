@@ -25,7 +25,7 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
 ### 📝 Contribution Log
 | Task | Contributor | Date | Status |
 | :--- | :--- | :--- | :--- |
-| Added Anxiety Dataset | @Gurpreethgnis | 2026-02-08 | ✅ Done |
+| Added Anxiety Dataset | @sbindra-ai | 2026-02-08 | ✅ Done |
 | Initial Repo Setup | @sbindra-ai | 2026-02-08 | ✅ Done |
 
 ## 📅 Weekly Plan (Student View)
