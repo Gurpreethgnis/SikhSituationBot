@@ -63,13 +63,30 @@ The project is divided into three main stages:
 **Goal:** A scalable, feature-rich platform.
 *   **Features:** Audio responses (TTS), user history, personalization, mobile apps, analytics.
 
+## 👥 Team Roles & Task Assignment
+
+We use **role-based branches** so everyone can work in parallel. Each person works on their branch and submits PRs to `main`.
+
+| Role | Branch | Focus |
+| :--- | :--- | :--- |
+| AI/Data | `feature/sbindra-ai` | Data, LLM, RAG |
+| Design | `feature/sarnazb-design` | UI/UX, theme, typography |
+| UX | `feature/siddharthchopra-ux` | Chat flows, persona UI |
+| Ops | `feature/samisingh-ops` | DevOps, setup, deployment |
+| AFK | `feature/suveersabharwal13-afk` | Backup / overflow tasks |
+
+**📋 [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)** — Assign work here. Team members pick up their tasks and continue on their branch.
+
+---
+
 ## 🤝 Contribution Workflow
 
 **IMPORTANT:** The `main` branch is protected and should never be pushed to directly.
 
 1.  **Checkout:** Always branch off from `main`.
-2.  **Naming Convention:** `feature/your-feature-name` or `fix/issue-description`.
-3.  **Pull Requests:** Submit PRs to the `main` branch for review.
+2.  **Your Branch:** Use your role branch (e.g. `feature/sarnazb-design`). See [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md).
+3.  **Naming Convention:** `feature/your-name-role` or `fix/issue-description`.
+4.  **Pull Requests:** Submit PRs from your branch to `main` for review.
 
 ## 🚀 Getting Started
 
@@ -77,15 +94,19 @@ The project is divided into three main stages:
     ```bash
     git clone https://github.com/Gurpreethgnis/SikhSituationBot.git
     ```
-2.  **Checkout the main branch:**
+2.  **Checkout main and pull latest:**
     ```bash
     git checkout main
+    git pull origin main
     ```
-3.  **Create your feature branch:**
+3.  **Switch to your role branch** (or create it if it doesn't exist):
     ```bash
-    git checkout -b feature/your-name-task
+    git checkout feature/your-name-role    # e.g. feature/sarnazb-design
+    # If branch doesn't exist:
+    git checkout -b feature/your-name-role
     ```
-4.  **Install dependencies:**
+4.  **Pick up your tasks:** See [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md) for assigned work.
+5.  **Install dependencies:**
     - **Frontend:** `cd client && npm install`
     - **Backend:** `cd server && pip install -r requirements.txt`
 
