@@ -2,6 +2,8 @@
 
 Welcome team! Our goal this week is to set up the "skeleton" of SikhSituationBot. Use **Cursor/Antigravity** to help you move fast, even if you are unfamiliar with some of these tools.
 
+**📋 [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)** — Check here for your assigned tasks and your role branch. Pick up work and continue on your branch.
+
 ## 🚀 Priority Tasks
 
 ### 1. Environment & Repo Setup
