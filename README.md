@@ -66,9 +66,9 @@ The project is divided into three main stages:
 
 **IMPORTANT:** The `main` branch is protected and should never be pushed to directly.
 
-1.  **Checkout:** Always branch off from `develop` (or your specific feature branch).
+1.  **Checkout:** Always branch off from `main`.
 2.  **Naming Convention:** `feature/your-feature-name` or `fix/issue-description`.
-3.  **Pull Requests:** Submit PRs to the `develop` branch for review.
+3.  **Pull Requests:** Submit PRs to the `main` branch for review.
 
 ## 🚀 Getting Started
 
@@ -76,9 +76,9 @@ The project is divided into three main stages:
     ```bash
     git clone <repository-url>
     ```
-2.  **Checkout the development branch:**
+2.  **Checkout the main branch:**
     ```bash
-    git checkout develop
+    git checkout main
     ```
 3.  **Install dependencies:**
     *(Instructions to be added based on selected stack)*
