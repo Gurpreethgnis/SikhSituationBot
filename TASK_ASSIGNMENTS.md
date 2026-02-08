@@ -46,8 +46,9 @@ git pull origin feature/your-role-branch
 | Task | Status | Notes |
 | :--- | :---: | :--- |
 | Create `scripts/clean_data.py` to normalize Gurbani text | ⬜ | See `docs/data-strategy.md` for schema |
-| Expand `data/shabad.json` with more situational Shabads | ⬜ | Target: 50 for PoC |
-| Validate data against schema in `docs/data-strategy.md` | ⬜ | |
+| Expand `data/shabad.json` with more situational Shabads | ⬜ | Target: 50 for PoC. Tag by mood (e.g. "Anxiety", "Bravery") |
+| Validate data against schema in `docs/data-strategy.md` | ⬜ | Ensure all fields like `gurmukhi_raw` are present |
+| **Pointers**: Use `sentence-transformers` in Python if you start on semantic search early. | | |
 
 ### Assigned to @sarnazb (Design)
 | Task | Status | Notes |

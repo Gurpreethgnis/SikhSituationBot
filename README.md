@@ -105,10 +105,20 @@ We use **role-based branches** so everyone can work in parallel. Each person wor
     # If branch doesn't exist:
     git checkout -b feature/your-name-role
     ```
-4.  **Pick up your tasks:** See [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md) for assigned work.
-5.  **Install dependencies:**
-    - **Frontend:** `cd client && npm install`
-    - **Backend:** `cd server && pip install -r requirements.txt`
+### 🛠️ Developer Quick Start
+
+| Component | Command | Port | Tech |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | `cd client && npm run dev` | `5173` | React, Vite, Tailwind (optional) |
+| **Backend** | `cd server && python app.py` | `5000` | Flask, Google Gemini SDK |
+
+### 📂 Key Folders
+- `/client/src`: Your React components
+- `/server`: Flask API logic and LLM prompts
+- `/data`: JSON datasets (e.g., `shabad.json`)
+- `/docs`: Visual specs and architecture
+
+---
 
 ## 📄 License
 [Insert License Information]
