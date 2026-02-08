@@ -68,9 +68,9 @@ git pull origin feature/your-role-branch
 | Task | Status | Notes |
 | :--- | :---: | :--- |
 | Initialize Next.js project in `/client` | ⬜ | Per `WEEK_1_TASKS.md` |
-| Set up Flask backend in `/server` | ⬜ | `app.py`, basic route |
-| Create `/server/app.py` with `@app.route('/ask')` | ⬜ | |
-| API key setup: Gemini, Supabase (shared docs) | ⬜ | Use env vars, never commit keys |
+| Set up Flask backend in `/server` | ⬜ | `server/app.py`, basic route |
+| API key setup (Google Gemini) | ⬜ | Use `.env` file (see `.env.example`) |
+| **Pointers**: Check `gh secret set` if we move to GitHub Actions later. | | |
 
 ### Assigned to @suveersabharwal13 (AFK / Backup)
 | Task | Status | Notes |
