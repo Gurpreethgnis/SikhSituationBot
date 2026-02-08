@@ -11,22 +11,22 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
 `[██░░░░░░░░] 20%`
 
 ### 🛠️ Active Tasks
-- [x] **Repo Setup & README** (Completed by @sbindra-ai on 2026-02-08)
+- [x] **Repo Setup & README** (Completed by @sbindra-ai)
 - [ ] **Frontend Setup (Vite+React)**
-    - [ ] Initialize project
-    - [ ] Create basic "Hello World" component
+    - [ ] Initialize project: `npx create-vite@latest client --template react`
+    - [ ] Create basic "Hello World" component in `client/src/App.jsx`
 - [ ] **Backend Setup (Flask)**
-    - [ ] Initialize Flask app
-    - [ ] Create simple API route
+    - [ ] Initialize Flask app: Create `server/app.py`
+    - [ ] Create simple API route: `@app.route('/ask')`
 - [ ] **Data Ingestion**
     - [ ] Create `data/shabads.json` (Partial: Anxiety dataset added)
-    - [ ] Write `scripts/clean_data.py`
+    - [ ] Write `scripts/clean_data.py` to normalize Gurbani text
 
 ### 📝 Contribution Log
 | Task | Contributor | Date | Status |
 | :--- | :--- | :--- | :--- |
-| Added Anxiety Dataset | @Gurpreethgnis | 2026-02-08 | ✅ Done |
-| Initial Repo Setup | @sbindra-ai | 2026-02-08 | ✅ Done |
+| Initial Setup & Data Strategy | @sarnazb | 2026-02-08 | ✅ Done (PR #1) |
+| Weekly Plan & Anxiety Data | @sbindra-ai | 2026-02-08 | ✅ Done (PR #2) |
 
 ## 📅 Weekly Plan (Student View)
 
@@ -38,7 +38,7 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
 | **Week 4** | **Polish & Demo** | Refine UI/UX (animations, responsive design). Conduct user testing and prepare the final demo/presentation. | **Project Demo Ready!** 🚀 |
 
 ### 💡 Student Success Tips
-- **Branch Often:** Don't work on `develop` directly. Create feature branches for every task.
+- **Branch Often:** Create feature branches from `main`.
 - **Commits Matter:** Use descriptive commit messages (e.g., `feat: add shabad search logic`).
 - **Ask for Help:** Stuck on Gurbani APIs or AI prompts? Use the `docs/` folder or reach out!
 - **Test Small:** Verify your code works in small chunks before moving to the next week's goal.
@@ -74,14 +74,19 @@ The project is divided into three main stages:
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/Gurpreethgnis/SikhSituationBot.git
     ```
 2.  **Checkout the main branch:**
     ```bash
     git checkout main
     ```
-3.  **Install dependencies:**
-    *(Instructions to be added based on selected stack)*
+3.  **Create your feature branch:**
+    ```bash
+    git checkout -b feature/your-name-task
+    ```
+4.  **Install dependencies:**
+    - **Frontend:** `cd client && npm install`
+    - **Backend:** `cd server && pip install -r requirements.txt`
 
 ## 📄 License
 [Insert License Information]
