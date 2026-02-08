@@ -8,7 +8,7 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
 ## ✅ Project Progress Tracker
 
 **Current Phase: Stage 1 (PoC)**
-`[██░░░░░░░░] 20%`
+`[████░░░░░░] 40%`
 
 ### 🛠️ Active Tasks
 - [x] **Repo Setup & README** (Completed by @sbindra-ai)
@@ -19,7 +19,8 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
     - [ ] Initialize Flask app: Create `server/app.py`
     - [ ] Create simple API route: `@app.route('/ask')`
 - [ ] **Data Ingestion**
-    - [ ] Create `data/shabads.json` (Partial: Anxiety dataset added)
+    - [x] Create `data/shabads.json` (Completed by @sbindra-ai)
+    - [x] Schema Design (Completed by @sarnazb)
     - [ ] Write `scripts/clean_data.py` to normalize Gurbani text
 
 ### 📝 Contribution Log
