@@ -1,0 +1,267 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;600;800&display=swap');
+
+:root {
+  /* Deep Blues - Base Palette */
+  --midnight: hsl(230, 60%, 8%);
+  --navy-deep: hsl(230, 50%, 12%);
+  --navy: hsl(230, 45%, 18%);
+  --royal: hsl(225, 60%, 28%);
+
+  /* Gold Accents - Spiritual & Highlights */
+  --gold: hsl(48, 100%, 55%);
+  --gold-light: hsl(48, 100%, 70%);
+  --gold-muted: hsl(48, 40%, 45%);
+  --gold-gradient: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+  --gold-glow: 0 0 20px hsla(48, 100%, 55%, 0.4);
+
+  /* Function Colors */
+  --bg-main: var(--midnight);
+  --text-primary: hsl(0, 0%, 98%);
+  --text-secondary: hsl(230, 20%, 75%);
+  --text-muted: hsl(230, 15%, 50%);
+
+  /* Glassmorphism & UI Elements */
+  --surface-glass: hsla(0, 0%, 100%, 0.03);
+  --surface-glass-hover: hsla(0, 0%, 100%, 0.07);
+  --border-glass: hsla(0, 0%, 100%, 0.08);
+  --border-gold: hsla(48, 100%, 55%, 0.2);
+
+  /* Transitions */
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(circle at 0% 0%, hsla(225, 60%, 28%, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, hsla(48, 100%, 55%, 0.03) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Utility Classes */
+.text-gold {
+  color: var(--gold);
+}
+
+.bg-navy {
+  background-color: var(--navy);
+}
+
+.glass-panel {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 24px;
+}
+
+.gold-gradient-text {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* perspective-tabs Component */
+.perspective-container {
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  background: hsla(230, 50%, 5%, 0.4);
+  border-radius: 99px;
+  border: 1px solid var(--border-glass);
+  width: fit-content;
+}
+
+.perspective-pill {
+  padding: 10px 24px;
+  border-radius: 99px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.perspective-pill:hover {
+  background: var(--surface-glass-hover);
+  color: var(--text-primary);
+}
+
+.perspective-pill.active {
+  background: var(--gold-gradient);
+  color: var(--midnight);
+  box-shadow: var(--gold-glow);
+  border-color: var(--gold-light);
+}
+
+/* Chat Input Component */
+.chat-input-container {
+  width: 100%;
+  max-width: 800px;
+  position: relative;
+  margin-top: 40px;
+}
+
+.chat-input {
+  width: 100%;
+  background: var(--surface-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 18px 24px;
+  padding-right: 60px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
+  outline: none;
+  transition: var(--transition-smooth);
+}
+
+.chat-input:focus {
+  background: hsla(0, 0%, 100%, 0.05);
+  border-color: var(--border-gold);
+  box-shadow: 0 0 20px hsla(225, 60%, 28%, 0.3);
+}
+
+.chat-submit-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--gold-gradient);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--midnight);
+  transition: var(--transition-smooth);
+}
+
+.chat-submit-btn:hover {
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: var(--gold-glow);
+}
+
+/* ShabadCard Component Styles */
+.shabad-card {
+  width: 100%;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 40px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-gold);
+  border-radius: 24px;
+  box-shadow: var(--shadow-navy), 0 0 30px hsla(48, 100%, 55%, 0.05);
+  animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ik-onkar-icon {
+  font-size: 2rem;
+  color: var(--gold);
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+.gurmukhi-text {
+  font-size: 2.2rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  /* Use placeholder font until Raaj is installed */
+  font-family: serif;
+}
+
+.transliteration {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 24px;
+}
+
+.translation {
+  font-size: 1.25rem;
+  color: var(--gold-light);
+  font-weight: 500;
+  line-height: 1.6;
+  font-family: 'Outfit', sans-serif;
+  margin-bottom: 32px;
+  font-style: italic;
+}
+
+.ai-insight {
+  border-top: 1px solid var(--border-glass);
+  padding-top: 24px;
+  text-align: left;
+}
+
+.insight-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.insight-text {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Persona Variations */
+.shabad-card.child {
+  border-radius: 40px;
+  border-width: 2px;
+}
+
+.shabad-card.adult {
+  padding: 50px;
+}
