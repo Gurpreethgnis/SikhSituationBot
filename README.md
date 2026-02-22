@@ -28,6 +28,8 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
 | :--- | :--- | :--- | :--- |
 | Initial Setup & Data Strategy | @sarnazb | 2026-02-08 | ✅ Done (PR #1) |
 | Weekly Plan & Anxiety Data | @sbindra-ai | 2026-02-08 | ✅ Done (PR #2) |
+| Added Anxiety Dataset | @sbindra-ai | 2026-02-08 | ✅ Done |
+| Initial Repo Setup | @sbindra-ai | 2026-02-08 | ✅ Done |
 
 ## 📅 Weekly Plan (Student View)
 
