@@ -1,0 +1,48 @@
+[
+    {
+        "shabad_id": "unknown",
+        "gurmukhi": "ਤਪਤਿ ਮਾਹਿ ਠਾਢਿ ਵਰਤਾਈ ॥",
+        "romanization": "tapat maahi thaadh varataaee ||",
+        "english_translation": "In the midst of the burning heat, a cooling breeze has begun to blow.",
+        "context_tags": [
+            "anxiety",
+            "peace",
+            "calm",
+            "stress",
+            "heat",
+            "relief"
+        ],
+        "source": "SGGS Page 1",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "unknown",
+        "gurmukhi": "ਤਾਤੀ ਵਾਉ ਨ ਲਗਈ ਪਾਰਬ੍ਰਹਮ ਸਰਣਾਈ ॥",
+        "romanization": "taatee vau na lagee paarabraham saranaaee ||",
+        "english_translation": "The hot wind does not even touch one who is under the Protection of the Supreme Lord God.",
+        "context_tags": [
+            "fear",
+            "protection",
+            "safety",
+            "anxiety",
+            "comfort"
+        ],
+        "source": "SGGS Page 819",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "unknown",
+        "gurmukhi": "ਨਿਰਭਉ ਜਪੈ ਸਗਲ ਭਉ ਮਿਟੈ ॥",
+        "romanization": "nirabhau japai sagal bhau mitai ||",
+        "english_translation": "Meditating on the Fearless Lord, all fear departs.",
+        "context_tags": [
+            "courage",
+            "fearless",
+            "strength",
+            "bravery",
+            "meditation"
+        ],
+        "source": "SGGS Page 293",
+        "recommended_persona": "any"
+    }
+]
