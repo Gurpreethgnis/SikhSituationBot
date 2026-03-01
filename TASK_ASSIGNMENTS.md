@@ -12,6 +12,7 @@ This document helps you **assign work** and lets team members **pick up tasks** 
 | **Design** | `feature/sarnazb-design` | @sarnazb | UI/UX design, visual specs, theme, Gurmukhi typography |
 | **UX** | `feature/siddharthchopra-ux` | @siddharthchopra | User flows, persona switching, chat interaction patterns |
 | **Ops** | `feature/samisingh-ops` | @samisingh | DevOps, deployment, CI/CD, environment setup, API keys |
+| **Vision** | `feature/ekaskohi-vision` | @ekaskohi | Advanced RAG, Semantic Search, Gurbani LLM fine-tuning |
 | **AFK** | `feature/suveersabharwal13-afk` | @suveersabharwal13 | Backup / flexible capacity — picks up overflow tasks |
 
 ---
@@ -45,17 +46,17 @@ git pull origin feature/your-role-branch
 ### Assigned to @sbindra-ai (AI/Data)
 | Task | Status | Notes |
 | :--- | :---: | :--- |
-| Create `scripts/clean_data.py` to normalize Gurbani text | ⬜ | See `docs/data-strategy.md` for schema |
-| Expand `data/shabad.json` with more situational Shabads | ⬜ | Target: 50 for PoC. Tag by mood (e.g. "Anxiety", "Bravery") |
-| Validate data against schema in `docs/data-strategy.md` | ⬜ | Ensure all fields like `gurmukhi_raw` are present |
+| Create `scripts/clean_data.py` to normalize Gurbani text | ✅ | Done. Used to ensure schema consistency. |
+| Expand `data/shabad.json` with more situational Shabads | ✅ | Target hit: 50 situational Shabads vectorized & ready. |
+| Validate data against schema in `docs/data-strategy.md` | ✅ | Done. All files use unified JSON schema. |
 | **Pointers**: Use `sentence-transformers` in Python if you start on semantic search early. | | |
 
 ### Assigned to @sarnazb (Design)
 | Task | Status | Notes |
 | :--- | :---: | :--- |
-| Define CSS color palette (Deep Blues, Gold accents) | ⬜ | Sikh-inspired, calming |
-| Create `docs/design-tokens.md` or design spec | ⬜ | Colors, typography, spacing |
-| Design "Perspectives" pills/tabs (Child, Teen, Adult) | ⬜ | Visual design for UI |
+| Define CSS color palette (Deep Blues, Gold accents) | ✅ | Sikh-inspired, calming (`client/src/index.css`) |
+| Create `docs/design-tokens.md` or design spec | ✅ | Created `docs/design-tokens.md` |
+| Design "Perspectives" pills/tabs (Child, Teen, Adult) | ✅ | Integrated into `client/src/index.css` |
 
 ### Assigned to @siddharthchopra (UX)
 | Task | Status | Notes |
@@ -72,6 +73,13 @@ git pull origin feature/your-role-branch
 | API key setup (Google Gemini) | ⬜ | Use `.env` file (see `.env.example`) |
 | **Pointers**: Check `gh secret set` if we move to GitHub Actions later. | | |
 
+### Assigned to @ekaskohi (Vision)
+| Task | Status | Notes |
+| :--- | :---: | :--- |
+| Semantic Search Research | ⬜ | Explore `sentence-transformers` for Gurbani |
+| Advanced RAG Architecture | ⬜ | Design multi-stage retrieval flow |
+| Vision: Gurbani fine-tuning plan | ⬜ | Research feasibility of Gurbani-specific LLM |
+
 ### Assigned to @suveersabharwal13 (AFK / Backup)
 | Task | Status | Notes |
 | :--- | :---: | :--- |
@@ -85,7 +93,7 @@ git pull origin feature/your-role-branch
 
 | Task | Status | Notes |
 | :--- | :---: | :--- |
-| Frontend: Initialize Vite+React or Next.js | ⬜ | Assign to Ops or UX |
+| Frontend: Initialize Vite+React or Next.js | ✅ | Initialized Next.js at `http://localhost:3000` |
 | Backend: Flask app + `/ask` route | ⬜ | Assign to Ops |
 | Data: `scripts/clean_data.py` | ⬜ | Assigned to @sbindra-ai (AI) |
 

@@ -1,0 +1,7 @@
+google-cloud-aiplatform
+python-dotenv
+flask
+flask-sqlalchemy
+pgvector
+psycopg2-binary
+sentence-transformers

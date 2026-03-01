@@ -1,0 +1,60 @@
+.perspectives {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.perspectives__container {
+  display: flex;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.perspectives__btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  outline: none;
+}
+
+.perspectives__btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.perspectives__btn--active {
+  color: var(--color-bg);
+  background: var(--color-accent) !important;
+  box-shadow: 0 0 15px var(--color-accent-soft);
+}
+
+.perspectives__icon {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 480px) {
+  .perspectives__container {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .perspectives__btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}

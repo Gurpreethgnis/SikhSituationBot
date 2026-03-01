@@ -8,26 +8,24 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
 ## ✅ Project Progress Tracker
 
 **Current Phase: Stage 1 (PoC)**
-`[████░░░░░░] 40%`
+`[██████████] 100% (Week 1)`
 
 ### 🛠️ Active Tasks
 - [x] **Repo Setup & README** (Completed by @sbindra-ai)
-- [ ] **Frontend Setup (Vite+React)**
-    - [ ] Initialize project: `npx create-vite@latest client --template react`
-    - [ ] Create basic "Hello World" component in `client/src/App.jsx`
-- [ ] **Backend Setup (Flask)**
-    - [ ] Initialize Flask app: Create `server/app.py`
-    - [ ] Create simple API route: `@app.route('/ask')`
-- [ ] **Data Ingestion**
+- [x] **Frontend Setup (Vite+React)** (Completed by @Antigravity)
+- [x] **Backend Skeleton** (Completed by @samisingh-ops)
+- [x] **Data Ingestion**
     - [x] Create `data/shabads.json` (Completed by @sbindra-ai)
     - [x] Schema Design (Completed by @sarnazb)
-    - [ ] Write `scripts/clean_data.py` to normalize Gurbani text
+    - [x] Write `scripts/clean_data.py` to normalize Gurbani text (Completed by @sbindra-ai)
 
 ### 📝 Contribution Log
 | Task | Contributor | Date | Status |
 | :--- | :--- | :--- | :--- |
-| Initial Setup & Data Strategy | @sarnazb | 2026-02-08 | ✅ Done (PR #1) |
-| Weekly Plan & Anxiety Data | @sbindra-ai | 2026-02-08 | ✅ Done (PR #2) |
+| Initial UI & Data Foundation | @sbindra-ai | 2026-03-01 | ✅ Done |
+| Design Tokens & Theme | @sarnazb | 2026-03-01 | ✅ Done |
+| Perspectives UI & Consolidation | @Antigravity | 2026-03-01 | ✅ Done |
+| Project Roadmap Setup | @sbindra-ai | 2026-02-08 | ✅ Done |
 
 ## 📅 Weekly Plan (Student View)
 

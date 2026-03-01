@@ -14,7 +14,7 @@ Welcome team! Our goal this week is to set up the "skeleton" of SikhSituationBot
 
 ### 2. Data Sourcing (The Core)
 - [x] **Locate Data**: Done. Initial `data/shabad.json` created by @sbindra-ai.
-- [ ] **Data Cleaning**: Create `scripts/clean_data.py`.
+- [x] **Data Cleaning**: Done. Created `scripts/clean_data.py`.
 - [x] **Schema Design**: Done. Proposed in `docs/data-strategy.md` by @sarnazb.
 
 ### 3. Basic UI Scaffolding
