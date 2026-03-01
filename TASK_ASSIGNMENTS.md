@@ -12,6 +12,7 @@ This document helps you **assign work** and lets team members **pick up tasks** 
 | **Design** | `feature/sarnazb-design` | @sarnazb | UI/UX design, visual specs, theme, Gurmukhi typography |
 | **UX** | `feature/siddharthchopra-ux` | @siddharthchopra | User flows, persona switching, chat interaction patterns |
 | **Ops** | `feature/samisingh-ops` | @samisingh | DevOps, deployment, CI/CD, environment setup, API keys |
+| **Vision** | `feature/ekaskohi-vision` | @ekaskohi | Advanced RAG, Semantic Search, Gurbani LLM fine-tuning |
 | **AFK** | `feature/suveersabharwal13-afk` | @suveersabharwal13 | Backup / flexible capacity — picks up overflow tasks |
 
 ---
@@ -71,6 +72,13 @@ git pull origin feature/your-role-branch
 | Set up Flask backend in `/server` | ⬜ | `server/app.py`, basic route |
 | API key setup (Google Gemini) | ⬜ | Use `.env` file (see `.env.example`) |
 | **Pointers**: Check `gh secret set` if we move to GitHub Actions later. | | |
+
+### Assigned to @ekaskohi (Vision)
+| Task | Status | Notes |
+| :--- | :---: | :--- |
+| Semantic Search Research | ⬜ | Explore `sentence-transformers` for Gurbani |
+| Advanced RAG Architecture | ⬜ | Design multi-stage retrieval flow |
+| Vision: Gurbani fine-tuning plan | ⬜ | Research feasibility of Gurbani-specific LLM |
 
 ### Assigned to @suveersabharwal13 (AFK / Backup)
 | Task | Status | Notes |

@@ -1,8 +1,13 @@
+import React, { useState } from 'react'
 import ChatInput from './components/ChatInput.jsx'
+import Perspectives from './components/Perspectives.jsx'
+import './App.css'
 
 function App() {
+  const [persona, setPersona] = useState('adult')
+
   const handleSend = (query) => {
-    console.log('Query:', query)
+    console.log(`Persona: ${persona} | Query: ${query}`)
     // TODO: Wire to backend / display results (task 3: chat flow)
   }
 
@@ -12,9 +17,15 @@ function App() {
         <h1 className="app__title">SikhSituationBot</h1>
         <p className="app__tagline">Gurbani-based guidance for life's moments</p>
       </header>
+
       <main className="app__main">
-        <ChatInput onSend={handleSend} placeholder="Share how you're feeling or ask for guidance..." />
+        <Perspectives activePersona={persona} onPersonaChange={setPersona} />
+        <ChatInput onSend={handleSend} placeholder={`Share how you're feeling as a ${persona}...`} />
       </main>
+
+      <footer className="app__footer">
+        <p>Seek guidance. Find peace.</p>
+      </footer>
     </div>
   )
 }
