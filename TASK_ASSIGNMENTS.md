@@ -53,9 +53,9 @@ git pull origin feature/your-role-branch
 ### Assigned to @sarnazb (Design)
 | Task | Status | Notes |
 | :--- | :---: | :--- |
-| Define CSS color palette (Deep Blues, Gold accents) | ⬜ | Sikh-inspired, calming |
-| Create `docs/design-tokens.md` or design spec | ⬜ | Colors, typography, spacing |
-| Design "Perspectives" pills/tabs (Child, Teen, Adult) | ⬜ | Visual design for UI |
+| Define CSS color palette (Deep Blues, Gold accents) | ✅ | Sikh-inspired, calming (`client/src/index.css`) |
+| Create `docs/design-tokens.md` or design spec | ✅ | Created `docs/design-tokens.md` |
+| Design "Perspectives" pills/tabs (Child, Teen, Adult) | ✅ | Integrated into `client/src/index.css` |
 
 ### Assigned to @siddharthchopra (UX)
 | Task | Status | Notes |
@@ -85,7 +85,7 @@ git pull origin feature/your-role-branch
 
 | Task | Status | Notes |
 | :--- | :---: | :--- |
-| Frontend: Initialize Vite+React or Next.js | ⬜ | Assign to Ops or UX |
+| Frontend: Initialize Vite+React or Next.js | ✅ | Initialized Next.js at `http://localhost:3000` |
 | Backend: Flask app + `/ask` route | ⬜ | Assign to Ops |
 | Data: `scripts/clean_data.py` | ⬜ | Assigned to @sbindra-ai (AI) |
 
