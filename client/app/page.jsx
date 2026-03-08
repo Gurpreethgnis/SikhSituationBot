@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import ChatInput from './components/ChatInput.jsx'
 import Perspectives from './components/Perspectives.jsx'
+import Logo from './components/Logo'
 
 function App() {
   const [persona, setPersona] = useState('adult')
@@ -42,9 +43,7 @@ function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <div className="logo-container">
-          <img src="/logo.png" alt="SikhSituationBot Logo" className="app-logo" />
-        </div>
+        <Logo />
         <h1 className="app__title">SikhSituationBot</h1>
         <p className="app__tagline">Gurbani-based guidance for life's moments</p>
       </header>
