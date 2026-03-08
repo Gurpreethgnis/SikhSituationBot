@@ -75,7 +75,7 @@ We use **role-based branches** so everyone can work in parallel. Each person wor
 | Ops | `feature/samisingh-ops` | DevOps, setup, deployment |
 | AFK | `feature/suveersabharwal13-afk` | Backup / overflow tasks |
 
-**📋 [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)** — Check here for the latest Stage 2 assignments. Team members pick up their tasks and continue on their branch.
+**📋 [docs/TASK_ASSIGNMENTS.md](docs/TASK_ASSIGNMENTS.md)** — Check here for the latest Stage 2 assignments. Team members pick up their tasks and continue on their branch.
 **📋 [docs/mvp-plan.md](docs/mvp-plan.md)** — Read the official MVP goals and feature requirements.
 **🧪 [docs/poc-testing-guide.md](docs/poc-testing-guide.md)** — Use this in class to interact with the currently deployed PoC.
 
@@ -86,7 +86,7 @@ We use **role-based branches** so everyone can work in parallel. Each person wor
 **IMPORTANT:** The `main` branch is protected and should never be pushed to directly.
 
 1.  **Checkout:** Always branch off from `main`.
-2.  **Your Branch:** Use your role branch (e.g. `feature/sarnazb-design`). See [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md).
+2.  **Your Branch:** Use your role branch (e.g. `feature/sarnazb-design`). See [docs/TASK_ASSIGNMENTS.md](docs/TASK_ASSIGNMENTS.md).
 3.  **Naming Convention:** `feature/your-name-role` or `fix/issue-description`.
 4.  **Pull Requests:** Submit PRs from your branch to `main` for review.
 

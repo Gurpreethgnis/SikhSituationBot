@@ -117,13 +117,13 @@ git pull origin feature/your-role-branch
 
 1. **Assign:** Add the task under the appropriate role in `Assigned Tasks` above.
 2. **Use status:** `⬜` = Not started | `🔄` = In progress | `✅` = Done |
-3. **Update:** When done, move to `✅` and add to the Contribution Log in `README.md`.
+3. **Update:** When done, move to `✅` and add to the Contribution Log in `../README.md`.
 
 ---
 
 ## 🔗 Quick Links
 
-- [README.md](README.md) — Project overview and progress
+- [README.md](../README.md) — Project overview and progress
 - [WEEK_1_TASKS.md](WEEK_1_TASKS.md) — Week 1 priorities
 - [docs/weekly-plan.md](docs/weekly-plan.md) — 4-week plan
 - [docs/data-strategy.md](docs/data-strategy.md) — Data schema
