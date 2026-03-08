@@ -3,9 +3,9 @@ import './Perspectives.css';
 
 const Perspectives = ({ activePersona, onPersonaChange }) => {
   const personas = [
-    { id: 'child', label: 'Child', icon: '👶' },
-    { id: 'teen', label: 'Teen', icon: '🧑' },
-    { id: 'adult', label: 'Adult', icon: '🧔' }
+    { id: 'child', label: 'Child', icon: '👳🏽' },
+    { id: 'teen', label: 'Teen', icon: '👳🏽' },
+    { id: 'adult', label: 'Adult', icon: '👳🏽‍♂️' }
   ];
 
   return (
