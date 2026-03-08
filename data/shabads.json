@@ -1,0 +1,761 @@
+[
+    {
+        "shabad_id": "anxiety_001",
+        "gurmukhi": "ਤਪਤਿ ਮਾਹਿ ਠਾਢਿ ਵਰਤਾਈ ॥",
+        "romanization": "tapat maahi thaadh varataaee ||",
+        "english_translation": "In the midst of the burning heat, a cooling breeze has begun to blow.",
+        "context_tags": [
+            "anxiety",
+            "peace",
+            "calm",
+            "stress",
+            "heat",
+            "relief"
+        ],
+        "source": "SGGS Page 1",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "fear_001",
+        "gurmukhi": "ਤਾਤੀ ਵਾਉ ਨ ਲਗਈ ਪਾਰਬ੍ਰਹਮ ਸਰਣਾਈ ॥",
+        "romanization": "taatee vau na lagee paarabraham saranaaee ||",
+        "english_translation": "The hot wind does not even touch one who is under the Protection of the Supreme Lord God.",
+        "context_tags": [
+            "fear",
+            "protection",
+            "safety",
+            "anxiety",
+            "comfort"
+        ],
+        "source": "SGGS Page 819",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "courage_001",
+        "gurmukhi": "ਨਿਰਭਉ ਜਪੈ ਸਗਲ ਭਉ ਮਿਟੈ ॥",
+        "romanization": "nirabhau japai sagal bhau mitai ||",
+        "english_translation": "Meditating on the Fearless Lord, all fear departs.",
+        "context_tags": [
+            "courage",
+            "fearless",
+            "strength",
+            "bravery",
+            "meditation"
+        ],
+        "source": "SGGS Page 293",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "gratitude_001",
+        "gurmukhi": "ਤੇਰਾ ਕੀਤਾ ਜਾਤੋ ਨਾਹੀ ਮੈਨੋ ਜੋਗੁ ਕੀਤੋਈ ॥",
+        "romanization": "tera keeta jaato naahee maino jog keetoee ||",
+        "english_translation": "I have not appreciated what You have done for me; You have made me worthy.",
+        "context_tags": [
+            "gratitude",
+            "humility",
+            "thankfulness",
+            "unworthy",
+            "mercy"
+        ],
+        "source": "SGGS Page 1429",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "lonely_001",
+        "gurmukhi": "ਤੂ ਮੇਰਾ ਪਿਤਾ ਤੂਹੈ ਮੇਰਾ ਮਾਤਾ ॥",
+        "romanization": "too mera pita toohai mera maata ||",
+        "english_translation": "You are my Father, and You are my Mother.",
+        "context_tags": [
+            "lonely",
+            "belonging",
+            "family",
+            "support",
+            "isolation"
+        ],
+        "source": "SGGS Page 103",
+        "recommended_persona": "child"
+    },
+    {
+        "shabad_id": "patience_001",
+        "gurmukhi": "ਧੀਰਜੁ ਧਾਮਿ ਭਏ ਕਿਰਪਾਲਾ ॥",
+        "romanization": "dheeraj dhaam bhe kirapaala ||",
+        "english_translation": "The Merciful Lord has blessed me with the home of patience.",
+        "context_tags": [
+            "patience",
+            "calm",
+            "waiting",
+            "mercy",
+            "anger"
+        ],
+        "source": "SGGS Page 187",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "hardship_001",
+        "gurmukhi": "ਦੁਖ ਭੰਜਨੁ ਤੇਰਾ ਨਾਮੁ ਜੀ ਦੁਖ ਭੰਜਨੁ ਤੇਰਾ ਨਾਮੁ ॥",
+        "romanization": "dukh bhanjan tera naam jee dukh bhanjan tera naam ||",
+        "english_translation": "The Destroyer of Suffering is Your Name, Lord; the Destroyer of Suffering is Your Name.",
+        "context_tags": [
+            "hardship",
+            "suffering",
+            "pain",
+            "healing",
+            "hope"
+        ],
+        "source": "SGGS Page 218",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "confused_001",
+        "gurmukhi": "ਭੂਲੀ ਮਾਰਗੁ ਜਿਨਿ ਬਤਾਇਆ ॥",
+        "romanization": "bhoolee maarag jin bataaia ||",
+        "english_translation": "One who has shown the way to the one who had forgotten it.",
+        "context_tags": [
+            "confused",
+            "direction",
+            "lost",
+            "guidance",
+            "help"
+        ],
+        "source": "SGGS Page 613",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "peace_001",
+        "gurmukhi": "ਸੁਖਮਨੀ ਸੁਖ ਅੰਮ੍ਰਿਤ ਪ੍ਰਭ ਨਾਮੁ ॥",
+        "romanization": "sukhamanee sukh amrit prabh naam ||",
+        "english_translation": "Sukhmani: The Jewel of Peace, the Nectar-Name of God.",
+        "context_tags": [
+            "peace",
+            "happiness",
+            "bliss",
+            "satisfaction",
+            "meditation"
+        ],
+        "source": "SGGS Page 262",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "ego_001",
+        "gurmukhi": "ਹਉਮੈ ਮਾਰਿ ਗੁਰ ਸਬਦੁ ਵੀਚਾਰੀ ॥",
+        "romanization": "houmai maar gur sabad veecharee ||",
+        "english_translation": "Ego is stilled by contemplating the Word of the Guru's Shabad.",
+        "context_tags": [
+            "ego",
+            "pride",
+            "humility",
+            "angry",
+            "jealousy"
+        ],
+        "source": "SGGS Page 1130",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "protection_002",
+        "gurmukhi": "ਜੇ ਕੋ ਬਹੈ ਖਲਾਇਆ ਰਾਮ ਨਾਮੁ ਚਿਤਿ ਨ ਆਵਈ ॥",
+        "romanization": "je ko bahai khalaaia raam naam chit na aavee ||",
+        "english_translation": "Even if someone is slandered, but if God's Name does not leave the heart...",
+        "context_tags": [
+            "protection",
+            "slander",
+            "bullying",
+            "rumors",
+            "enemies"
+        ],
+        "source": "SGGS Page 1384",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "depression_001",
+        "gurmukhi": "ਸਗਲਾ ਰੋਗੁ ਮਿਟਾਇਆ ਕਰਤੇ ॥",
+        "romanization": "sagala rog mitaaia karate ||",
+        "english_translation": "The Creator has cured all diseases and sorrows.",
+        "context_tags": [
+            "depression",
+            "sadness",
+            "healing",
+            "sickness",
+            "sorrow"
+        ],
+        "source": "SGGS Page 1140",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "connection_001",
+        "gurmukhi": "ਮੇਰੇ ਮਾਧਉ ਜੀ ਸਤਸੰਗਤਿ ਮਿਲੇ ਸੁ ਤਰਿਆ ॥",
+        "romanization": "mere maadhau jee satasangat mile su taria ||",
+        "english_translation": "O my Dear Lord, one who joins the Sat Sangat (True Congregation) is saved.",
+        "context_tags": [
+            "lonely",
+            "community",
+            "connection",
+            "friends",
+            "belonging"
+        ],
+        "source": "SGGS Page 10",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "work_stress_001",
+        "gurmukhi": "ਵਿਚਿ ਦੁਨੀਆ ਸੇਵ ਕਮਾਈਐ ॥ ਤਾ ਦਰਗਹ ਬੈਸਣੁ ਪਾਈਐ ॥",
+        "romanization": "vich duneeaa sev kamaaeeai || taa dargah baisan paaeeai ||",
+        "english_translation": "In the midst of this world, do service, and you shall be given a place of honor in the Divine Court.",
+        "context_tags": [
+            "work",
+            "career",
+            "stress",
+            "service",
+            "success",
+            "office"
+        ],
+        "source": "SGGS Page 26",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "exam_success_001",
+        "gurmukhi": "ਉਦਮੁ ਕਰੇਦਿਆ ਜੀਉ ਤੂੰ ਕਮਾਵਦਿਆ ਸੁਖ ਭੁੰਚੁ ॥",
+        "romanization": "udam karediaa jeeu too kamaavadiaa sukh bhunch ||",
+        "english_translation": "While making the effort, you shall live; while practicing it, you shall enjoy peace.",
+        "context_tags": [
+            "exams",
+            "success",
+            "effort",
+            "study",
+            "motivation",
+            "student"
+        ],
+        "source": "SGGS Page 522",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "exam_fear_001",
+        "gurmukhi": "ਤੂ ਮੇਰਾ ਰਾਖਾ ਸਭਨੀ ਥਾਈ ਤਾ ਭਉ ਕੇਹਾ ਕਾੜਾ ਜੀਉ ॥",
+        "romanization": "too mera raakhaa sabhanee thaaee taa bhau kehaa kaaraa jeeu ||",
+        "english_translation": "You are my Protector everywhere, so why should I feel any fear or anxiety?",
+        "context_tags": [
+            "fear",
+            "exams",
+            "anxiety",
+            "results",
+            "protection",
+            "student"
+        ],
+        "source": "SGGS Page 103",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "discipline_001",
+        "gurmukhi": "ਗੁਰ ਸਤਿਗੁਰ ਕਾ ਜੋ ਸਿਖੁ ਅਖਾਏ ਸੁ ਭਲਕੇ ਉਠਿ ਹਰਿ ਨਾਮੁ ਧਿਆਵੈ ॥",
+        "romanization": "gur satgur kaa jo sikh akhaae su bhalake uth har naam dhiaavai ||",
+        "english_translation": "One who calls himself a Sikh of the Guru shall rise early and meditate on the Lord's Name.",
+        "context_tags": [
+            "discipline",
+            "routine",
+            "work-ethic",
+            "study-habit",
+            "consistency"
+        ],
+        "source": "SGGS Page 305",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "family_conflict_001",
+        "gurmukhi": "ਹੋਇ ਇਕਤ੍ਰ ਮਿਲਹੁ ਮੇਰੇ ਭਾਈ ਦੁਬਿਧਾ ਦੂਰਿ ਕਰਹੁ ਲਿਵ ਲਾਇ ॥",
+        "romanization": "hoi ekatram milhu mere bhaaee durbidhaa door karahu liv laai ||",
+        "english_translation": "Come and meet together, O my siblings of Destiny; dispel your duality and focus your love on the Lord.",
+        "context_tags": [
+            "family",
+            "conflict",
+            "argument",
+            "peace",
+            "harmony",
+            "siblings"
+        ],
+        "source": "SGGS Page 1185",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "grief_loss_001",
+        "gurmukhi": "ਜੀਵਨੁ ਮਰਣੁ ਸਭੁ ਤੇਰੈ ਹਾਥਿ ॥",
+        "romanization": "jeevan maran sabh terai haath ||",
+        "english_translation": "Life and death are both in Your Hands.",
+        "context_tags": [
+            "grief",
+            "death",
+            "loss",
+            "sadness",
+            "acceptance",
+            "healing"
+        ],
+        "source": "SGGS Page 760",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "focus_concentration_001",
+        "gurmukhi": "ਇਕ ਮਨਿ ਪੁਰਖੁ ਧਿਆਇ ਬਰਦਾਤਾ ॥",
+        "romanization": "ek man purakh dhiaai baradaataa ||",
+        "english_translation": "With single-minded focus, meditate on the Giver of Blessings.",
+        "context_tags": [
+            "focus",
+            "study",
+            "concentration",
+            "distraction",
+            "learning"
+        ],
+        "source": "SGGS Page 218",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "bullying_001",
+        "gurmukhi": "ਜਾ ਤੂ ਮੇਰੈ ਵਲਿ ਹੈ ਤਾ ਕਿਆ ਮੁਹਛੰਦਾ ॥",
+        "romanization": "jaa too merai val hai taa kiaa muhachhandaa ||",
+        "english_translation": "When You are on my side, what do I need from anyone else?",
+        "context_tags": [
+            "bullying",
+            "confidence",
+            "fear",
+            "protection",
+            "lonely",
+            "insult"
+        ],
+        "source": "SGGS Page 1096",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "financial_stress_001",
+        "gurmukhi": "ਸਦਾ ਸਦਾ ਸੁਖੁ ਪਾਇਆ ਰਾਮੁ ਨਾਮੁ ਗੁਣ ਗਾਇ ॥",
+        "romanization": "sadaa sadaa sukh paaiaa raamu naamu gun gaai ||",
+        "english_translation": "Forever and ever, peace is found by singing the Glories of the Lord's Name.",
+        "context_tags": [
+            "money",
+            "finance",
+            "debt",
+            "stress",
+            "future",
+            "bills"
+        ],
+        "source": "SGGS Page 21",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "identity_crisis_001",
+        "gurmukhi": "ਮਨ ਤੂੰ ਜੋਤਿ ਸਰੂਪੁ ਹੈ ਆਪਣਾ ਮੂਲੁ ਪਛਾਣੁ ॥",
+        "romanization": "man too jot saroop hai aapanaa mool pachhaan ||",
+        "english_translation": "O my mind, you are the embodiment of Divine Light; recognize your own origin.",
+        "context_tags": [
+            "identity",
+            "purpose",
+            "who-am-i",
+            "confidence",
+            "mind",
+            "light"
+        ],
+        "source": "SGGS Page 441",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "procrastination_001",
+        "gurmukhi": "ਆਜੁ ਕਾਲਿ ਫੁਨਿ ਕਾਲਿ ਕਰਤਿਆ ਜਨਮੁ ਗਇਆ ॥",
+        "romanization": "aaj kaal fun kaal karatiaa janamgaiaa ||",
+        "english_translation": "Thinking of today and tomorrow, and then the day after, life passes away.",
+        "context_tags": [
+            "procrastination",
+            "time",
+            "laziness",
+            "regret",
+            "action"
+        ],
+        "source": "SGGS Page 1106",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "jealousy_001",
+        "gurmukhi": "ਪਰ ਕਾ ਬੁਰਾ ਨ ਰਾਖਹੁ ਚੀਤ ॥",
+        "romanization": "par kaa buraa na raakhahu cheet ||",
+        "english_translation": "Do not cherish ill-will for others in your mind.",
+        "context_tags": [
+            "jealousy",
+            "envy",
+            "hate",
+            "kindness",
+            "mindset"
+        ],
+        "source": "SGGS Page 386",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "loneliness_evening_001",
+        "gurmukhi": "ਸਗਲੀ ਰੈਣਿ ਸੁਹਾਵਣੀ ਜਉ ਪਿਰੁ ਰਹੈ ਹਦੂਰਿ ॥",
+        "romanization": "sagalee rain suhaavanee jau pir rahai hadoor ||",
+        "english_translation": "The entire night is beautiful, if the Beloved remains close by.",
+        "context_tags": [
+            "lonely",
+            "missing-someone",
+            "night",
+            "longing",
+            "comfort"
+        ],
+        "source": "SGGS Page 1215",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "greed_001",
+        "gurmukhi": "ਬਿਨੁ ਸੰਤੋਖ ਨਹੀ ਕੋਊ ਰਾਜੈ ॥",
+        "romanization": "bin santokh nahee kooo raajai ||",
+        "english_translation": "Without contentment, no one is ever satisfied.",
+        "context_tags": [
+            "greed",
+            "satisfaction",
+            "money",
+            "contentment",
+            "desire"
+        ],
+        "source": "SGGS Page 278",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "protection_travel_001",
+        "gurmukhi": "ਜਿਥੈ ਗਉੜਾ ਤਿਥੈ ਤੂ ਰਖਵਾਲਾ ॥",
+        "romanization": "jithai gauraa tithai too rakhavaalaa ||",
+        "english_translation": "Where the path is difficult, there You are my Protector.",
+        "context_tags": [
+            "travel",
+            "danger",
+            "protection",
+            "fear",
+            "safety"
+        ],
+        "source": "SGGS Page 104",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "inner_voice_001",
+        "gurmukhi": "ਘਟ ਘਟ ਕੇ ਅੰਤਰ ਕੀ ਜਾਨਤ ॥",
+        "romanization": "ghat ghat ke antar kee jaanat ||",
+        "english_translation": "He knows the inner state of every heart.",
+        "context_tags": [
+            "secrets",
+            "lonely",
+            "misunderstood",
+            "god",
+            "knowledge"
+        ],
+        "source": "Patshahi 10, Chaupai Sahib",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "guilt_002",
+        "gurmukhi": "ਕੀਤਾ ਹੋਆ ਹੋਵਣਹਾਰੁ ॥",
+        "romanization": "keetaa hoaa hovanahaar ||",
+        "english_translation": "Whatever has been done, and whatever is to happen (is in Hukam).",
+        "context_tags": [
+            "guilt",
+            "fate",
+            "acceptance",
+            "mistakes",
+            "hukam"
+        ],
+        "source": "SGGS Page 2",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "bullying_school_001",
+        "gurmukhi": "ਨਿਰਵੈਰੈ ਨਾਲਿ ਵੈਰੁ ਰਚਾਇਦਾ ਅਪਣੈ ਘਰਿ ਲੂਕੀ ਲਾਇ ॥",
+        "romanization": "niravairai naal vair rchaaidaa apanai ghar lookee laai ||",
+        "english_translation": "One who harbors enmity against the one who is without enmity, sets fire to his own home.",
+        "context_tags": [
+            "bullying",
+            "enemies",
+            "revenge",
+            "justice",
+            "mean-people"
+        ],
+        "source": "SGGS Page 1146",
+        "recommended_persona": "teen"
+    },
+    {
+        "shabad_id": "friendship_001",
+        "gurmukhi": "ਜਿਨੁ ਦਿਸੈ ਗੁਰਸਿਖੜਾ ਤਿਸੁ ਨਿਵਿ ਨਿਵਿ ਲਾਗਉ ਪਾਇ ॥",
+        "romanization": "jin disai gurasikharaa tis niv niv laagau paai ||",
+        "english_translation": "Whenever I see a Sikh of the Guru, I bow down and touch their feet.",
+        "context_tags": [
+            "friends",
+            "community",
+            "sangats",
+            "respect",
+            "kindness"
+        ],
+        "source": "SGGS Page 763",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "health_recovery_001",
+        "gurmukhi": "ਰੋਗੁ ਗਇਆ ਪ੍ਰਭਿ ਆਪਿ ਗਵਾਇਆ ॥",
+        "romanization": "rog gayaa prabh aap gavaaiaa ||",
+        "english_translation": "The disease is split; God Himself has cured it.",
+        "context_tags": [
+            "healing",
+            "recovery",
+            "sickness",
+            "health",
+            "thankful"
+        ],
+        "source": "SGGS Page 807",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "anger_management_002",
+        "gurmukhi": "ਕਾਮੁ ਕ੍ਰੋਧੁ ਕਾਇਆ ਕਉ ਗਾਲੈ ॥",
+        "romanization": "kaam krodh kaaiaa kau gaalai ||",
+        "english_translation": "Lust and anger consume the body.",
+        "context_tags": [
+            "anger",
+            "health",
+            "self-control",
+            "calm",
+            "body"
+        ],
+        "source": "SGGS Page 932",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "sleep_anxiety_001",
+        "gurmukhi": "ਸੁਖ ਨਾਹੀ ਬਹੁਤੈ ਧਨਿ ਖਾਟੇ ॥",
+        "romanization": "sukh naahee bahutai dhan khaate ||",
+        "english_translation": "There is no peace in earning a great deal of wealth (without content).",
+        "context_tags": [
+            "sleep",
+            "stress",
+            "money",
+            "night",
+            "peace"
+        ],
+        "source": "SGGS Page 1147",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "spiritual_longing_001",
+        "gurmukhi": "ਦਰਸਨੁ ਦੇਖਿ ਜੀਵਾ ਗੁਰ ਤੇਰਾ ॥",
+        "romanization": "darasan dekh jeevaa gur teraa ||",
+        "english_translation": "Beholding the Blessed Vision of Your Darshan, I live.",
+        "context_tags": [
+            "longing",
+            "love",
+            "spiritual",
+            "peace",
+            "guru"
+        ],
+        "source": "SGGS Page 742",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "patience_adversity_001",
+        "gurmukhi": "ਜਉ ਤਉ ਪ੍ਰੇਮ ਖੇਲਣ ਕਾ ਚਾਉ ॥ ਸਿਰੁ ਧਰਿ ਤਲੀ ਗਲੀ ਮੇਰੀ ਆਉ ॥",
+        "romanization": "jau tau prem khelran kaa chaau || sir dhar talee galee meree aau ||",
+        "english_translation": "If you desire to play the game of love, then step onto My path with your head upon your palm.",
+        "context_tags": [
+            "commitment",
+            "sacrifice",
+            "love",
+            "adversity",
+            "courage"
+        ],
+        "source": "SGGS Page 1412",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "peace_mind_001",
+        "gurmukhi": "ਮਨ ਵਿਸਰਾਮ ਹੋਆ ਤਉ ਸੁਖੁ ਪਾਇਆ ॥",
+        "romanization": "man visaraam hoaa tau sukh paaiaa ||",
+        "english_translation": "When the mind rests in peace, then happiness is found.",
+        "context_tags": [
+            "peace",
+            "calm",
+            "mind",
+            "happiness",
+            "rest"
+        ],
+        "source": "SGGS Page 1141",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "protection_fear_003",
+        "gurmukhi": "ਨਿਰਭਉ ਜੀਵਹਿ ਹਰਿ ਕੇ ਦਾਸ ॥",
+        "romanization": "nirabhau jeevahi har ke daas ||",
+        "english_translation": "The servants of the Lord live without fear.",
+        "context_tags": [
+            "fear",
+            "courage",
+            "safety",
+            "trust",
+            "devotion"
+        ],
+        "source": "SGGS Page 1140",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "gratitude_daily_001",
+        "gurmukhi": "ਉਠਤ ਬੈਠਤ ਸੋਵਤ ਧਿਆਈਐ ॥",
+        "romanization": "uthat baithat sovat dhiaaeeai ||",
+        "english_translation": "While standing, sitting and sleeping, meditate on Him.",
+        "context_tags": [
+            "gratitude",
+            "routine",
+            "meditation",
+            "daily",
+            "prayer"
+        ],
+        "source": "SGGS Page 294",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "hope_despair_001",
+        "gurmukhi": "ਤੂੰ ਸਮਰਥੁ ਸਰਨਿ ਕੋ ਦਾਤਾ ॥",
+        "romanization": "toon samarath saran ko daata ||",
+        "english_translation": "You are the All-powerful Provider of Shelter.",
+        "context_tags": [
+            "hope",
+            "protection",
+            "despair",
+            "shelter",
+            "help"
+        ],
+        "source": "SGGS Page 218",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "success_worldly_001",
+        "gurmukhi": "ਰਾਜੁ ਨ ਚਾਹਉ ਮੁਕਤਿ ਨ ਚਾਹਉ ਮਨਿ ਪ੍ਰੀਤਿ ਚਰਨ ਕਮਲਾਰੇ ॥",
+        "romanization": "raaj na chaahau mukat na chaahau man preet charan kamalaare ||",
+        "english_translation": "I do not desire power, and I do not desire liberation; my mind is in love with Your lotus feet.",
+        "context_tags": [
+            "success",
+            "power",
+            "ambition",
+            "humility",
+            "love"
+        ],
+        "source": "SGGS Page 534",
+        "recommended_persona": "adult"
+    },
+    {
+        "shabad_id": "focus_distraction_001",
+        "gurmukhi": "ਅਨਿਕ ਜਤਨ ਕਰਿ ਰਾਖਉ ਮਨੂਆ ॥",
+        "romanization": "anik jatan kar raakhau manooaa ||",
+        "english_translation": "In many ways, I try to hold my mind steady.",
+        "context_tags": [
+            "focus",
+            "distraction",
+            "mind-control",
+            "effort",
+            "concentration"
+        ],
+        "source": "SGGS Page 1141",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "justice_001",
+        "gurmukhi": "ਅਲਹੁ ਵੈਰੀ ਅਲਹੁ ਮੀਤੁ ॥",
+        "romanization": "alahu vairee alahu meet ||",
+        "english_translation": "The Lord is his enemy, and the Lord is his friend.",
+        "context_tags": [
+            "justice",
+            "enemies",
+            "friends",
+            "neutrality",
+            "equanimity"
+        ],
+        "source": "SGGS Page 1140",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "humility_003",
+        "gurmukhi": "ਸਗਲ ਸਮਗ੍ਰੀ ਤੇਰੀ ਧਾਰੀ ॥",
+        "romanization": "sagal samagree teree dhaaree ||",
+        "english_translation": "All things are supported by You.",
+        "context_tags": [
+            "humility",
+            "gratitude",
+            "support",
+            "dependence",
+            "creation"
+        ],
+        "source": "SGGS Page 268",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "forgiveness_mistakes_001",
+        "gurmukhi": "ਲੇਖੈ ਕਤਹਿ ਨ ਛੂਟੀਐ ਖਿਨੁ ਖਿਨੁ ਭੂਲਨਹਾਰ ॥",
+        "romanization": "lekhai katahi na chhooteeai khinu khinu bhoolanahaar ||",
+        "english_translation": "By your account, I can never be saved; each and every moment, I am a sinner.",
+        "context_tags": [
+            "forgiveness",
+            "mistakes",
+            "confession",
+            "mercy",
+            "guilt"
+        ],
+        "source": "SGGS Page 261",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "acceptance_death_001",
+        "gurmukhi": "ਮਰਣੁ ਲਿਖਾਇ ਮੰਡਲ ਮਹਿ ਆਏ ॥",
+        "romanization": "maran likhaai mandal mahi aae ||",
+        "english_translation": "Death is pre-ordained for all who come into this world.",
+        "context_tags": [
+            "death",
+            "acceptance",
+            "fate",
+            "mortality",
+            "truth"
+        ],
+        "source": "SGGS Page 1022",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "comfort_sadness_001",
+        "gurmukhi": "ਦੁਖੁ ਵਿਸਾਰਹੁ ਸੁਖੁ ਲੀਜੈ ॥",
+        "romanization": "dukhu visaarahu sukhu leeijai ||",
+        "english_translation": "Forget your suffering and take hold of peace.",
+        "context_tags": [
+            "comfort",
+            "sadness",
+            "peace",
+            "healing",
+            "happiness"
+        ],
+        "source": "SGGS Page 661",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "strength_weakness_001",
+        "gurmukhi": "ਬਲੁ ਛੁਟਕਿਓ ਬੰਧਨ ਪਰੇ ਕਛੂ ਨ ਹੋਤ ਉਪਾਇ ॥",
+        "romanization": "balu chhutakio bandhan pare kachhoo na hot upaai ||",
+        "english_translation": "My strength is exhausted, and I am in bonds; I cannot do anything at all.",
+        "context_tags": [
+            "weakness",
+            "despair",
+            "helpless",
+            "surrender",
+            "strength"
+        ],
+        "source": "SGGS Page 1429",
+        "recommended_persona": "any"
+    },
+    {
+        "shabad_id": "guidance_lost_001",
+        "gurmukhi": "ਗੁਰ ਬਿਨੁ ਘੋਰ ਅੰਧਾਰੁ ॥",
+        "romanization": "gur binu ghor andhaar ||",
+        "english_translation": "Without the Guru, there is pitch darkness.",
+        "context_tags": [
+            "lost",
+            "guidance",
+            "darkness",
+            "confusion",
+            "help"
+        ],
+        "source": "SGGS Page 1393",
+        "recommended_persona": "any"
+    }
+]

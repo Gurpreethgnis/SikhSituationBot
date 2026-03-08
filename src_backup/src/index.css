@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;600;800&display=swap');
+
+:root {
+    /* Deep Blues - Base Palette */
+    --midnight: hsl(230, 60%, 8%);
+    --navy-deep: hsl(230, 50%, 12%);
+    --navy: hsl(230, 45%, 18%);
+    --royal: hsl(225, 60%, 28%);
+
+    /* Gold Accents - Spiritual & Highlights */
+    --gold: hsl(48, 100%, 55%);
+    --gold-light: hsl(48, 100%, 70%);
+    --gold-muted: hsl(48, 40%, 45%);
+    --gold-gradient: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+    --gold-glow: 0 0 20px hsla(48, 100%, 55%, 0.4);
+
+    /* Function Colors */
+    --bg-main: var(--midnight);
+    --text-primary: hsl(0, 0%, 98%);
+    --text-secondary: hsl(230, 20%, 75%);
+    --text-muted: hsl(230, 15%, 50%);
+
+    /* Glassmorphism & UI Elements */
+    --surface-glass: hsla(0, 0%, 100%, 0.03);
+    --surface-glass-hover: hsla(0, 0%, 100%, 0.07);
+    --border-glass: hsla(0, 0%, 100%, 0.08);
+    --border-gold: hsla(48, 100%, 55%, 0.2);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+        radial-gradient(circle at 0% 0%, hsla(225, 60%, 28%, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, hsla(48, 100%, 55%, 0.03) 0%, transparent 50%);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+/* Utility Classes for the Palette */
+.text-gold {
+    color: var(--gold);
+}
+
+.bg-navy {
+    background-color: var(--navy);
+}
+
+.glass-panel {
+    background: var(--surface-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+}
+
+.gold-gradient-text {
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.gold-border-glow {
+    border: 1px solid var(--border-gold);
+    box-shadow: 0 0 15px hsla(48, 100%, 55%, 0.1);
+}
+
+/* perspective-tabs Component */
+.perspective-container {
+    display: flex;
+    gap: 12px;
+    padding: 8px;
+    background: hsla(230, 50%, 5%, 0.3);
+    border-radius: 99px;
+    border: 1px solid var(--border-glass);
+    width: fit-content;
+}
+
+.perspective-pill {
+    padding: 10px 24px;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.perspective-pill:hover {
+    background: var(--surface-glass-hover);
+    color: var(--text-primary);
+}
+
+.perspective-pill.active {
+    background: var(--gold-gradient);
+    color: var(--midnight);
+    box-shadow: var(--gold-glow);
+    border-color: var(--gold-light);
+}
+
+.perspective-pill.active .icon {
+    opacity: 1;
+}
+
+.perspective-pill .icon {
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
