@@ -3,3 +3,8 @@ server/venv
 server/__pycache__
 client/.next
 client/node_modules
+node_modules
+.next
+venv
+.env
+.DS_Store
