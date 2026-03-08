@@ -51,7 +51,6 @@ git pull origin feature/your-role-branch
 | Validate data against schema in `docs/data-strategy.md` | ✅ | Done. All files use unified JSON schema. |
 | **[MVP]** Script data pipeline to embed SGGS JSON via Gemini | ⬜ | See `docs/mvp-plan.md` |
 | **[MVP]** Integrate Gemini API in `/ask` for final response synthesis | ⬜ | RAG combination phase |
-| **[MVP]** Implement Web Speech API / Whisper for voice-to-text | ⬜ | ChatGPT-like audio input |
 | **Pointers**: Use `sentence-transformers` in Python if you start on semantic search early. | | |
 
 ### Assigned to @sarnazb (Design)
@@ -71,7 +70,6 @@ git pull origin feature/your-role-branch
 | Wire up chat flow: query → display → loading states | ⬜ | |
 | **[MVP]** Implement polished loading skeleton or "Bot is thinking" UI | ⬜ | Essential for AI latency |
 | **[MVP]** Design failure/error states gracefully | ⬜ | Fallback UI when LLM times out |
-| **[MVP]** Implement microphone button and active recording UI | ⬜ | For Voice Interaction |
 
 ### Assigned to @samisingh (Ops)
 | Task | Status | Notes |

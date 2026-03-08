@@ -31,20 +31,10 @@ As a development team, our focus is transitioning this application from a basic 
 | Perspectives UI & Consolidation | @Antigravity | 2026-03-01 | ✅ Done |
 | Project Roadmap Setup | @sbindra-ai | 2026-02-08 | ✅ Done |
 
-## 📅 Weekly Plan (Student View)
-
-| Week | Focus | Main Tasks | Milestone / Deliverable |
-| :--- | :--- | :--- | :--- |
-| **Week 1** | **Foundations** | Set up environment, Git branches, and basic project structure. Research [BaniDB](https://api.banidb.com) and LLM options. | Repo initialized with a "Hello World" frontend. |
-| **Week 2** | **Data & UI** | Build the core Chat UI. Connect to Gurbani data sources and implement basic keyword retrieval. | Searchable Shabad interface with proper formatting. |
-| **Week 3** | **AI Integration** | Integrate LLM for generating responses. Design and test prompts for Child, Teen, and Adult personas. | Functional AI chatbot that explains Gurbani contextually. |
-| **Week 4** | **Polish & Demo** | Refine UI/UX (animations, responsive design). Conduct user testing and prepare the final demo/presentation. | **Project Demo Ready!** 🚀 |
-
-### 💡 Student Success Tips
+### 💡 Student Tips
 - **Branch Often:** Create feature branches from `main`.
 - **Commits Matter:** Use descriptive commit messages (e.g., `feat: add shabad search logic`).
-- **Ask for Help:** Stuck on Gurbani APIs or AI prompts? Use the `docs/` folder or reach out!
-- **Test Small:** Verify your code works in small chunks before moving to the next week's goal.
+- **Check your tasks:** Your specific tasks are in [docs/TASK_ASSIGNMENTS.md](docs/TASK_ASSIGNMENTS.md). Work at your own pace — there is no fixed weekly deadline.
 
 
 ## 🗺️ Implementation Roadmap

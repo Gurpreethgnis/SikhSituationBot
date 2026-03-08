@@ -10,8 +10,7 @@ The primary objective of the MVP is to replace the mock keyword-matching system 
 2. **Data Pipeline:** Create a script to run our curated Gurbani data through an embedding model and populate the database.
 3. **Intelligence (RAG):** Upgrade the `/ask` endpoint to convert user queries to vectors, query the database for the nearest semantic matches, and pass the results to a Large Language Model (LLM) for response generation.
 4. **UX & Polish:** Refine the frontend to handle potential AI latency with elegant loading states (e.g., streaming text, typing indicators) and ensure error handling is robust.
-5. **Voice Interaction (Speech-to-Text):** Add a smooth, ChatGPT-like voice input feature, allowing users to speak their situation directly using a sleek microphone interface.
-6. **Secure Operations:** Provision the production database and securely manage all necessary secrets (DB connection strings, LLM API keys) across our deployment platforms.
+5. **Secure Operations:** Provision the production database and securely manage all necessary secrets (DB connection strings, LLM API keys) across our deployment platforms.
 
 ---
 
@@ -23,7 +22,6 @@ The primary objective of the MVP is to replace the mock keyword-matching system 
 - **Tasks:** 
   - Construct the data ingestion pipeline (`server/seed_db.py`).
   - Integrate the Gemini API inside `server/app.py` to synthesize the final response combining the retrieved Shabad and the user's situation.
-  - Evaluate Web Speech API (Client-side) vs. Whisper API (Server-side) for handling smooth voice-to-text transcription.
 
 ### 👁️ Vision (@ekaskohi-vision)
 **Focus:** Semantic search and advanced RAG (Retrieval-Augmented Generation).
@@ -45,7 +43,6 @@ The primary objective of the MVP is to replace the mock keyword-matching system 
 - **Tasks:**
   - Implement a refined loading skeleton or "typing..." indicator in the chat UI.
   - Design failure/error states gracefully (e.g., if the LLM times out).
-  - Design and implement a microphone button inside the chat input with active recording visual feedback (e.g., pulsing animation).
 
 ### ⚙️ Ops (@samisingh)
 **Focus:** Infrastructure, database setup, and CI/CD.
