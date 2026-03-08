@@ -7,17 +7,17 @@ To bridge the gap between historical Sikh scripture and contemporary human exper
 
 ## ✅ Project Progress Tracker
 
-**Current Phase: Stage 1 (PoC)**
-`[██████████] 100% (Week 1)`
+**Current Phase: Stage 2 (MVP)**
+`[██████████] Stage 1 (PoC) - 100% Complete & Deployed`
+`[██░░░░░░░░] Stage 2 (MVP) - 20% In Progress`
 
-### 🛠️ Active Tasks
+### 🛠️ Recent Completions (PoC)
 - [x] **Repo Setup & README** (Completed by @sbindra-ai)
-- [x] **Frontend Setup (Vite+React)** (Completed by @Antigravity)
-- [x] **Backend Skeleton** (Completed by @samisingh-ops)
-- [x] **Data Ingestion**
-    - [x] Create `data/shabads.json` (Completed by @sbindra-ai)
-    - [x] Schema Design (Completed by @sarnazb)
-    - [x] Write `scripts/clean_data.py` to normalize Gurbani text (Completed by @sbindra-ai)
+- [x] **Frontend Setup (Next.js)** (Completed by @Antigravity)
+- [x] **Backend Skeleton (Flask)** (Completed by @samisingh-ops)
+- [x] **Mock Data Ingestion** (Completed by @sbindra-ai)
+- [x] **Premium UI & Branding** (Completed by @Antigravity)
+- [x] **Live Deployment Configuration** (Vercel & Railway)
 
 ### 📝 Contribution Log
 | Task | Contributor | Date | Status |
@@ -50,12 +50,14 @@ The project is divided into three main stages:
 ### Stage 1: Proof of Concept (PoC)
 **Goal:** A basic functional web interface to test keyword-based Gurbani retrieval.
 *   **Features:** Keyword search, basic responses (Gurbani line + simple meaning), minimal chat UI.
-*   **Status:** In Progress
+*   **Status:** ✅ **Completed & Deployed to `https://sikhsituationbot.sage-school.com`**
+*   **Testing:** See `docs/poc-testing-guide.md` for class testing instructions.
 
 ### Stage 2: Minimum Viable Product (MVP)
-**Goal:** A smart, context-aware bot with age-appropriate explanations.
-*   **Features:** Natural language search, tiered explanations (Child/Teen/Adult), full Gurbani context, FAQ section.
-*   **Stack:** React/Vue, Node.js/Python, Vector Search (Pinecone/Milvus), LLM Integration.
+**Goal:** A smart, context-aware bot with true semantic search and AI synthesis.
+*   **Features:** Natural language search, vector embeddings, Gemini AI integration, Voice interaction.
+*   **Stack:** Next.js, Flask, PostgreSQL (`pgvector`), Google Gemini API.
+*   **Status:** 🔄 **In Progress** - See `docs/mvp-plan.md` for full details.
 
 ### Stage 3: Production Version
 **Goal:** A scalable, feature-rich platform.
@@ -73,7 +75,9 @@ We use **role-based branches** so everyone can work in parallel. Each person wor
 | Ops | `feature/samisingh-ops` | DevOps, setup, deployment |
 | AFK | `feature/suveersabharwal13-afk` | Backup / overflow tasks |
 
-**📋 [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)** — Assign work here. Team members pick up their tasks and continue on their branch.
+**📋 [TASK_ASSIGNMENTS.md](TASK_ASSIGNMENTS.md)** — Check here for the latest Stage 2 assignments. Team members pick up their tasks and continue on their branch.
+**📋 [docs/mvp-plan.md](docs/mvp-plan.md)** — Read the official MVP goals and feature requirements.
+**🧪 [docs/poc-testing-guide.md](docs/poc-testing-guide.md)** — Use this in class to interact with the currently deployed PoC.
 
 ---
 
@@ -107,14 +111,14 @@ We use **role-based branches** so everyone can work in parallel. Each person wor
 
 | Component | Command | Port | Tech |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | `cd client && npm run dev` | `5173` | React, Vite, Tailwind (optional) |
-| **Backend** | `cd server && python app.py` | `5000` | Flask, Google Gemini SDK |
+| **Frontend** | `cd client && npm install && npm run dev` | `3000` | Next.js, React, CSS Modules |
+| **Backend** | `cd server && pip install -r requirements.txt && python app.py` | `5000` | Flask, PostgreSQL, Gemini SDK |
 
 ### 📂 Key Folders
-- `/client/src`: Your React components
-- `/server`: Flask API logic and LLM prompts
+- `/client/app`: Next.js frontend application code
+- `/server`: Flask backend logic, models, and embedding scripts
+- `/docs`: Technical specs, MVP plans, and testing guides
 - `/data`: JSON datasets (e.g., `shabad.json`)
-- `/docs`: Visual specs and architecture
 
 ---
 
