@@ -1,9 +1,13 @@
 # SikhSituationBot 🪯
 
-SikhSituationBot is an AI-powered conversational agent designed to provide guidance from Gurbani for modern life's challenges. It helps users find relevant Shabads (verses) based on their emotional state or life situation.
+## 🎯 What does this repo do?
+This repository contains the code for an AI-powered conversational web application. The bot acts as a specialized search engine and empathetic guide: users type or speak their current emotional state (e.g., "I feel anxious"), and the bot retrieves relevant historical verses (Shabads) from the Siri Guru Granth Sahib (SGGS) to provide comfort and perspective.
 
-## 🌟 Project Vision
-To bridge the gap between historical Sikh scripture and contemporary human experience by making Gurbani's wisdom accessible, age-appropriate, and actionable for the next generation.
+## 🔭 What is our focus?
+As a development team, our focus is transitioning this application from a basic keyword-search prototype into a context-aware AI. We are focused on:
+1. **Semantic Understanding:** Using vector databases (`pgvector`) and Google Gemini embeddings to understand the *meaning* behind user queries, not just exact keywords.
+2. **Generative Synthesis:** Using Large Language Models to read the retrieved historical verses and explain them in plain, empathetic English depending on the user's age (Child, Teen, Adult).
+3. **Premium Interaction:** Delivering a seamless, rapid, and visually stunning chat interface (Next.js) with Voice Interaction capabilities.
 
 ## ✅ Project Progress Tracker
 
