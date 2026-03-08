@@ -2,12 +2,41 @@ import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+from models import db
+from sqlalchemy import text
 
 # Load environment variables from the root .env file
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the frontend to communicate with the backend
+
+# Database Configuration
+db_user = os.environ.get('DB_USER', 'postgres')
+db_password = os.environ.get('DB_PASSWORD', 'password')
+db_host = os.environ.get('DB_HOST', 'localhost')
+db_name = os.environ.get('DB_NAME', 'sikh_situation_bot')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{db_user}:{db_password}@{db_host}/{db_name}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+
+# Helper function to initialize database tables
+def init_db():
+    with app.app_context():
+        try:
+            # Require the pgvector extension
+            db.session.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
+            db.session.commit()
+            db.create_all()
+            print("Database tables created successfully.")
+        except Exception as e:
+            print(f"Database initialization failed (maybe db doesn't exist yet): {e}")
+
+# Call init_db on startup
+# NOTE: In production, it's better to use migration scripts (Alembic) instead of create_all()
+init_db()
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
