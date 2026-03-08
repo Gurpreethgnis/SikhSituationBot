@@ -42,11 +42,14 @@ function App() {
   return (
     <div className="app">
       <header className="app__header">
+        <div className="logo-container">
+          <img src="/logo.png" alt="SikhSituationBot Logo" className="app-logo" />
+        </div>
         <h1 className="app__title">SikhSituationBot</h1>
         <p className="app__tagline">Gurbani-based guidance for life's moments</p>
       </header>
 
-      <main className="app__main">
+      <main className="app__main container">
         <Perspectives activePersona={persona} onPersonaChange={setPersona} />
         <ChatInput 
           onSend={handleSend} 
