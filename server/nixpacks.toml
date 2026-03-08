@@ -1,4 +1,5 @@
 providers = ["python"]
 
 [phases.setup]
-nixPkgs = ["...", "postgresql"]
+nixPkgs = ["...", "postgresql", "gcc"]
+aptPkgs = ["...", "libpq-dev", "build-essential"]
