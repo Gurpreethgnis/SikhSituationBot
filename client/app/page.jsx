@@ -59,12 +59,17 @@ function App() {
 
         {aiResponse && (
           <div className="shabad-result">
-            <p className="ai-insight">{aiResponse}</p>
+            <div className="ai-insight-wrapper">
+              <span className="insight-label">Guru's Guidance ({persona}):</span>
+              <p className="ai-insight">{aiResponse}</p>
+            </div>
             {shabad && (
-              <div className="shabad-card">
-                <span className="ik-onkar-icon">☬</span>
-                <h2 className="gurmukhi-text">{shabad.text}</h2>
-                <p className="translation">{shabad.title}</p>
+              <div className={`shabad-card ${persona}`}>
+                <div className="ik-onkar-icon">☬</div>
+                <h2 className="gurmukhi-text">{shabad. Gurmukhi || shabad.text}</h2>
+                <p className="transliteration">{shabad.transliteration}</p>
+                <div className="shabad-divider"></div>
+                <p className="translation">“{shabad.title}”</p>
               </div>
             )}
           </div>

@@ -21,18 +21,52 @@ def health_check():
 def ask():
     """Endpoint for chat queries. To be implemented by AI team."""
     data = request.json
-    query = data.get('query', '')
+    query = data.get('query', '').lower()
+    persona = data.get('persona', 'adult')
     
     if not query:
         return jsonify({"error": "No query provided"}), 400
         
-    # Placeholder response
+    # Mock knowledge base / wired responses
+    responses = {
+        "peace": {
+            "child": "Finding peace is like feeling a warm hug from Waheguru. It means being kind and quiet in your heart.",
+            "teen": "True peace isn't the absence of noise, but a calm mind amidst the chaos of life and social media. Let Gurbani be your anchor.",
+            "adult": "Peace (Shanti) in Gurbani is attained by surrendering the ego and aligning one's consciousness with the Eternal Truth.",
+            "shabad": {
+                "text": "ਤਪਤਿ ਮਾਹਿ ਠਾਢਿ ਵਰਤਾਈ ॥",
+                "title": "In the midst of the heat, a cooling sense has spread.",
+                "transliteration": "Tapat Mahe Thadh Varta-ee"
+            }
+        },
+        "stress": {
+            "child": "When things feel hard, remember you're never alone. Like a superhero's shield, Waheguru protects you.",
+            "teen": "Exam stress or social pressure? Gurbani reminds us that 'Jo Tudh Bhaave Saa-ee Bhalee Kaar'—Whatever pleases You is best. Trust the process.",
+            "adult": "Anxiety arises from attachment. Release the burden of control and find solace in the Hukam (Divine Will).",
+            "shabad": {
+                "text": "ਸਗਲ ਮਨੋਰਥ ਪੂਰਨ ਹੋਏ ਮਨਿ ਤਨਿ ਭਈ ਸੀਤਲਤਾ ॥",
+                "title": "All my desires have been fulfilled; my mind and body are cooled and soothed.",
+                "transliteration": "Sagal Manorath Pooran Ho-e Man Tan Bha-ee Seetalta"
+            }
+        }
+    }
+
+    # Default fallback
+    result = responses.get("peace") if "peace" in query else responses.get("stress") if any(x in query for x in ["stress", "overwhelmed", "anxious", "scared"]) else None
+
+    if result:
+        return jsonify({
+            "response": result.get(persona, result["adult"]),
+            "shabad": result["shabad"]
+        }), 200
+
+    # Generic Placeholder
     return jsonify({
-        "response": f"Received query: '{query}'. AI synthesis coming soon.",
+        "response": f"Received your query about '{query}'. I am still learning, but the Guru's wisdom is infinite. AI synthesis coming soon.",
         "shabad": {
-            "id": 1,
-            "title": "Sample Shabad",
-            "text": "This is placeholder text for the shabad."
+            "text": "ੴ ਸਤਿ ਨਾਮੁ ਕਰਤਾ ਪੁਰਖੁ ॥",
+            "title": "One Universal Creator God. The Name Is Truth. Creative Being Personified.",
+            "transliteration": "Ik Onkar Sat Nam Karta Purakh"
         }
     }), 200
 
