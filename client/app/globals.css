@@ -375,6 +375,64 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
 }
 
+/* Loading skeleton and typing indicator */
+.ai-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 720px;
+  margin: 8px 0 16px 0;
+}
+
+.skeleton-line {
+  height: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.06) 100%);
+  border-radius: 8px;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+.typing-dots span {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  opacity: 0.9;
+  transform: translateY(0);
+  animation: typing-bounce 1s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.12s }
+.typing-dots span:nth-child(3) { animation-delay: 0.24s }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.85 }
+  30% { transform: translateY(-6px); opacity: 1 }
+}
+
+/* Error styles */
+.error-card {
+  background: linear-gradient(180deg, rgba(201,162,39,0.04), rgba(15,23,41,0.02));
+  border: 1px solid rgba(201,162,39,0.12);
+  padding: 18px;
+  border-radius: 12px;
+  max-width: 720px;
+}
+.error-message { color: var(--text-secondary); margin: 0 0 12px 0 }
+.error-actions { display:flex; gap:8px }
+.error-retry {
+  background: var(--gold-gradient);
+  color: var(--midnight);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.error-retry:hover { box-shadow: var(--gold-glow) }
+
 .insight-header {
   display: flex;
   align-items: center;

@@ -10,8 +10,12 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [shabad, setShabad] = useState(null)
   const [aiResponse, setAiResponse] = useState('')
+  const [lastQuery, setLastQuery] = useState('')
+  const [error, setError] = useState('')
 
   const handleSend = async (query) => {
+    setLastQuery(query)
+    setError('')
     setLoading(true)
     setShabad(null)
     setAiResponse('')
@@ -33,8 +37,9 @@ function App() {
       setAiResponse(data.response)
       setShabad(data.shabad)
     } catch (error) {
-      console.error('Error fetching guidance:', error)
-      setAiResponse('Sorry, I am having trouble connecting to Gurbani wisdom right now. Please try again.')
+      // Silently handle error and show graceful UI instead
+      setError('Sorry, I am having trouble connecting to Gurbani wisdom right now. Please try again.')
+      setAiResponse('')
     } finally {
       setLoading(false)
     }
@@ -56,11 +61,48 @@ function App() {
           loading={loading}
         />
 
-        {aiResponse && (
+        {/* Loading skeleton */}
+        {loading && !aiResponse && !error && (
           <div className="shabad-result">
             <div className="ai-insight-wrapper">
               <span className="insight-label">Guru's Guidance ({persona}):</span>
-              <p className="ai-insight">{aiResponse}</p>
+              <div className="ai-skeleton" aria-hidden>
+                <div className="skeleton-line" style={{ width: '70%' }} />
+                <div className="skeleton-line" style={{ width: '90%' }} />
+                <div className="typing-dots"><span></span><span></span><span></span></div>
+              </div>
+            </div>
+            <div className={`shabad-card skeleton ${persona}`}>
+              <div className="ik-onkar-icon">☬</div>
+              <h2 className="gurmukhi-text">&nbsp;</h2>
+              <p className="transliteration">&nbsp;</p>
+              <div className="shabad-divider"></div>
+              <p className="translation">&nbsp;</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error state with retry */}
+        {error && (
+          <div className="shabad-result">
+            <div className="ai-insight-wrapper">
+              <span className="insight-label">Guru's Guidance ({persona}):</span>
+              <div className="error-card" role="alert">
+                <p className="error-message">{error}</p>
+                <div className="error-actions">
+                  <button className="error-retry" onClick={() => handleSend(lastQuery)}>Retry</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Normal AI response */}
+        {aiResponse && !error && (
+          <div className="shabad-result" aria-live="polite">
+            <div className="ai-insight-wrapper">
+              <span className="insight-label">Guru's Guidance ({persona}):</span>
+              <div className="ai-insight prose-gurbani">{aiResponse}</div>
             </div>
             {shabad && (
               <div className={`shabad-card ${persona}`}>
