@@ -50,9 +50,9 @@ function App() {
 
       <main className="app__main container">
         <Perspectives activePersona={persona} onPersonaChange={setPersona} />
-        <ChatInput 
-          onSend={handleSend} 
-          placeholder={`Share how you're feeling as a ${persona}...`} 
+        <ChatInput
+          onSend={handleSend}
+          placeholder={`Share how you're feeling as a ${persona}...`}
           loading={loading}
         />
 
@@ -65,7 +65,7 @@ function App() {
             {shabad && (
               <div className={`shabad-card ${persona}`}>
                 <div className="ik-onkar-icon">☬</div>
-                <h2 className="gurmukhi-text">{shabad. Gurmukhi || shabad.text}</h2>
+                <h2 className="gurmukhi-text">{shabad?.Gurmukhi || shabad?.text}</h2>
                 <p className="transliteration">{shabad.transliteration}</p>
                 <div className="shabad-divider"></div>
                 <p className="translation">“{shabad.title}”</p>
