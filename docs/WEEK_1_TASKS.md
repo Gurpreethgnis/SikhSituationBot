@@ -18,9 +18,9 @@ Welcome team! Our goal this week is to set up the "skeleton" of SikhSituationBot
 - [x] **Schema Design**: Done. Proposed in `docs/data-strategy.md` by @sarnazb.
 
 ### 3. Basic UI Scaffolding
-- [ ] **Chat Input**: Create a search bar/input field that feels premium.
-- [ ] **Perspectives UI**: Build a "pills" or "tabs" component to select 'Child', 'Teen', or 'Adult'.
-- [ ] **Theme**: Define a CSS color palette that is calming (Deep Blues, Gold accents - *Sikh color palette*).
+- [x] **Chat Input**: Create a search bar/input field that feels premium.
+- [x] **Perspectives UI**: Build a "pills" or "tabs" component to select 'Child', 'Teen', or 'Adult'.
+- [x] **Theme**: Define a CSS color palette that is calming (Deep Blues, Gold accents - *Sikh color palette*).
 
 ---
 
