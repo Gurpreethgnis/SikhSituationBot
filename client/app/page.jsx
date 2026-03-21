@@ -21,7 +21,9 @@ function App() {
     setAiResponse('')
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/ask`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const endpoint = `${baseUrl}/ask`
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,15 +32,16 @@ function App() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch guidance')
+        const devErrorText = await response.text().catch(() => '[no body]')
+        throw new Error(`Failed to fetch guidance from ${endpoint}: ${response.status} ${devErrorText}`)
       }
 
       const data = await response.json()
       setAiResponse(data.response)
       setShabad(data.shabad)
     } catch (error) {
-      // Silently handle error and show graceful UI instead
-      setError('Sorry, I am having trouble connecting to Gurbani wisdom right now. Please try again.')
+      console.error('Chat query failed:', error)
+      setError(`Sorry, I am having trouble connecting to Gurbani wisdom right now. (${error.message})`)
       setAiResponse('')
     } finally {
       setLoading(false)
