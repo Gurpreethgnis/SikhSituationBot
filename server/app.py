@@ -3,11 +3,20 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
+from server.models import db, Shabad
+from server.vector_utils import get_embedding
+from server.retrieval import find_similar_shabads
+
 # Load environment variables from the root .env file
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the frontend to communicate with the backend
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://localhost/sikhsituationbot')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -51,7 +60,32 @@ def ask():
         }
     }
 
-    # Default fallback
+    # Attempt semantic retrieval via vector search
+    query_embedding = get_embedding(query)
+    if not query_embedding:
+        return jsonify({"error": "Embedding generation failed"}), 503
+
+    similar_shabads = find_similar_shabads(query_embedding=query_embedding, limit=5, persona=persona)
+
+    if similar_shabads:
+        response_items = []
+        for s in similar_shabads:
+            response_items.append({
+                "shabad_id": s.shabad_id,
+                "gurmukhi": s.gurmukhi,
+                "romanization": s.romanization,
+                "english_translation": s.english_translation,
+                "source": s.source,
+                "context_tags": s.context_tags,
+            })
+
+        return jsonify({
+            "response": f"Found {len(response_items)} relevant shabads for your query.",
+            "query": query,
+            "shabads": response_items
+        }), 200
+
+    # Fallback predefined responses for initial prototype behavior
     result = responses.get("peace") if "peace" in query else responses.get("stress") if any(x in query for x in ["stress", "overwhelmed", "anxious", "scared"]) else None
 
     if result:

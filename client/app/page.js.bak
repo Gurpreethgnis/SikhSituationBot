@@ -87,16 +87,33 @@ export default function Home() {
             "Where there is no one else, You are all-powerful there."
           </blockquote>
         </section>
+        
         <footer className="ai-insight">
-          <div className="insight-label">AI Perspective: {activePersona}</div>
-          <p className="insight-text">
-            {activePersona === 'Child' ?
-              "Just like a superhero who is always by your side, Guru Ji is with you even when you feel all alone. You are never actually by yourself!" :
-              activePersona === 'Teen' ?
-                "When you feel like no one understands what you're going through, remember there's a higher power that has your back 24/7. Use this Gurbani to ground yourself." :
-                "This verse from Asa Ki Vaar reminds us of the omnipresence of the Divine. In moments of perceived isolation, we are invited to lean into the strength of the Creator."
-            }
-          </p>
+          <div className="insight-header">
+            <div className="insight-label">AI Wisdom • {activePersona} Perspective</div>
+            <div className="insight-divider"></div>
+          </div>
+          
+          <div className="prose-gurbani">
+            {activePersona === 'Child' ? (
+              <p>Just like a <strong>superhero</strong> who is always by your side, Guru Ji is with you even when you feel all alone. You are never actually by yourself!</p>
+            ) : activePersona === 'Teen' ? (
+              <>
+                <p>When you feel like no one understands what you're going through, remember there's a higher power that has your back <strong>24/7</strong>.</p>
+                <p>Use this Gurbani to ground yourself during stressful times like exams or social pressure.</p>
+              </>
+            ) : (
+              <>
+                <p>This verse from <em>Asa Ki Vaar</em> reminds us of the omnipresence of the Divine. In moments of perceived isolation, we are invited to lean into the strength of the Creator.</p>
+                <p><strong>Practical Application:</strong></p>
+                <ul>
+                  <li>Take three deep breaths and recite this Shabad internally.</li>
+                  <li>Identify one area where you feel "unsupported" and offer it to the Infinite.</li>
+                </ul>
+                <p>By shifting our focus from our own limitations to God's <em>samrath</em> (all-powerful nature), we find peace even in total solitude.</p>
+              </>
+            )}
+          </div>
         </footer>
       </article>
 

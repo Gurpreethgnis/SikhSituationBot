@@ -98,20 +98,25 @@ The persona switching system uses a pill-based toggle bar.
 
 ---
 
-## ⌨️ Developer Implementation
+## 🤖 AI Wisdom Content (Rich Text)
 
-These tokens are exposed in `:root` inside `client/src/index.css`. Use them like so:
+Standardized styling for AI-generated insights and Gurbani analysis.
 
-```css
-.card {
-  background: var(--navy-deep);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  color: var(--text-primary);
-}
+| Element | Class / Style | Intent |
+| :--- | :--- | :--- |
+| **Container** | `.prose-gurbani` | Wrapper for all AI-generated text |
+| **Paragraphs** | `margin-bottom: 1.5rem` | Clear separation of ideas |
+| **Emphasis** | `color: var(--gold-light)` | Use for Bold / `<strong>` tags |
+| **Bullet Points** | `padding-left: 1.5rem` | Gold-colored markers for lists |
+| **Hierarchy** | `.insight-header` | Flex-row with label and gradient divider |
+| **Typography** | `line-height: 1.8` | Maximum legibility for spiritual insights |
 
-.button-gold {
-  background: var(--gold-gradient);
-  box-shadow: var(--shadow-gold);
-}
+**Implementation Example:**
+```html
+<div class="prose-gurbani">
+  <p>This verse from <strong>Asa Ki Vaar</strong>...</p>
+  <ul>
+    <li>Take a deep breath.</li>
+  </ul>
+</div>
 ```

@@ -266,15 +266,29 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   max-width: 800px;
   margin: 40px auto;
-  padding: 40px;
+  padding: 48px;
   background: var(--surface-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-gold);
   border-radius: 24px;
-  box-shadow: 0 0 30px hsla(48, 100%, 55%, 0.05);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), var(--gold-glow);
   animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background accent for the card */
+.shabad-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, hsla(48, 100%, 55%, 0.03) 0%, transparent 40%);
+  pointer-events: none;
 }
 
 @keyframes cardFadeIn {
@@ -283,66 +297,202 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ik-onkar-icon {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: var(--gold);
-  margin-bottom: 24px;
-  opacity: 0.8;
+  margin-bottom: 32px;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px hsla(48, 100%, 55%, 0.3));
 }
 
 .gurmukhi-text {
-  font-size: 2.2rem;
-  line-height: 1.5;
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  line-height: 1.6;
   color: var(--text-primary);
-  margin-bottom: 12px;
-  font-family: serif;
+  margin-bottom: 16px;
+  font-family: serif; /* Will be updated with Gurmukhi font later */
+  word-wrap: break-word;
 }
 
 .transliteration {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   margin-bottom: 24px;
+  font-weight: 500;
 }
 
 .translation {
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
   color: var(--gold-light);
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 1.7;
   font-family: 'Outfit', sans-serif;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   font-style: italic;
+  max-width: 650px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Standardized Rich Text (Markdown) Styling for AI Insights */
+.prose-gurbani {
+  text-align: left;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+.prose-gurbani p {
+  margin-bottom: 1.5rem;
+}
+
+.prose-gurbani p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-gurbani strong {
+  color: var(--gold-light);
+  font-weight: 600;
+}
+
+.prose-gurbani ul, .prose-gurbani ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.prose-gurbani li {
+  margin-bottom: 0.5rem;
+}
+
+.prose-gurbani li::marker {
+  color: var(--gold);
 }
 
 .ai-insight {
   border-top: 1px solid var(--border-glass);
-  padding-top: 24px;
-  text-align: left;
+  padding-top: 32px;
+  position: relative;
+}
+
+/* Loading skeleton and typing indicator */
+.ai-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 720px;
+  margin: 8px 0 16px 0;
+}
+
+.skeleton-line {
+  height: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.06) 100%);
+  border-radius: 8px;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+.typing-dots span {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  opacity: 0.9;
+  transform: translateY(0);
+  animation: typing-bounce 1s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.12s }
+.typing-dots span:nth-child(3) { animation-delay: 0.24s }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.85 }
+  30% { transform: translateY(-6px); opacity: 1 }
+}
+
+/* Error styles */
+.error-card {
+  background: linear-gradient(180deg, rgba(201,162,39,0.04), rgba(15,23,41,0.02));
+  border: 1px solid rgba(201,162,39,0.12);
+  padding: 18px;
+  border-radius: 12px;
+  max-width: 720px;
+}
+.error-message { color: var(--text-secondary); margin: 0 0 12px 0 }
+.error-actions { display:flex; gap:8px }
+.error-retry {
+  background: var(--gold-gradient);
+  color: var(--midnight);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.error-retry:hover { box-shadow: var(--gold-glow) }
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .insight-label {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--gold-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  letter-spacing: 0.1em;
 }
 
-.insight-text {
-  font-size: 1.05rem;
-  color: var(--text-secondary);
-  line-height: 1.7;
+.insight-divider {
+  flex-grow: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--border-gold), transparent);
 }
 
-/* Persona Variations */
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .shabad-card {
+    padding: 24px 20px;
+    margin: 24px 0;
+    border-radius: 20px;
+  }
+
+  .ik-onkar-icon {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+
+  .gurmukhi-text {
+    line-height: 1.4;
+  }
+
+  .translation {
+    margin-bottom: 24px;
+  }
+
+  .prose-gurbani {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .ai-insight {
+    padding-top: 24px;
+  }
+}
+
+/* Persona Variations Enhancement */
 .shabad-card.child {
-  border-radius: 40px;
   border-width: 2px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
 .shabad-card.adult {
-  padding: 50px;
+  border-left-width: 3px;
+  border-left-color: var(--gold);
 }
 

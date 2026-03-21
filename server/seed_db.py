@@ -2,8 +2,9 @@ import os
 import json
 import google.generativeai as genai
 from dotenv import load_dotenv
-from app import app, db
-from models import Shabad
+from server.app import app, db
+from server.models import Shabad
+from server.vector_utils import get_embedding
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
@@ -11,19 +12,7 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 # Configure Gemini API
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-def get_embedding(text):
-    """Generate a vector embedding for the given text using Gemini."""
-    try:
-        # Using text-embedding-004 as it is the recommended model for general text embeddings
-        result = genai.embed_content(
-            model="models/text-embedding-004",
-            content=text,
-            task_type="retrieval_document"
-        )
-        return result['embedding']
-    except Exception as e:
-        print(f"Error generating embedding: {e}")
-        return None
+# get_embedding imported from vector_utils, ensuring use of shared embedding behavior
 
 def seed_database(json_file_path):
     """Read the SGGS JSON file, generate embeddings, and insert into DB."""
@@ -35,6 +24,11 @@ def seed_database(json_file_path):
         shabads_data = json.load(f)
     
     with app.app_context():
+        # Ensure pgvector extension & index exist for fast similarity queries
+        db.session.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        db.session.execute("CREATE INDEX IF NOT EXISTS shabads_embedding_idx ON shabads USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)")
+        db.session.commit()
+
         # Optional: db.drop_all() if you want a clean slate every run, though usually not desired in prod
         print(f"Found {len(shabads_data)} shabads. Beginning ingestion...")
         
@@ -48,11 +42,12 @@ def seed_database(json_file_path):
             
             if embedding:
                 new_shabad = Shabad(
+                    shabad_id=item.get('shabad_id') or f"shabad-{index+1}",
                     gurmukhi=item.get('gurmukhi', ''),
-                    transliteration=item.get('transliteration', ''),
-                    translation=item.get('translation', ''),
-                    page=item.get('page', 0),
-                    theme=item.get('theme', ''),
+                    romanization=item.get('romanization', item.get('transliteration', '')),
+                    english_translation=item.get('english_translation', item.get('translation', '')),
+                    source=item.get('source', ''),
+                    context_tags=item.get('context_tags', []),
                     embedding=embedding
                 )
                 db.session.add(new_shabad)
