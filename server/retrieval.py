@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from server.models import Shabad
+from models import Shabad
 from sqlalchemy.exc import SQLAlchemyError
 
 
