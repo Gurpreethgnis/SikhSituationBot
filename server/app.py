@@ -3,9 +3,9 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-from server.models import db, Shabad
-from server.vector_utils import get_embedding
-from server.retrieval import find_similar_shabads
+from models import db, Shabad
+from vector_utils import get_embedding
+from retrieval import find_similar_shabads
 
 # Load environment variables from the root .env file
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
