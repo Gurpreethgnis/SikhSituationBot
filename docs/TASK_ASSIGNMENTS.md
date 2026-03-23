@@ -61,6 +61,7 @@ git pull origin feature/your-role-branch
 | Design "Perspectives" pills/tabs (Child, Teen, Adult) | ✅ | Integrated into `client/src/index.css` |
 | **[MVP]** Standardize rich text/Markdown styling for AI insights | ✅ | Standardized via `.prose-gurbani` in `globals.css` |
 | **[MVP]** Refine typography layout for dynamically sized AI content | ✅ | Implemented `clamp()` typography and responsive `shabad-card` padding |
+| **[MVP]** Add comprehensive testing guide and verify suite | ✅ | Created `docs/tests-guide.md` and verified all backend tests |
 
 ### Assigned to @siddharthchopra (UX)
 | Task | Status | Notes |
