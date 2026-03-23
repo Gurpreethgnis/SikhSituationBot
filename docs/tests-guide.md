@@ -16,7 +16,34 @@ The project maintains two main test directories:
 
 ---
 
-## 🚀 Test Execution Strategy
+## � Environment Setup
+
+Before running tests, ensure the development environment is properly configured:
+
+### Backend Tests (Python)
+1. **Activate Virtual Environment**:
+   ```bash
+   & .venv\Scripts\Activate.ps1  # Windows PowerShell
+   # or
+   source .venv/bin/activate     # Linux/Mac
+   ```
+
+2. **Set Python Path** (required for import resolution):
+   ```bash
+   $env:PYTHONPATH = ".;server"  # Windows PowerShell
+   # or
+   export PYTHONPATH=".:server"  # Linux/Mac
+   ```
+
+### Frontend Tests (JavaScript)
+1. **Install Dependencies** (if not already done):
+   ```bash
+   cd client && npm install
+   ```
+
+---
+
+## �🚀 Test Execution Strategy
 
 The tests are divided into two main categories to balance speed and coverage.
 
@@ -25,7 +52,7 @@ The tests are divided into two main categories to balance speed and coverage.
 
 - **Check Backend Health & Connectivity**:
   ```bash
-  pytest tests/integration/test_app.py::test_health_check
+  pytest tests/integration/test_app.py::test_health_endpoint
   ```
 - **Ensure Core Conversational Flow**:
   ```bash
