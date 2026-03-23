@@ -1,1 +1,1 @@
-# Backend package
+# SikhSituationBot Server Package

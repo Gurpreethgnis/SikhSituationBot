@@ -31,6 +31,7 @@ As a development team, our focus is transitioning this application from a basic 
 | Perspectives UI & Consolidation | @Antigravity | 2026-03-01 | ✅ Done |
 | Project Roadmap Setup | @sbindra-ai | 2026-02-08 | ✅ Done |
 | Updated Design Tokens and Global CSS | @sarnazb | 2026-03-21 | ✅ Done |
+| Testing Guide & Suite Verification | @sarnazb | 2026-03-23 | ✅ Done |
 
 ### 💡 Student Tips
 - **Branch Often:** Create feature branches from `main`.

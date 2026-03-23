@@ -49,8 +49,8 @@ git pull origin feature/your-role-branch
 | Create `scripts/clean_data.py` to normalize Gurbani text | ✅ | Done. Used to ensure schema consistency. |
 | Expand `data/shabad.json` with more situational Shabads | ✅ | Target hit: 50 situational Shabads vectorized & ready. |
 | Validate data against schema in `docs/data-strategy.md` | ✅ | Done. All files use unified JSON schema. |
-| **[MVP]** Script data pipeline to embed SGGS JSON via Gemini | ⬜ | See `docs/mvp-plan.md` |
-| **[MVP]** Integrate Gemini API in `/ask` for final response synthesis | ⬜ | RAG combination phase |
+| **[MVP]** Script data pipeline to embed SGGS JSON via Gemini | ✅ | COMPLETED: Enhanced `server/seed_db.py` with robust error handling, batch processing, pgvector setup, and progress logging. |
+| **[MVP]** Integrate Gemini API in `/ask` for final response synthesis | ✅ | COMPLETED: Updated `/ask` endpoint with Gemini synthesis, persona-aware prompts, and structured responses. |
 | **Pointers**: Use `sentence-transformers` in Python if you start on semantic search early. | | |
 
 ### Assigned to @sarnazb (Design)
@@ -61,6 +61,7 @@ git pull origin feature/your-role-branch
 | Design "Perspectives" pills/tabs (Child, Teen, Adult) | ✅ | Integrated into `client/src/index.css` |
 | **[MVP]** Standardize rich text/Markdown styling for AI insights | ✅ | Standardized via `.prose-gurbani` in `globals.css` |
 | **[MVP]** Refine typography layout for dynamically sized AI content | ✅ | Implemented `clamp()` typography and responsive `shabad-card` padding |
+| **[MVP]** Add comprehensive testing guide and verify suite | ✅ | Created `docs/tests-guide.md` and verified all backend tests |
 
 ### Assigned to @siddharthchopra (UX)
 | Task | Status | Notes |
