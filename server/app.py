@@ -7,8 +7,8 @@ import logging
 import inspect
 from typing import List, Dict, Any
 
-from server.models import db, Shabad
-from server.vector_utils import get_embedding
+from models import db, Shabad
+from vector_utils import get_embedding
 from retrieval import search_similar_shabads, get_random_shabads, get_shabad_by_id
 from prompts import build_gemini_response_prompt, format_shabad_context, synthesize_gemini_response, FALLBACK_RESPONSE
 
