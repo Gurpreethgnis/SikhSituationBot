@@ -1,10 +1,30 @@
+# Environment files
 .env
-server/venv
-server/__pycache__
-client/.next
-client/node_modules
-node_modules
-.next
-venv
-.env
+.env.test
+.env.local
+
+# Virtual environments
+venv/
+.venv/
+server/venv/
+
+# Python cache and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+server/__pycache__/
+
+# Testing
+.pytest_cache/
+pytest_output*
+pytest_diagnostic*
+
+# Frontend
+client/.next/
+client/node_modules/
+node_modules/
+.next/
+
+# OS files
 .DS_Store
+Thumbs.db
