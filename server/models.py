@@ -33,3 +33,18 @@ class Shabad(db.Model):
 
     def __repr__(self):
         return f'<Shabad {self.shabad_id}>'
+
+    def to_dict(self):
+        """Convert Shabad instance to dictionary."""
+        return {
+            'id': self.id,
+            'shabad_id': self.shabad_id,
+            'gurmukhi': self.gurmukhi,
+            'romanization': self.romanization,
+            'english_translation': self.english_translation,
+            'source': self.source,
+            'recommended_persona': self.recommended_persona,
+            'context_tags': self.context_tags,
+            'embedding': self.embedding,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
