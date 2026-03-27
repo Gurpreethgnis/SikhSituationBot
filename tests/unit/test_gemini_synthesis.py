@@ -131,8 +131,8 @@ class TestGeminiSynthesis(unittest.TestCase):
         self.assertIn("compassionate", SYSTEM_PROMPT)
         self.assertIn("wisdom", SYSTEM_PROMPT)
 
-    @patch('server.app.genai')
-    @patch('server.app.GEMINI_API_KEY', 'test-key')
+    @patch('prompts.genai')
+    @patch('prompts.GEMINI_API_KEY', 'test-key')
     def test_synthesize_gemini_response_success(self, mock_genai):
         """Test successful Gemini response synthesis."""
         # Mock the Gemini API response
@@ -142,7 +142,7 @@ class TestGeminiSynthesis(unittest.TestCase):
         mock_model.generate_content.return_value = mock_response
         mock_genai.GenerativeModel.return_value = mock_model
 
-        from server.app import synthesize_gemini_response
+        from prompts import synthesize_gemini_response
 
         result = synthesize_gemini_response("test query", self.sample_shabads, "adult")
 
@@ -150,19 +150,19 @@ class TestGeminiSynthesis(unittest.TestCase):
         mock_genai.GenerativeModel.assert_called_with('gemini-1.5-flash')
         mock_model.generate_content.assert_called_once()
 
-    @patch('server.app.genai')
-    @patch('server.app.GEMINI_API_KEY', None)
+    @patch('prompts.genai')
+    @patch('prompts.GEMINI_API_KEY', None)
     def test_synthesize_gemini_response_no_api_key(self, mock_genai):
         """Test Gemini synthesis when API key is not configured."""
-        from server.app import synthesize_gemini_response
+        from prompts import synthesize_gemini_response
 
         result = synthesize_gemini_response("test query", self.sample_shabads, "adult")
 
         self.assertIn("timeless Sikh wisdom", result)
         mock_genai.GenerativeModel.assert_not_called()
 
-    @patch('server.app.genai')
-    @patch('server.app.GEMINI_API_KEY', 'test-key')
+    @patch('prompts.genai')
+    @patch('prompts.GEMINI_API_KEY', 'test-key')
     def test_synthesize_gemini_response_api_error(self, mock_genai):
         """Test Gemini synthesis when API call fails."""
         # Mock API failure
@@ -170,15 +170,15 @@ class TestGeminiSynthesis(unittest.TestCase):
         mock_model.generate_content.side_effect = Exception("API Error")
         mock_genai.GenerativeModel.return_value = mock_model
 
-        from server.app import synthesize_gemini_response
+        from prompts import synthesize_gemini_response
 
         result = synthesize_gemini_response("test query", self.sample_shabads, "adult")
 
         self.assertIn("Sikh wisdom", result)
         self.assertIn("Guru Granth Sahib", result)
 
-    @patch('server.app.genai')
-    @patch('server.app.GEMINI_API_KEY', 'test-key')
+    @patch('prompts.genai')
+    @patch('prompts.GEMINI_API_KEY', 'test-key')
     def test_synthesize_gemini_response_empty_response(self, mock_genai):
         """Test Gemini synthesis when API returns empty response."""
         # Mock empty response
@@ -188,7 +188,7 @@ class TestGeminiSynthesis(unittest.TestCase):
         mock_model.generate_content.return_value = mock_response
         mock_genai.GenerativeModel.return_value = mock_model
 
-        from server.app import synthesize_gemini_response
+        from prompts import synthesize_gemini_response
 
         result = synthesize_gemini_response("test query", self.sample_shabads, "adult")
 

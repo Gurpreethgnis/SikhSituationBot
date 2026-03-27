@@ -10,8 +10,8 @@ from vector_utils import (
     get_embedding,
     get_embedding_gemini,
     get_embedding_local,
-    _calculate_backoff_delay,
-    _load_local_model
+    calculate_backoff_delay,
+    load_local_model
 )
 
 
@@ -26,17 +26,17 @@ class TestVectorUtils(unittest.TestCase):
     def test_calculate_backoff_delay(self):
         """Test exponential backoff delay calculation."""
         # First retry
-        delay1 = _calculate_backoff_delay(0)
+        delay1 = calculate_backoff_delay(0)
         self.assertGreaterEqual(delay1, 1.0)
         self.assertLessEqual(delay1, 2.0)
 
         # Second retry
-        delay2 = _calculate_backoff_delay(1)
+        delay2 = calculate_backoff_delay(1)
         self.assertGreaterEqual(delay2, 2.0)
         self.assertLessEqual(delay2, 4.0)
 
         # High retry count
-        delay_high = _calculate_backoff_delay(5)
+        delay_high = calculate_backoff_delay(5)
         self.assertLessEqual(delay_high, 11.0)  # Max delay with jitter
 
     @patch('vector_utils.GEMINI_API_KEY', 'test-key')
@@ -214,12 +214,12 @@ class TestVectorUtils(unittest.TestCase):
         mock_st_class.return_value = mock_model
 
         # First call
-        result1 = _load_local_model()
+        result1 = load_local_model()
         self.assertEqual(result1, mock_model)
         mock_st_class.assert_called_once()
 
         # Second call should use cache
-        result2 = _load_local_model()
+        result2 = load_local_model()
         self.assertEqual(result2, mock_model)
         mock_st_class.assert_called_once()  # Still only called once
 
