@@ -22,6 +22,9 @@ class TestVectorUtils(unittest.TestCase):
         """Set up test fixtures."""
         self.test_text = "This is a test text for embedding"
         self.test_embedding = [0.1, 0.2, 0.3] * 256  # 768-dim vector
+        
+        import vector_utils
+        vector_utils._local_model = None
 
     def test_calculate_backoff_delay(self):
         """Test exponential backoff delay calculation."""

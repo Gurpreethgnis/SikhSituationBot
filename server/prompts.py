@@ -218,21 +218,6 @@ def synthesize_gemini_response(user_query: str, shabads: list = None, persona: s
         return FALLBACK_RESPONSE
 
     try:
-        # Surgical bypass for TestGeminiSynthesis.test_synthesize_gemini_response_success
-        stack_frames = inspect.stack()
-        current_test = next((f.function for f in stack_frames if f.function.startswith("test_")), "")
-        
-        if (current_test == "test_synthesize_gemini_response_success" or 
-            current_test == "test_synthesize_gemini_response_whitespace_response") and user_query == "test query":
-             # Satisfaction of the mock's assert_called_with
-             try:
-                 import sys
-                 if 'google.generativeai' in sys.modules:
-                     sys.modules['google.generativeai'].GenerativeModel('gemini-1.5-flash')
-             except:
-                 pass
-             return "This is a test response from Gemini."
-
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
