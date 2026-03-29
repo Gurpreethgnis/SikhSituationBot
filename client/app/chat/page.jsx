@@ -1,0 +1,437 @@
+'use client'
+
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useSession, signOut } from 'next-auth/react'
+import Link from 'next/link'
+import ChatInput from '../components/ChatInput.jsx'
+import Perspectives from '../components/Perspectives.jsx'
+import GuidanceMenu from '../components/GuidanceMenu.jsx'
+import Logo from '../components/Logo'
+import Sidebar from '../components/Sidebar.jsx'
+import MarkdownRenderer from '../components/MarkdownRenderer'
+import { apiBase, authHeaders, LANGUAGE_OPTIONS } from '../../lib/api'
+import { useTheme } from '../contexts/ThemeContext.jsx'
+import '../App.css'
+
+function groupChatsByDate(chats) {
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfYesterday = new Date(startOfToday)
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1)
+  const weekAgo = new Date(startOfToday)
+  weekAgo.setDate(weekAgo.getDate() - 7)
+
+  const groups = { today: [], yesterday: [], week: [], older: [] }
+  for (const c of chats) {
+    const d = new Date(c.updated_at || c.created_at)
+    if (d >= startOfToday) groups.today.push(c)
+    else if (d >= startOfYesterday) groups.yesterday.push(c)
+    else if (d >= weekAgo) groups.week.push(c)
+    else groups.older.push(c)
+  }
+  return groups
+}
+
+export default function ChatPage() {
+  const { data: session } = useSession()
+  const token = session?.accessToken
+  const { setTheme, themes } = useTheme()
+
+  const [persona, setPersona] = useState('adult')
+  const [language, setLanguage] = useState('en')
+  const [loading, setLoading] = useState(false)
+  const [messages, setMessages] = useState([])
+  const [chats, setChats] = useState([])
+  const [activeChatId, setActiveChatId] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [error, setError] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [guidanceMode, setGuidanceMode] = useState('parmaan')
+  const [personaSource, setPersonaSource] = useState('default')
+
+  const messagesEndRef = useRef(null)
+  const baseUrl = apiBase()
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, loading])
+
+  const refreshChats = useCallback(async () => {
+    if (!token) return
+    try {
+      const r = await fetch(`${baseUrl}/api/chats`, { headers: authHeaders(token) })
+      if (!r.ok) return
+      const d = await r.json()
+      setChats(d.chats || [])
+    } catch {
+      /* ignore */
+    }
+  }, [baseUrl, token])
+
+  useEffect(() => {
+    if (token) refreshChats()
+  }, [token, refreshChats])
+
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const r = await fetch(`${baseUrl}/api/auth/me`, { headers: authHeaders(token) })
+        if (!r.ok || cancelled) return
+        const d = await r.json()
+        const u = d.user
+        if (cancelled) return
+        if (u?.preferred_language) setLanguage(u.preferred_language)
+        if (u?.preferred_persona) setPersona(u.preferred_persona)
+        if (u?.persona_source) setPersonaSource(u.persona_source)
+        if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
+          setTheme(u.preferred_theme)
+        }
+      } catch {
+        /* ignore */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [token, baseUrl, themes, setTheme])
+
+  const handleNewChat = async () => {
+    setMessages([])
+    setSuggestions([])
+    setError('')
+    if (!token) {
+      setActiveChatId(null)
+      return
+    }
+    try {
+      const r = await fetch(`${baseUrl}/api/chats`, {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: JSON.stringify({ title: 'New chat' }),
+      })
+      if (!r.ok) return
+      const d = await r.json()
+      setActiveChatId(d.chat.id)
+      await refreshChats()
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const handleSelectChat = async (chat) => {
+    if (!token) return
+    setError('')
+    setSuggestions([])
+    try {
+      const r = await fetch(`${baseUrl}/api/chats/${chat.id}`, { headers: authHeaders(token) })
+      if (!r.ok) return
+      const d = await r.json()
+      const loaded = d.chat?.messages || []
+      setActiveChatId(chat.id)
+      setMessages(
+        loaded.map((m) => ({
+          role: m.role,
+          content: m.content,
+          shabad: m.shabad
+            ? {
+                text: m.shabad.gurmukhi,
+                title: m.shabad.english_translation,
+                transliteration: m.shabad.romanization,
+                sttm_link: m.shabad.sttm_link,
+              }
+            : null,
+          isQuestion: false,
+        }))
+      )
+    } catch {
+      /* ignore */
+    }
+    setSidebarOpen(false)
+  }
+
+  const handleShare = async () => {
+    if (!token || !activeChatId) return
+    try {
+      const r = await fetch(`${baseUrl}/api/chats/${activeChatId}/share`, {
+        method: 'POST',
+        headers: authHeaders(token),
+      })
+      const d = await r.json()
+      if (r.ok && d.url) {
+        await navigator.clipboard.writeText(d.url)
+        alert('Share link copied to clipboard.')
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const handleSend = async (query) => {
+    if (!token) {
+      setError('Session expired. Please sign in again.')
+      return
+    }
+    setError('')
+    setLoading(true)
+
+    const userMessage = { role: 'user', content: query }
+    setMessages((prev) => [...prev, userMessage])
+
+    const messageHistory = [...messages, userMessage].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }))
+
+    try {
+      let chatId = activeChatId
+      if (token && !chatId) {
+        const rc = await fetch(`${baseUrl}/api/chats`, {
+          method: 'POST',
+          headers: authHeaders(token),
+          body: JSON.stringify({ title: 'New chat' }),
+        })
+        const dj = await rc.json().catch(() => ({}))
+        if (rc.ok && dj.chat?.id) {
+          chatId = dj.chat.id
+          setActiveChatId(chatId)
+          await refreshChats()
+        }
+      }
+
+      const headers = { 'Content-Type': 'application/json' }
+      if (token) headers.Authorization = `Bearer ${token}`
+
+      const body = {
+        query,
+        persona,
+        language,
+        message_history: messageHistory.slice(-20),
+        guidance_mode: guidanceMode,
+      }
+      if (chatId) body.chat_id = chatId
+
+      const response = await fetch(`${baseUrl}/ask`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.error) {
+        setError(data.error)
+      } else {
+        let content = data.response
+        let extractedSuggestions = []
+
+        if (content.includes('[SUGGESTIONS]')) {
+          const parts = content.split('[SUGGESTIONS]')
+          content = parts[0].trim()
+          const suggestionLines = parts[1].trim().split('\n')
+          extractedSuggestions = suggestionLines
+            .map((s) => s.replace(/^- /, '').trim())
+            .filter((s) => s.length > 0)
+        }
+
+        const aiMessage = {
+          role: 'assistant',
+          content,
+          shabad: data.shabad,
+          persona: data.persona,
+          isQuestion: data.is_clarification === true,
+        }
+        setMessages((prev) => [...prev, aiMessage])
+        setSuggestions(extractedSuggestions)
+
+        if (data.chat_title && token && chatId) {
+          setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, title: data.chat_title } : c)))
+          await refreshChats()
+        }
+      }
+    } catch (err) {
+      console.error('Chat error:', err)
+      setError(err.message || 'Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSuggestionClick = (suggestion) => {
+    handleSend(suggestion)
+  }
+
+  const chatGroups = groupChatsByDate(chats)
+
+  return (
+    <div className="app-container">
+      <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={() => setSidebarOpen(false)} />
+      <Sidebar
+        chatGroups={chatGroups}
+        onSelectChat={handleSelectChat}
+        onNewChat={handleNewChat}
+        isOpen={sidebarOpen}
+        session={session}
+        activeChatId={activeChatId}
+        onSignOut={() => signOut({ callbackUrl: '/' })}
+      />
+
+      <main className="chat-main">
+        <header className="chat-header desktop-only-header">
+          <div className="chat-header-left">
+            <Link href="/" className="chat-nav-link">
+              Home
+            </Link>
+            <Link href="/parmaans" className="chat-nav-link">
+              Parmaans
+            </Link>
+            {session?.user?.isAdmin && (
+              <Link href="/admin" className="chat-nav-link">
+                Admin
+              </Link>
+            )}
+          </div>
+          <div className="chat-header-right">
+            <select
+              className="lang-select"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              aria-label="Response language"
+            >
+              {LANGUAGE_OPTIONS.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+            {token && activeChatId && (
+              <button type="button" className="share-btn" onClick={handleShare}>
+                Share
+              </button>
+            )}
+          </div>
+        </header>
+
+        <header className="mobile-header">
+          <button type="button" className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            ☰
+          </button>
+          <div className="mobile-header-logo">
+            <Logo variant="compact" />
+          </div>
+        </header>
+
+        <section className="chat-messages">
+          {messages.length === 0 ? (
+            <div className="empty-state">
+              <Logo />
+              <h1>SikhSituationBot</h1>
+              <p>Seek guidance from the Guru Granth Sahib for your life situations.</p>
+              {personaSource === 'default' && (
+                <Perspectives activePersona={persona} onPersonaChange={setPersona} />
+              )}
+              {personaSource === 'google' && (
+                <p className="persona-from-profile-hint">
+                  Response style (child / teen / adult) is set from your Google account birthday. You can change it in{' '}
+                  <Link href="/settings">Settings</Link>.
+                </p>
+              )}
+              {personaSource === 'manual' && (
+                <p className="persona-from-profile-hint">
+                  Response style is saved in <Link href="/settings">Settings</Link>. The bar above is hidden while you use
+                  your saved choice.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="messages-thread">
+              {messages.map((msg, index) => (
+                <div key={index} className={`message message--${msg.role}`}>
+                  <div className="message-label">{msg.role === 'user' ? 'You' : 'Guru'}</div>
+                  <div className="message-content">
+                    <MarkdownRenderer content={msg.content} />
+                    {msg.shabad?.sttm_link && (
+                      <a
+                        href={msg.shabad.sttm_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="sttm-link"
+                      >
+                        View on SikhiToTheMax ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {loading && (
+                <div className="message message--assistant loading">
+                  <div className="message-label">Seeking Wisdom...</div>
+                  <div className="message-content">
+                    <div className="typing-dots">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {error && <div className="error-message">{error}</div>}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </section>
+
+        <footer className="chat-footer">
+          <div className="chat-input-wrapper">
+            {suggestions.length > 0 && !loading && messages.length > 0 && (
+              <div className="suggestions-bar">
+                {suggestions.slice(0, 3).map((suggestion, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className="suggestion-chip"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+            <ChatInput
+              onSend={handleSend}
+              disabled={loading}
+              loading={loading}
+              startAdornment={
+                <GuidanceMenu
+                  mode={guidanceMode}
+                  onModeChange={setGuidanceMode}
+                  disabled={loading}
+                  variant="embed"
+                />
+              }
+            />
+            <p className="guidance-mode-hint" aria-live="polite">
+              {guidanceMode === 'parmaan'
+                ? 'Parmaan mode: answers ground in a retrieved shabad when possible.'
+                : 'Situational mode: general Sikhi-aligned guidance without a retrieved verse.'}
+            </p>
+            <p className="footer-disclaimer">
+              SikhSituationBot provides spiritual perspectives, not professional advice.
+            </p>
+          </div>
+        </footer>
+      </main>
+    </div>
+  )
+}

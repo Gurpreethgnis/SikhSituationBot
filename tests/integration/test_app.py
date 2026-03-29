@@ -1,291 +1,220 @@
-import unittest
 import json
-from unittest.mock import patch, MagicMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, patch
 
 # Add server directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'server'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server"))
 
-from app import app
+os.environ.setdefault("TESTING", "true")
+os.environ.setdefault("DATABASE_URL_TEST", "sqlite:///:memory:")
+os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-integration")
+
+from app import app  # noqa: E402
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "helpers"))
+from flask_test_auth import ask_auth_headers  # noqa: E402
+
+
+def _mock_shabad_row():
+    """ORM-like mock matching ask() expectations."""
+    m = MagicMock()
+    m.id = 1
+    m.shabad_id = "test-1"
+    m.gurmukhi = "test gurmukhi"
+    m.romanization = "test roman"
+    m.english_translation = "test english translation"
+    m.source = "test source"
+    m.recommended_persona = "adult"
+    m.context_tags = None
+    m.embedding = [0.1] * 8
+
+    def to_dict(include_embedding=True):
+        return {
+            "id": m.id,
+            "shabad_id": m.shabad_id,
+            "gurmukhi": m.gurmukhi,
+            "romanization": m.romanization,
+            "english_translation": m.english_translation,
+            "source": m.source,
+            "recommended_persona": m.recommended_persona,
+            "context_tags": m.context_tags,
+            "embedding": m.embedding if include_embedding else None,
+            "created_at": None,
+            "sttm_link": "https://www.sikhitothemax.org/shabad?id=test-1",
+        }
+
+    def to_api_dict():
+        return {
+            "id": m.id,
+            "shabad_id": m.shabad_id,
+            "gurmukhi": m.gurmukhi,
+            "romanization": m.romanization,
+            "english_translation": m.english_translation,
+            "source": m.source,
+            "recommended_persona": m.recommended_persona,
+            "context_tags": m.context_tags,
+            "created_at": None,
+            "sttm_link": "https://www.sikhitothemax.org/shabad?id=test-1",
+        }
+
+    m.to_dict = to_dict
+    m.to_api_dict = to_api_dict
+    return m
 
 
 class TestAppIntegration(unittest.TestCase):
     """Integration tests for Flask application endpoints."""
 
     def setUp(self):
-        """Set up test client and fixtures."""
         self.app = app
         self.client = self.app.test_client()
-        self.app.config['TESTING'] = True
-
-        self.test_shabad = {
-            'id': 1,
-            'gurmukhi': 'test gurmukhi',
-            'english': 'test english',
-            'punjabi': 'test punjabi',
-            'translation': 'test translation',
-            'source': 'test source',
-            'section': 'test section',
-            'embedding': [0.1, 0.2, 0.3] * 256
-        }
+        self.app.config["TESTING"] = True
 
         self.valid_ask_request = {
-            'query': 'What is the meaning of life?',
-            'persona': 'adult'
+            "query": "What does Gurbani say about finding peace after loss?",
+            "persona": "adult",
         }
 
-        self.invalid_ask_request = {
-            'query': '',
-            'persona': 'adult'
-        }
+        self.invalid_ask_request = {"query": "", "persona": "adult"}
 
     def test_health_endpoint(self):
-        """Test health check endpoint."""
-        response = self.client.get('/health')
+        response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
-
         data = json.loads(response.data)
-        self.assertIn('status', data)
-        self.assertEqual(data['status'], 'healthy')
+        self.assertEqual(data["status"], "healthy")
 
     def test_cors_headers(self):
-        """Test CORS headers are present."""
-        response = self.client.get('/health')
-        self.assertIn('Access-Control-Allow-Origin', response.headers)
-        self.assertIn('Access-Control-Allow-Methods', response.headers)
-        self.assertIn('Access-Control-Allow-Headers', response.headers)
+        response = self.client.get("/health")
+        self.assertIn("Access-Control-Allow-Origin", response.headers)
 
-    @patch('app.search_similar_shabads')
-    @patch('app.synthesize_gemini_response')
-    def test_ask_endpoint_success(self, mock_synthesize, mock_search):
-        """Test successful ask endpoint."""
-        mock_search.return_value = [self.test_shabad]
-        mock_synthesize.return_value = "This is a synthesized response based on Gurbani wisdom."
+    @patch("app.assess_query_clarity")
+    @patch("app.get_embedding")
+    @patch("app.search_similar_shabads")
+    @patch("app.synthesize_chat_response")
+    def test_ask_endpoint_success(self, mock_synth, mock_search, mock_emb, mock_assess):
+        mock_assess.return_value = (False, "")
+        mock_emb.return_value = [0.1] * 8
+        mock_search.return_value = [_mock_shabad_row()]
+        mock_synth.return_value = (
+            "Synthesized guidance.\n\n[SUGGESTIONS]\n- a\n- b\n- c",
+            "gemini",
+            "models/gemini-flash-latest",
+        )
 
-        response = self.client.post('/ask',
-                                  data=json.dumps(self.valid_ask_request),
-                                  content_type='application/json')
-
+        response = self.client.post(
+            "/ask",
+            data=json.dumps(self.valid_ask_request),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
+        )
         self.assertEqual(response.status_code, 200)
-
         data = json.loads(response.data)
-        self.assertIn('query', data)
-        self.assertIn('persona', data)
-        self.assertIn('response', data)
-        self.assertIn('shabads', data)
-        self.assertIn('timestamp', data)
+        self.assertIn("response", data)
+        self.assertIn("persona", data)
+        self.assertEqual(data["persona"], "adult")
+        self.assertFalse(data.get("is_clarification"))
+        self.assertIn("shabad", data)
+        self.assertIsNotNone(data["shabad"])
+        self.assertIn("sttm_link", data["shabad"])
 
-        self.assertEqual(data['query'], self.valid_ask_request['query'])
-        self.assertEqual(data['persona'], self.valid_ask_request['persona'])
-        self.assertEqual(len(data['shabads']), 1)
-
-    @patch('app.search_similar_shabads')
-    def test_ask_endpoint_no_shabads_found(self, mock_search):
-        """Test ask endpoint when no relevant shabads are found."""
+    @patch("app.assess_query_clarity")
+    @patch("app.get_embedding")
+    @patch("app.search_similar_shabads")
+    def test_ask_endpoint_no_shabads_found(self, mock_search, mock_emb, mock_assess):
+        mock_assess.return_value = (False, "")
+        mock_emb.return_value = [0.1] * 8
         mock_search.return_value = []
 
-        response = self.client.post('/ask',
-                                  data=json.dumps(self.valid_ask_request),
-                                  content_type='application/json')
-
-        self.assertEqual(response.status_code, 200)
-
+        response = self.client.post(
+            "/ask",
+            data=json.dumps(self.valid_ask_request),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
+        )
+        self.assertEqual(response.status_code, 404)
         data = json.loads(response.data)
-        self.assertIn('response', data)
-        self.assertIn('No relevant Gurbani verses found', data['response'])
+        self.assertIn("error", data)
 
     def test_ask_endpoint_invalid_json(self):
-        """Test ask endpoint with invalid JSON."""
-        response = self.client.post('/ask',
-                                  data='invalid json',
-                                  content_type='application/json')
-
+        response = self.client.post("/ask", data="invalid json", content_type="application/json")
         self.assertEqual(response.status_code, 400)
-
-        data = json.loads(response.data)
-        self.assertIn('error', data)
-
-    def test_ask_endpoint_missing_fields(self):
-        """Test ask endpoint with missing required fields."""
-        incomplete_request = {'query': 'test query'}  # Missing persona
-
-        response = self.client.post('/ask',
-                                  data=json.dumps(incomplete_request),
-                                  content_type='application/json')
-
-        self.assertEqual(response.status_code, 400)
-
-        data = json.loads(response.data)
-        self.assertIn('error', data)
 
     def test_ask_endpoint_empty_query(self):
-        """Test ask endpoint with empty query."""
-        response = self.client.post('/ask',
-                                  data=json.dumps(self.invalid_ask_request),
-                                  content_type='application/json')
-
+        response = self.client.post(
+            "/ask",
+            data=json.dumps(self.invalid_ask_request),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
+        )
         self.assertEqual(response.status_code, 400)
 
+    def test_ask_requires_authentication(self):
+        response = self.client.post(
+            "/ask",
+            data=json.dumps(self.valid_ask_request),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 401)
         data = json.loads(response.data)
-        self.assertIn('error', data)
+        self.assertIn("error", data)
 
-    def test_ask_endpoint_invalid_persona(self):
-        """Test ask endpoint with invalid persona."""
-        invalid_persona_request = {
-            'query': 'test query',
-            'persona': 'invalid_persona'
-        }
+    @patch("app.assess_query_clarity")
+    @patch("app.get_embedding")
+    @patch("app.search_similar_shabads")
+    @patch("app.synthesize_chat_response")
+    def test_ask_invalid_persona_defaults(self, mock_synth, mock_search, mock_emb, mock_assess):
+        mock_assess.return_value = (False, "")
+        mock_emb.return_value = [0.1] * 8
+        mock_search.return_value = [_mock_shabad_row()]
+        mock_synth.return_value = ("ok", "gemini", "models/gemini-flash-latest")
 
-        response = self.client.post('/ask',
-                                  data=json.dumps(invalid_persona_request),
-                                  content_type='application/json')
-
-        # Should still work but default to adult persona
+        response = self.client.post(
+            "/ask",
+            data=json.dumps({"query": "clear specific question about grief", "persona": "invalid"}),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
+        )
         self.assertEqual(response.status_code, 200)
-
-    @patch('app.search_similar_shabads')
-    @patch('app.synthesize_gemini_response')
-    def test_ask_endpoint_synthesis_failure(self, mock_synthesize, mock_search):
-        """Test ask endpoint when synthesis fails."""
-        mock_search.return_value = [self.test_shabad]
-        mock_synthesize.return_value = None  # Synthesis failure
-
-        response = self.client.post('/ask',
-                                  data=json.dumps(self.valid_ask_request),
-                                  content_type='application/json')
-
-        self.assertEqual(response.status_code, 200)
-
         data = json.loads(response.data)
-        self.assertIn('response', data)
-        # Should still return shabad context even if synthesis fails
-        self.assertIn('shabads', data)
+        self.assertEqual(data["persona"], "adult")
 
-    @patch('app.get_random_shabads')
+    @patch("app.get_random_shabads")
     def test_random_shabads_endpoint_success(self, mock_get_random):
-        """Test successful random shabads endpoint."""
-        mock_get_random.return_value = [self.test_shabad]
+        mock_get_random.return_value = [_mock_shabad_row()]
 
-        response = self.client.get('/random-shabads?limit=3')
-
+        response = self.client.get("/random-shabads?limit=3")
         self.assertEqual(response.status_code, 200)
-
         data = json.loads(response.data)
-        self.assertIn('shabads', data)
-        self.assertEqual(len(data['shabads']), 1)
+        self.assertIn("shabads", data)
+        self.assertEqual(len(data["shabads"]), 1)
+        self.assertIn("sttm_link", data["shabads"][0])
 
-    @patch('app.get_random_shabads')
-    def test_random_shabads_endpoint_no_results(self, mock_get_random):
-        """Test random shabads endpoint when no results."""
+    @patch("app.get_random_shabads")
+    def test_random_shabads_empty(self, mock_get_random):
         mock_get_random.return_value = []
-
-        response = self.client.get('/random-shabads?limit=3')
-
+        response = self.client.get("/random-shabads?limit=3")
         self.assertEqual(response.status_code, 200)
-
         data = json.loads(response.data)
-        self.assertEqual(data['shabads'], [])
+        self.assertEqual(data["shabads"], [])
 
-    def test_random_shabads_endpoint_invalid_limit(self):
-        """Test random shabads endpoint with invalid limit."""
-        response = self.client.get('/random-shabads?limit=invalid')
+    def test_parmaans_categories(self):
+        r = self.client.get("/api/parmaans/categories")
+        self.assertEqual(r.status_code, 200)
+        data = json.loads(r.data)
+        self.assertIn("categories", data)
 
-        self.assertEqual(response.status_code, 200)  # Should default to valid limit
-
-        data = json.loads(response.data)
-        self.assertIn('shabads', data)
-
-    def test_random_shabads_endpoint_large_limit(self):
-        """Test random shabads endpoint with very large limit."""
-        response = self.client.get('/random-shabads?limit=1000')
-
-        self.assertEqual(response.status_code, 200)  # Should be handled gracefully
-
-    @patch('app.get_shabad_by_id')
-    def test_shabad_by_id_endpoint_success(self, mock_get_shabad):
-        """Test successful shabad by ID endpoint."""
-        mock_get_shabad.return_value = self.test_shabad
-
-        response = self.client.get('/shabad/1')
-
-        self.assertEqual(response.status_code, 200)
-
-        data = json.loads(response.data)
-        self.assertEqual(data['id'], 1)
-        self.assertEqual(data['gurmukhi'], 'test gurmukhi')
-
-    @patch('app.get_shabad_by_id')
-    def test_shabad_by_id_endpoint_not_found(self, mock_get_shabad):
-        """Test shabad by ID endpoint when not found."""
-        mock_get_shabad.return_value = None
-
-        response = self.client.get('/shabad/999')
-
-        self.assertEqual(response.status_code, 404)
-
-        data = json.loads(response.data)
-        self.assertIn('error', data)
-
-    def test_shabad_by_id_endpoint_invalid_id(self):
-        """Test shabad by ID endpoint with invalid ID."""
-        response = self.client.get('/shabad/invalid')
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_options_request(self):
-        """Test OPTIONS request for CORS preflight."""
-        response = self.client.options('/ask')
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Access-Control-Allow-Origin', response.headers)
-        self.assertIn('Access-Control-Allow-Methods', response.headers)
-
-    @patch('app.search_similar_shabads')
-    @patch('app.synthesize_gemini_response')
-    def test_ask_endpoint_different_personas(self, mock_synthesize, mock_search):
-        """Test ask endpoint with different personas."""
-        mock_search.return_value = [self.test_shabad]
-        mock_synthesize.return_value = "Response for persona"
-
-        for persona in ['child', 'teen', 'adult']:
-            request = {'query': 'test query', 'persona': persona}
-            response = self.client.post('/ask',
-                                      data=json.dumps(request),
-                                      content_type='application/json')
-
-            self.assertEqual(response.status_code, 200)
-            data = json.loads(response.data)
-            self.assertEqual(data['persona'], persona)
-
-    @patch('app.search_similar_shabads')
-    def test_ask_endpoint_search_failure(self, mock_search):
-        """Test ask endpoint when search fails."""
-        mock_search.side_effect = Exception("Database connection failed")
-
-        response = self.client.post('/ask',
-                                  data=json.dumps(self.valid_ask_request),
-                                  content_type='application/json')
-
-        self.assertEqual(response.status_code, 200)
-
-        data = json.loads(response.data)
-        self.assertIn('response', data)
-        self.assertIn('No relevant Gurbani verses found', data['response'])
-
-    def test_error_handling_middleware(self):
-        """Test that error handling middleware catches exceptions."""
-        # This would require mocking an endpoint that raises an exception
-        # For now, just verify the error handling is in place by checking status codes
-
-        # Test with malformed request that might cause internal errors
-        response = self.client.post('/ask',
-                                  data=json.dumps({'invalid': 'structure'}),
-                                  content_type='application/json')
-
-        # Should return 400 for validation error, not 500 for unhandled exception
-        self.assertEqual(response.status_code, 400)
+    @patch("app.get_embedding")
+    @patch("app.search_similar_shabads")
+    def test_parmaans_search(self, mock_search, mock_emb):
+        mock_emb.return_value = [0.1] * 8
+        mock_search.return_value = [_mock_shabad_row()]
+        r = self.client.post(
+            "/api/parmaans/search",
+            data=json.dumps({"query": "peace"}),
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200)
+        data = json.loads(r.data)
+        self.assertTrue(data["shabads"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

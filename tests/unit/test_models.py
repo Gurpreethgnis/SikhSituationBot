@@ -53,7 +53,7 @@ class TestModels(unittest.TestCase):
 
         # Check that all expected keys are present
         expected_keys = ['id', 'shabad_id', 'gurmukhi', 'romanization', 'english_translation', 
-                        'source', 'recommended_persona', 'context_tags', 'embedding', 'created_at']
+                        'source', 'recommended_persona', 'context_tags', 'embedding', 'created_at', 'sttm_link']
         
         for key in expected_keys:
             self.assertIn(key, result)
