@@ -5,19 +5,27 @@ import { fetchGoogleBirthYear } from './googleBirthYear'
 const flaskBase = () =>
   process.env.FLASK_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
-export const authOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      authorization: {
-        params: {
-          scope:
-            'openid email profile https://www.googleapis.com/auth/user.birthday.read',
-        },
-      },
-    }),
-    CredentialsProvider({
+/** Omit Google provider when id/secret missing so email/password auth still works in dev/partial deploys. */
+const googleId = (process.env.GOOGLE_CLIENT_ID || '').trim()
+const googleSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim()
+const googleProviderConfigured = Boolean(googleId && googleSecret)
+
+const providers = [
+  ...(googleProviderConfigured
+    ? [
+        GoogleProvider({
+          clientId: googleId,
+          clientSecret: googleSecret,
+          authorization: {
+            params: {
+              scope:
+                'openid email profile https://www.googleapis.com/auth/user.birthday.read',
+            },
+          },
+        }),
+      ]
+    : []),
+  CredentialsProvider({
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -45,7 +53,10 @@ export const authOptions = {
         }
       },
     }),
-  ],
+]
+
+export const authOptions = {
+  providers,
   callbacks: {
     async jwt({ token, user, account }) {
       if (account?.provider === 'google' && user?.email) {
