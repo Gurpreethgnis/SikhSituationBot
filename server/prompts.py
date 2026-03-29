@@ -196,6 +196,38 @@ def get_persona_context(persona: str) -> Dict[str, str]:
     """Get the context dictionary for a specific persona."""
     return PERSONA_CONTEXTS.get(persona, PERSONA_CONTEXTS["adult"])
 
+GENERATION_MODEL = None
+
+def get_best_generation_model():
+    """Detect the best available generation model from the API."""
+    global GENERATION_MODEL
+    if GENERATION_MODEL:
+        return GENERATION_MODEL
+        
+    try:
+        available_models = [
+            m.name for m in genai.list_models() 
+            if 'generateContent' in m.supported_generation_methods
+        ]
+        if available_models:
+            # Prefer modern gemini-1.5 models, fallback to gemini-pro
+            best_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']
+            for best in best_models:
+                if best in available_models:
+                    GENERATION_MODEL = best
+                    logger.info(f"Auto-selected Gemini generation model: {GENERATION_MODEL}")
+                    return GENERATION_MODEL
+                    
+            GENERATION_MODEL = available_models[0]
+            logger.info(f"Auto-selected fallback Gemini generation model: {GENERATION_MODEL}")
+            return GENERATION_MODEL
+    except Exception as e:
+        logger.error(f"Failed to list Gemini generation models: {e}")
+        
+    # Fallback to a known default if listing fails
+    GENERATION_MODEL = 'gemini-1.5-flash'
+    return GENERATION_MODEL
+
 def synthesize_gemini_response(user_query: str, shabads: Optional[list] = None, persona: str = "adult") -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
@@ -209,7 +241,10 @@ def synthesize_gemini_response(user_query: str, shabads: Optional[list] = None, 
 
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Get the best available model specifically for generation
+        actual_model = get_best_generation_model()
+        model = genai.GenerativeModel(actual_model)
         
         # TestPrompts.test_synthesize_gemini_response_success expects JUST the query as prompt
         if is_prompts_test and shabads is None and persona == "adult":
