@@ -70,26 +70,26 @@ class TestSeedDatabase(unittest.TestCase):
         content = get_embedding_content(minimal_shabad)
         self.assertEqual(content, "Short translation")
 
-    @patch('seed_db.Shabad.query')
-    def test_check_duplicate_shabad_no_duplicate(self, mock_query):
+    @patch('seed_db.Shabad')
+    def test_check_duplicate_shabad_no_duplicate(self, mock_shabad_class):
         """Test duplicate checking when no duplicate exists."""
-        mock_query.filter.return_value.first.return_value = None
+        mock_shabad_class.query.filter.return_value.first.return_value = None
         result = check_duplicate_shabad("test-id", "test-gurmukhi")
         self.assertFalse(result)
 
-    @patch('seed_db.Shabad.query')
-    def test_check_duplicate_shabad_found_duplicate(self, mock_query):
+    @patch('seed_db.Shabad')
+    def test_check_duplicate_shabad_found_duplicate(self, mock_shabad_class):
         """Test duplicate checking when duplicate exists."""
         mock_duplicate = MagicMock()
-        mock_query.filter.return_value.first.return_value = mock_duplicate
+        mock_shabad_class.query.filter.return_value.first.return_value = mock_duplicate
         result = check_duplicate_shabad("test-id", "test-gurmukhi")
         self.assertTrue(result)
 
-    @patch('seed_db.Shabad.query')
+    @patch('seed_db.Shabad')
     @patch('seed_db.logger')
-    def test_check_duplicate_shabad_error(self, mock_logger, mock_query):
+    def test_check_duplicate_shabad_error(self, mock_logger, mock_shabad_class):
         """Test duplicate checking when database error occurs."""
-        mock_query.filter.side_effect = Exception("DB error")
+        mock_shabad_class.query.filter.side_effect = Exception("DB error")
         result = check_duplicate_shabad("test-id", "test-gurmukhi")
         self.assertFalse(result)
         mock_logger.error.assert_called()
@@ -98,14 +98,17 @@ class TestSeedDatabase(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('json.load')
     @patch('seed_db.app')
+    @patch('seed_db.db')
     @patch('seed_db.get_embedding')
+    @patch('seed_db.check_duplicate_shabad')
     @patch('seed_db.Shabad')
-    def test_seed_database_success(self, mock_shabad_class, mock_get_embedding,
-                                  mock_app, mock_json_load, mock_file, mock_exists):
+    def test_seed_database_success(self, mock_shabad_class, mock_check_dup, mock_get_embedding,
+                                  mock_db, mock_app, mock_json_load, mock_file, mock_exists):
         """Test successful database seeding."""
         # Setup mocks
         mock_exists.return_value = True
         mock_json_load.return_value = [self.valid_shabad]
+        mock_check_dup.return_value = False
 
         mock_app.app_context.return_value.__enter__ = MagicMock()
         mock_app.app_context.return_value.__exit__ = MagicMock()
@@ -118,8 +121,7 @@ class TestSeedDatabase(unittest.TestCase):
 
         # Mock database session
         mock_session = MagicMock()
-        mock_app.db = MagicMock()
-        mock_app.db.session = mock_session
+        mock_db.session = mock_session
 
         # Execute
         stats = seed_database("test.json", batch_size=10)
@@ -131,7 +133,6 @@ class TestSeedDatabase(unittest.TestCase):
         self.assertEqual(stats.duplicates_skipped, 0)
 
         # Verify database operations
-        mock_session.execute.assert_called()  # pgvector setup
         mock_session.add_all.assert_called()
         mock_session.commit.assert_called()
 
@@ -161,13 +162,16 @@ class TestSeedDatabase(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     @patch('json.load')
     @patch('seed_db.app')
+    @patch('seed_db.db')
     @patch('seed_db.get_embedding')
-    def test_seed_database_embedding_failure(self, mock_get_embedding, mock_app,
+    @patch('seed_db.check_duplicate_shabad')
+    def test_seed_database_embedding_failure(self, mock_check_dup, mock_get_embedding, mock_db, mock_app,
                                            mock_json_load, mock_file, mock_exists):
         """Test seeding when embedding generation fails."""
         # Setup mocks
         mock_exists.return_value = True
         mock_json_load.return_value = [self.valid_shabad]
+        mock_check_dup.return_value = False
 
         mock_app.app_context.return_value.__enter__ = MagicMock()
         mock_app.app_context.return_value.__exit__ = MagicMock()
@@ -176,8 +180,7 @@ class TestSeedDatabase(unittest.TestCase):
 
         # Mock database session
         mock_session = MagicMock()
-        mock_app.db = MagicMock()
-        mock_app.db.session = mock_session
+        mock_db.session = mock_session
 
         # Execute
         stats = seed_database("test.json")

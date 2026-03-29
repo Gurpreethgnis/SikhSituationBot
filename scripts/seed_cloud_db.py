@@ -19,7 +19,7 @@ def seed_database(input_path="data/shabads_with_embeddings.json"):
         print("Error: DATABASE_URL not found in environment variables.")
         return
 
-    app.config['SQLALCHEMY_DATABASE_HOST'] = db_uri
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
