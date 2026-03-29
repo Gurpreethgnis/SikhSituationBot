@@ -163,7 +163,6 @@ def seed_database(json_file_path: str, batch_size: int = 10, skip_duplicates: bo
                         gurmukhi=gurmukhi,
                         english_translation=item.get('english_translation') or item.get('english'),
                         romanization=item.get('romanization') or item.get('roman'),
-                        page=item.get('page'),
                         embedding=embedding,
                         context_tags=item.get('context_tags', [])
                     )
