@@ -3,9 +3,11 @@
 import React from 'react'
 import Link from 'next/link'
 import ThemeSwitcher from './ThemeSwitcher.jsx'
+import { useTranslation } from '../contexts/TranslationContext.jsx'
 import './Sidebar.css'
 
 function ChatGroup({ label, items, activeChatId, onSelectChat }) {
+  const { t } = useTranslation()
   if (!items?.length) return null
   return (
     <div className="sidebar__group">
@@ -19,7 +21,7 @@ function ChatGroup({ label, items, activeChatId, onSelectChat }) {
             onClick={() => onSelectChat(c)}
           >
             <span className="chat-icon">💬</span>
-            <span className="history-text">{c.title || 'Chat'}</span>
+            <span className="history-text">{c.title || t('chat')}</span>
           </button>
         ))}
       </div>
@@ -29,59 +31,49 @@ function ChatGroup({ label, items, activeChatId, onSelectChat }) {
 
 function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeChatId, onSignOut }) {
   const user = session?.user
+  const { t } = useTranslation()
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar__header">
         <button type="button" className="new-chat-btn" onClick={onNewChat}>
-          <span className="plus-icon">+</span> New Chat
+          <span className="plus-icon">+</span> {t('newChat')}
         </button>
       </div>
 
       <div className="sidebar__nav">
-        <Link href="/parmaans" className="sidebar-link">
-          Parmaans
-        </Link>
-        <Link href="/" className="sidebar-link">
-          Home
-        </Link>
-        {user && (
-          <Link href="/settings" className="sidebar-link">
-            Settings
-          </Link>
-        )}
         {user?.isAdmin && (
           <Link href="/admin" className="sidebar-link">
-            Admin
+            {t('admin')}
           </Link>
         )}
       </div>
 
       <div className="sidebar__history">
-        <h3 className="history-label">Conversations</h3>
-        {!session && <p className="no-history">Sign in to save chats by conversation.</p>}
+        <h3 className="history-label">{t('conversations')}</h3>
+        {!session && <p className="no-history">{t('signInToSave')}</p>}
         {session && (
           <>
             <ChatGroup
-              label="Today"
+              label={t('today')}
               items={chatGroups?.today}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
             />
             <ChatGroup
-              label="Yesterday"
+              label={t('yesterday')}
               items={chatGroups?.yesterday}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
             />
             <ChatGroup
-              label="Last 7 days"
+              label={t('last7Days')}
               items={chatGroups?.week}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
             />
             <ChatGroup
-              label="Older"
+              label={t('older')}
               items={chatGroups?.older}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
@@ -89,7 +81,7 @@ function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeC
             {!chatGroups?.today?.length &&
               !chatGroups?.yesterday?.length &&
               !chatGroups?.week?.length &&
-              !chatGroups?.older?.length && <p className="no-history">No saved chats yet.</p>}
+              !chatGroups?.older?.length && <p className="no-history">{t('noSavedChats')}</p>}
           </>
         )}
       </div>
@@ -105,14 +97,14 @@ function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeC
             <div className="user-meta">
               <span className="user-name">{user.name || user.email}</span>
               <button type="button" className="sign-out-btn" onClick={onSignOut}>
-                Sign out
+                {t('signOut')}
               </button>
             </div>
           </div>
         ) : (
           <div className="user-profile">
             <Link href="/login" className="sidebar-login-link">
-              Sign in
+              {t('signIn')}
             </Link>
           </div>
         )}

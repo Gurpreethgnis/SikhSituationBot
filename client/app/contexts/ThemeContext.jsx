@@ -3,19 +3,20 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
 export const THEMES = [
-  { id: 'saffron', name: 'Saffron', description: 'Warm default' },
-  { id: 'royal-blue', name: 'Royal Blue', description: 'Traditional blues' },
+  { id: 'basanti', name: 'Basanti', description: 'Traditional yellow' },
+  { id: 'neela', name: 'Neela', description: 'Traditional blue' },
   { id: 'light', name: 'Light', description: 'High contrast' },
   { id: 'khalsa-gold', name: 'Khalsa Gold', description: 'Warm gold' },
   { id: 'nihangs-navy', name: 'Nihangs Navy', description: 'Deep navy' },
 ]
 
+const DEFAULT_THEME = 'basanti'
 const ThemeContext = createContext(null)
 
 const STORAGE_KEY = 'sikh_bot_theme'
 
 export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState('saffron')
+  const [theme, setThemeState] = useState(DEFAULT_THEME)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -23,9 +24,12 @@ export function ThemeProvider({ children }) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved && THEMES.some((t) => t.id === saved)) {
         setThemeState(saved)
+        document.documentElement.setAttribute('data-theme', saved)
+      } else {
+        document.documentElement.setAttribute('data-theme', DEFAULT_THEME)
       }
     } catch {
-      /* ignore */
+      document.documentElement.setAttribute('data-theme', DEFAULT_THEME)
     }
     setReady(true)
   }, [])
@@ -41,11 +45,14 @@ export function ThemeProvider({ children }) {
   }, [theme, ready])
 
   const setTheme = (id) => {
-    if (THEMES.some((t) => t.id === id)) setThemeState(id)
+    if (THEMES.some((t) => t.id === id)) {
+      setThemeState(id)
+      document.documentElement.setAttribute('data-theme', id)
+    }
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES }}>
+    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES, ready }}>
       {children}
     </ThemeContext.Provider>
   )

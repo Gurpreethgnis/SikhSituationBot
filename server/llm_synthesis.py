@@ -58,7 +58,7 @@ def ensure_llm_settings_row() -> None:
     mid = DEFAULT_MODEL
     if mid not in LLM_PROVIDER_MODELS.get(prov, []):
         mid = LLM_PROVIDER_MODELS[prov][0]
-    row = LLMSettings(id=1, provider=prov, model_id=mid)
+    row = LLMSettings(id=1, provider=prov, model_id=mid, guidance_shabad_count=3, parmaan_shabad_count=5)
     db.session.add(row)
     try:
         db.session.commit()
@@ -164,7 +164,7 @@ def synthesize_chat_response(
     persona: str = "adult",
     language: str = "en",
     message_history: Any = None,
-    guidance_mode: str = "parmaan",
+    guidance_mode: str = "guidance",
 ) -> Tuple[str, str, str]:
     """
     Build the RAG prompt and call the configured provider.
