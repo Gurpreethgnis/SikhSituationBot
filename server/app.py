@@ -1,4 +1,5 @@
 import os
+import json
 import google.generativeai as genai
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -6,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import logging
 import sys
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 from models import db, Shabad
 from vector_utils import get_embedding
@@ -24,6 +25,81 @@ logger = logging.getLogger(__name__)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
+
+# LLM model for query assessment (lightweight, fast)
+query_assessment_model = None
+
+def get_assessment_model():
+    """Get or create the query assessment model."""
+    global query_assessment_model
+    if query_assessment_model is None and GEMINI_API_KEY:
+        query_assessment_model = genai.GenerativeModel('models/gemini-2.0-flash-lite')
+    return query_assessment_model
+
+def assess_query_clarity(query: str, persona: str = "adult") -> Tuple[bool, str]:
+    """
+    Use LLM to assess if a query has enough context to provide meaningful Gurbani guidance.
+    
+    Returns:
+        Tuple of (needs_clarification: bool, reason: str)
+    """
+    model = get_assessment_model()
+    if not model:
+        return (False, "")
+    
+    assessment_prompt = f"""You are assessing whether a user's query has enough context to provide meaningful spiritual guidance from Sikh scripture (Guru Granth Sahib).
+
+USER'S QUERY: "{query}"
+USER TYPE: {persona}
+
+Analyze if this query:
+1. Expresses a clear situation, problem, or question that can be addressed with scriptural wisdom
+2. Has enough context to find relevant Gurbani verses
+3. Or is too vague/ambiguous and would benefit from clarification
+
+Examples that NEED clarification:
+- "I am scared" (scared of what? situation unclear)
+- "Help me" (with what?)
+- "I'm feeling down" (why? what happened?)
+- "What should I do?" (about what?)
+- "I can't anymore" (can't do what?)
+- "Life is hard" (in what way specifically?)
+
+Examples that are CLEAR enough:
+- "I am scared about my upcoming job interview" (clear situation)
+- "How do I deal with anger towards my parents?" (clear emotion + context)
+- "I lost my father recently and feel lost" (clear life event)
+- "What does Gurbani say about forgiveness?" (clear topic)
+- "I'm struggling with my faith after a tragedy" (clear spiritual challenge)
+
+Respond with ONLY valid JSON (no markdown, no code blocks):
+{{"needs_clarification": true/false, "reason": "brief explanation"}}"""
+
+    try:
+        response = model.generate_content(
+            assessment_prompt,
+            generation_config=genai.GenerationConfig(
+                temperature=0.1,
+                max_output_tokens=150
+            )
+        )
+        
+        result_text = response.text.strip()
+        # Clean up any markdown formatting that might slip through
+        if result_text.startswith('```'):
+            result_text = result_text.split('\n', 1)[1] if '\n' in result_text else result_text
+            result_text = result_text.rsplit('```', 1)[0] if '```' in result_text else result_text
+        result_text = result_text.strip()
+        
+        result = json.loads(result_text)
+        return (result.get("needs_clarification", False), result.get("reason", ""))
+        
+    except json.JSONDecodeError as e:
+        logger.warning(f"Failed to parse query assessment JSON: {e}, response: {response.text if response else 'None'}")
+        return (False, "")
+    except Exception as e:
+        logger.warning(f"Query assessment failed, proceeding with full response: {e}")
+        return (False, "")
 
 app = Flask(__name__)
 # Enable CORS for the frontend to communicate with the backend
@@ -103,6 +179,20 @@ def ask():
 
     logger.info(f"Processing query: '{query_text}' for persona: {persona}")
 
+    # Use LLM to assess if query needs clarification
+    needs_clarification, clarification_reason = assess_query_clarity(query_text, persona)
+    
+    if needs_clarification:
+        logger.info(f"Query needs clarification: '{query_text}' - Reason: {clarification_reason}")
+        ai_response = synthesize_gemini_response(query_text, None, persona)
+        
+        return jsonify({
+            "response": ai_response,
+            "shabad": None,
+            "persona": persona,
+            "is_clarification": True
+        }), 200
+
     # 1. Generate Query Embedding
     query_vector = get_embedding(query_text)
     if not query_vector:
@@ -137,7 +227,8 @@ def ask():
                 "title": context_dict["english_translation"],
                 "transliteration": context_dict["romanization"]
             },
-            "persona": persona
+            "persona": persona,
+            "is_clarification": False
         }), 200
 
     except Exception as e:
@@ -153,17 +244,6 @@ def random_shabads():
 
 if __name__ == '__main__':
     with app.app_context():
-        try:
-            db.create_all()
-        except Exception as e:
-            print(f"Warning: Could not create tables: {e}")
-            
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
-
-if __name__ == '__main__':
-    with app.app_context():
-        # Ensure tables exist (database must already have pgvector extension)
         try:
             db.create_all()
         except Exception as e:

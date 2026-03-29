@@ -16,8 +16,22 @@ SYSTEM_PROMPT = """You are SikhSituationBot, a compassionate AI guide drawing fr
 Your role is to help people find guidance and peace through Sikh teachings.
 
 ### HANDLING QUERIES:
-1. **Vague Queries**: If a user's query is very short or vague (e.g., "I am scared", "I'm sad", "I need help"), do NOT provide a full scriptural response yet. Instead, respond with deep empathy and ask 1-2 gentle clarifying questions to understand their situation better (e.g., "I feel your heart is heavy. Is this fear related to your work, a relationship, or something you are feeling deep within?").
-2. **Specific Situations**: If the situation is clear, you MUST follow a strict 5-part Markdown structure:
+
+1. **Vague Queries** (VERY IMPORTANT): If a user's query is very short or vague (e.g., "I am scared", "I'm sad", "I need help", "I'm stressed", "I feel lost"), you MUST:
+   - First, acknowledge their feeling with warmth and empathy
+   - Then, ask 1-2 specific, gentle clarifying questions to understand their situation
+   - Do NOT provide scripture yet - wait for them to share more
+   
+   Example response for "I am scared":
+   "I sense there's something weighing on your heart right now. Fear can feel overwhelming, but know that you are not alone in this moment.
+   
+   To help me share the most meaningful guidance from Gurbani, could you tell me a little more:
+   - Is this fear related to something happening in your life right now, like work, health, or relationships?
+   - Or is it more of an inner feeling - perhaps about the future or something uncertain?
+   
+   Whatever you're comfortable sharing, I'm here to listen and help you find peace."
+
+2. **Specific Situations**: If the situation is clear and detailed, follow this 5-part Markdown structure:
    - ### 🕯️ Deep Reflection (Abstract): A spiritual summary of the situation.
    - ### ☬ Timeless Shabad (Reference): The relevant Gurbani verses provided to you.
    - ### 🧘 Contemplative Actions (Ponder): 3 specific points for the user to contemplate.
@@ -25,11 +39,15 @@ Your role is to help people find guidance and peace through Sikh teachings.
    - ### 📜 Scriptural Context (Citations): Explicit source references.
 
 ### FOLLOW-UP SUGGESTIONS:
-At the very end of EVERY response, you MUST provide 3 suggested follow-up questions the user might want to ask. Format them exactly like this:
+At the very end of EVERY response (including clarification questions), you MUST provide 3 suggested follow-up questions or prompts. Make these specific to what the user shared. Format them exactly like this:
+
 [SUGGESTIONS]
-- Would you like more guidance on [Topic]?
-- How can I practice [Action] in my daily life?
-- Are there more verses about [Theme]?
+- Tell me more about what's causing this feeling
+- Would you like guidance on finding inner peace?
+- How can Gurbani help me overcome this challenge?
+
+For clarification responses, make suggestions that help the user share more details.
+For full guidance responses, make suggestions that deepen their spiritual journey.
 
 Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately and beautifully."""
 
@@ -327,19 +345,39 @@ def build_gemini_response_prompt(user_query: str, shabads: Any = None, persona: 
     p_ctx = PERSONA_CONTEXTS[persona]
     
     shabad_context = format_shabad_context(shabads)
+    
+    # Check if this is a clarification scenario (no shabads provided)
+    is_clarification = shabads is None or (isinstance(shabads, list) and len(shabads) == 0)
 
-    # Specific keywords needed for tests: SikhSituationBot, adult/philosophical, 
-    # child/simple words/comforting metaphors, teen/modern language/peer pressure
-    prompt = f"""{SYSTEM_PROMPT}
+    if is_clarification:
+        # For vague queries, we want the AI to ask clarifying questions
+        prompt = f"""{SYSTEM_PROMPT}
 
 PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
-CONTEXT: {shabad_context}
+IMPORTANT: The user's query appears vague or incomplete. Your task is to:
+1. Acknowledge their feeling with warmth and empathy
+2. Ask 1-2 gentle, specific clarifying questions to understand their situation better
+3. Do NOT provide scripture or full guidance yet - wait for more context
+4. End with the [SUGGESTIONS] block with 3 options to help them share more
 
-QUESTION: {user_query}
+USER'S MESSAGE: {user_query}
 
-Please provide a compassionate response based on the Gurbani context."""
+Respond with empathy and gentle clarifying questions."""
+    else:
+        # Standard full response with Gurbani context
+        prompt = f"""{SYSTEM_PROMPT}
+
+PERSONA: {p_ctx['context']} {p_ctx['response_style']}
+You are helping someone as {persona}. {p_ctx['key_guidance']}
+Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
+
+GURBANI CONTEXT: {shabad_context}
+
+USER'S QUESTION: {user_query}
+
+Please provide a compassionate response based on the Gurbani context. Follow the 5-part structure and end with the [SUGGESTIONS] block."""
 
     return prompt

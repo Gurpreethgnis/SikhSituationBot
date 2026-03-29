@@ -13,6 +13,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState([])
   const [history, setHistory] = useState([])
+  const [suggestions, setSuggestions] = useState([])
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   
@@ -78,17 +79,9 @@ function App() {
 
       const data = await response.json()
       
-      // Add AI message to thread
-      const aiMessage = { 
-        role: 'assistant', 
-        content: data.response,
-        shabad: data.shabad,
-        persona: data.persona
-      }
       if (data.error) {
         setError(data.error)
       } else {
-        // Parse suggestions out of the content
         let content = data.response
         let extractedSuggestions = []
         
@@ -101,16 +94,15 @@ function App() {
             .filter(s => s.length > 0)
         }
 
-        const aiMessage = { role: 'assistant', content: content }
+        const aiMessage = { 
+          role: 'assistant', 
+          content: content,
+          shabad: data.shabad,
+          persona: data.persona,
+          isQuestion: data.is_clarification === true
+        }
         setMessages(prev => [...prev, aiMessage])
         setSuggestions(extractedSuggestions)
-        
-        // Save to history (sidebar)
-        setHistory(prev => {
-          const newHistory = [{ id: Date.now(), title: query, query }, ...prev]
-          localStorage.setItem('chatHistory', JSON.stringify(newHistory.slice(0, 20)))
-          return newHistory.slice(0, 20)
-        })
       }
     } catch (err) {
       console.error('Chat error:', err)
@@ -181,23 +173,6 @@ function App() {
                 </div>
               ))}
               
-              {suggestions.length > 0 && !loading && (
-                <div className="suggestions-container">
-                  <p className="suggestions-label">Continue your journey:</p>
-                  <div className="suggestions-list">
-                    {suggestions.map((suggestion, i) => (
-                      <button 
-                        key={i} 
-                        className="suggestion-btn"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {loading && (
                 <div className="message message--assistant loading">
                   <div className="message-label">Seeking Wisdom...</div>
@@ -214,6 +189,19 @@ function App() {
 
         <footer className="chat-footer">
           <div className="chat-input-wrapper">
+            {suggestions.length > 0 && !loading && messages.length > 0 && (
+              <div className="suggestions-bar">
+                {suggestions.slice(0, 3).map((suggestion, i) => (
+                  <button 
+                    key={i} 
+                    className="suggestion-chip"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
             <ChatInput onSend={handleSend} disabled={loading} />
             <p className="footer-disclaimer">
               SikhSituationBot provides spiritual perspectives, not professional advice.
