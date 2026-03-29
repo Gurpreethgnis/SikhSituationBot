@@ -183,6 +183,18 @@ if not is_testing:
     with app.app_context():
         try:
             db.create_all()
+            # Migration: add shabad count columns if they don't exist
+            from sqlalchemy import text, inspect
+            inspector = inspect(db.engine)
+            columns = [col['name'] for col in inspector.get_columns('llm_settings')]
+            if 'guidance_shabad_count' not in columns:
+                db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN guidance_shabad_count INTEGER DEFAULT 3"))
+                db.session.commit()
+                logger.info("Added guidance_shabad_count column to llm_settings")
+            if 'parmaan_shabad_count' not in columns:
+                db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN parmaan_shabad_count INTEGER DEFAULT 5"))
+                db.session.commit()
+                logger.info("Added parmaan_shabad_count column to llm_settings")
             ensure_llm_settings_row()
         except Exception as e:
             logger.warning("create_all warning: %s", e)
@@ -710,6 +722,8 @@ def admin_get_llm_settings():
         {
             "provider": row.provider if row else "gemini",
             "model_id": row.model_id if row else LLM_PROVIDER_MODELS["gemini"][0],
+            "guidance_shabad_count": getattr(row, 'guidance_shabad_count', 3) if row else 3,
+            "parmaan_shabad_count": getattr(row, 'parmaan_shabad_count', 5) if row else 5,
             "options": opts,
         }
     ), 200
@@ -719,23 +733,56 @@ def admin_get_llm_settings():
 @require_admin
 def admin_patch_llm_settings():
     data = request.get_json(silent=True) or {}
-    prov = (data.get("provider") or "").strip().lower()
-    mid = (data.get("model_id") or "").strip()
-    if prov not in LLM_PROVIDER_MODELS:
-        return jsonify({"error": f"Invalid provider. Use one of: {list(LLM_PROVIDER_MODELS)}"}), 400
-    allowed = LLM_PROVIDER_MODELS[prov]
-    if mid not in allowed:
-        return jsonify({"error": f"model_id must be one of {allowed} for provider {prov}"}), 400
     ensure_llm_settings_row()
     row = LLMSettings.query.get(1)
-    if not row:
-        row = LLMSettings(id=1, provider=prov, model_id=mid)
-        db.session.add(row)
-    else:
-        row.provider = prov
-        row.model_id = mid
+
+    # Handle provider/model updates
+    prov = data.get("provider")
+    mid = data.get("model_id")
+    if prov is not None or mid is not None:
+        prov = (prov or row.provider or "").strip().lower()
+        mid = (mid or row.model_id or "").strip()
+        if prov not in LLM_PROVIDER_MODELS:
+            return jsonify({"error": f"Invalid provider. Use one of: {list(LLM_PROVIDER_MODELS)}"}), 400
+        allowed = LLM_PROVIDER_MODELS[prov]
+        if mid not in allowed:
+            return jsonify({"error": f"model_id must be one of {allowed} for provider {prov}"}), 400
+        if not row:
+            row = LLMSettings(id=1, provider=prov, model_id=mid)
+            db.session.add(row)
+        else:
+            row.provider = prov
+            row.model_id = mid
+
+    # Handle shabad count updates
+    guidance_count = data.get("guidance_shabad_count")
+    parmaan_count = data.get("parmaan_shabad_count")
+    if guidance_count is not None:
+        try:
+            guidance_count = int(guidance_count)
+            if 1 <= guidance_count <= 10:
+                row.guidance_shabad_count = guidance_count
+            else:
+                return jsonify({"error": "guidance_shabad_count must be between 1 and 10"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"error": "guidance_shabad_count must be an integer"}), 400
+    if parmaan_count is not None:
+        try:
+            parmaan_count = int(parmaan_count)
+            if 1 <= parmaan_count <= 15:
+                row.parmaan_shabad_count = parmaan_count
+            else:
+                return jsonify({"error": "parmaan_shabad_count must be between 1 and 15"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"error": "parmaan_shabad_count must be an integer"}), 400
+
     db.session.commit()
-    return jsonify({"provider": row.provider, "model_id": row.model_id}), 200
+    return jsonify({
+        "provider": row.provider,
+        "model_id": row.model_id,
+        "guidance_shabad_count": getattr(row, 'guidance_shabad_count', 3),
+        "parmaan_shabad_count": getattr(row, 'parmaan_shabad_count', 5),
+    }), 200
 
 
 @app.route("/api/admin/interactions", methods=["GET"])
@@ -815,8 +862,8 @@ def ask():
     language = resolve_language(data.get("language"))
     chat_id = data.get("chat_id")
     client_history = data.get("message_history") or []
-    gm_raw = (data.get("guidance_mode") or data.get("response_mode") or "parmaan").strip().lower()
-    guidance_mode = gm_raw if gm_raw in ("parmaan", "situational") else "parmaan"
+    gm_raw = (data.get("guidance_mode") or data.get("response_mode") or "guidance").strip().lower()
+    guidance_mode = gm_raw if gm_raw in ("guidance", "parmaan") else "guidance"
 
     if not query_text:
         return jsonify({"error": "No query provided"}), 400
@@ -862,7 +909,7 @@ def ask():
             persona,
             language=language,
             message_history=message_history,
-            guidance_mode="parmaan",
+            guidance_mode="guidance",
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
         payload = {
@@ -881,67 +928,94 @@ def ask():
             payload["chat_title"] = active_chat.title
         return jsonify(payload), 200
 
-    if guidance_mode == "situational":
-        raw = synthesize_chat_response(
-            query_text,
-            None,
-            persona,
-            language=language,
-            message_history=message_history,
-            guidance_mode="situational",
-        )
-        ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
-        payload = {
-            "response": ai_response,
-            "shabad": None,
-            "persona": persona,
-            "language": language,
-            "is_clarification": False,
-            "guidance_mode": guidance_mode,
-        }
-        _persist_messages(
-            active_chat, query_text, ai_response, None, persona, language, llm_provider, llm_model
-        )
-        if active_chat:
-            active_chat.updated_at = datetime.utcnow()
-            if not active_chat.title or active_chat.title == "New chat":
-                active_chat.title = generate_chat_title(query_text)
-            db.session.commit()
-            payload["chat_title"] = active_chat.title
-        return jsonify(payload), 200
-
     query_vector = get_embedding(query_text)
     if not query_vector:
         logger.error("Embedding generation failed")
         return jsonify({"error": "Failed to process query embedding"}), 500
 
+    # Get configurable shabad counts from settings
+    llm_settings = LLMSettings.query.get(1)
+    guidance_shabad_count = getattr(llm_settings, 'guidance_shabad_count', 3) if llm_settings else 3
+    parmaan_shabad_count = getattr(llm_settings, 'parmaan_shabad_count', 5) if llm_settings else 5
+
     try:
-        similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=1, persona=persona)
+        if guidance_mode == "parmaan":
+            # Parmaan mode: search for similar/dissimilar shabads or shabads on a topic
+            # Return multiple shabads without synthesized guidance
+            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=parmaan_shabad_count, persona=persona)
+            if not similar_shabads:
+                similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=parmaan_shabad_count)
+            if not similar_shabads:
+                return jsonify({"error": "No matching shabads found for this topic"}), 404
+
+            # Format shabads for display
+            shabads_list = []
+            for shabad in similar_shabads:
+                shabads_list.append(_shabad_response_payload(shabad))
+
+            # Generate a brief intro about the shabads found
+            raw = synthesize_chat_response(
+                query_text,
+                [s.to_dict(include_embedding=True) for s in similar_shabads],
+                persona,
+                language=language,
+                message_history=message_history,
+                guidance_mode="parmaan",
+            )
+            ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
+
+            payload = {
+                "response": ai_response,
+                "shabads": shabads_list,
+                "shabad": shabads_list[0] if shabads_list else None,
+                "persona": persona,
+                "language": language,
+                "is_clarification": False,
+                "guidance_mode": guidance_mode,
+            }
+            _persist_messages(
+                active_chat, query_text, ai_response, similar_shabads[0].id if similar_shabads else None,
+                persona, language, llm_provider, llm_model
+            )
+            if active_chat:
+                active_chat.updated_at = datetime.utcnow()
+                if not active_chat.title or active_chat.title == "New chat":
+                    active_chat.title = generate_chat_title(query_text)
+                db.session.commit()
+                payload["chat_title"] = active_chat.title
+            return jsonify(payload), 200
+
+        # Default: Guidance mode - retrieve top shabads and provide guidance with summary
+        similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, persona=persona)
         if not similar_shabads:
-            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=1)
+            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count)
         if not similar_shabads:
             return jsonify({"error": "No matching wisdom found in database"}), 404
 
-        top_shabad = similar_shabads[0]
-        context_dict = top_shabad.to_dict(include_embedding=True)
-        shabad_list = [context_dict]
+        # Use all retrieved shabads for context
+        shabad_list = [s.to_dict(include_embedding=True) for s in similar_shabads]
         raw = synthesize_chat_response(
             query_text,
             shabad_list,
             persona,
             language=language,
             message_history=message_history,
-            guidance_mode="parmaan",
+            guidance_mode="guidance",
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 
+        # Return the primary shabad in response, plus all shabads used for synthesis
+        top_shabad = similar_shabads[0]
         shabad_payload = _shabad_response_payload(top_shabad)
+        shabads_list = [_shabad_response_payload(s) for s in similar_shabads]
         payload = {
             "response": ai_response,
             "shabad": shabad_payload,
+            "shabads": shabads_list,
             "persona": persona,
             "language": language,
             "is_clarification": False,
+            "guidance_mode": guidance_mode,
         }
         _persist_messages(
             active_chat,

@@ -11,6 +11,7 @@ import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 import { apiBase, authHeaders, LANGUAGE_OPTIONS } from '../../lib/api'
 import { useTheme } from '../contexts/ThemeContext.jsx'
+import { useTranslation, SUPPORTED_UI_LANGUAGES } from '../contexts/TranslationContext.jsx'
 import '../App.css'
 
 function groupChatsByDate(chats) {
@@ -36,6 +37,7 @@ export default function ChatPage() {
   const { data: session } = useSession()
   const token = session?.accessToken
   const { setTheme, themes } = useTheme()
+  const { t, uiLanguage, changeUiLanguage } = useTranslation()
 
   const [persona, setPersona] = useState('adult')
   const [language, setLanguage] = useState('en')
@@ -46,7 +48,7 @@ export default function ChatPage() {
   const [suggestions, setSuggestions] = useState([])
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [guidanceMode, setGuidanceMode] = useState('parmaan')
+  const [guidanceMode, setGuidanceMode] = useState('guidance')
   const [personaSource, setPersonaSource] = useState('default')
 
   const messagesEndRef = useRef(null)
@@ -232,8 +234,13 @@ export default function ChatPage() {
       if (data.error) {
         setError(data.error)
       } else {
-        let content = data.response
+        let content = data.response || ''
         let extractedSuggestions = []
+
+        if (!content) {
+          setError('No response received from the server. Please try again.')
+          return
+        }
 
         if (content.includes('[SUGGESTIONS]')) {
           const parts = content.split('[SUGGESTIONS]')
@@ -302,13 +309,20 @@ export default function ChatPage() {
             )}
           </div>
           <div className="chat-header-right">
+            <span className="active-mode-indicator" title={guidanceMode === 'guidance' ? t('guidanceModeHint') : t('parmaanModeHint')}>
+              {guidanceMode === 'guidance' ? `📖 ${t('guidanceMode')}` : `🔍 ${t('parmaanMode')}`}
+            </span>
             <select
-              className="lang-select"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              aria-label="Response language"
+              className="lang-select ui-lang-select"
+              value={uiLanguage}
+              onChange={(e) => {
+                changeUiLanguage(e.target.value)
+                setLanguage(e.target.value)
+              }}
+              aria-label="Interface language"
+              title={t('language')}
             >
-              {LANGUAGE_OPTIONS.map((l) => (
+              {SUPPORTED_UI_LANGUAGES.map((l) => (
                 <option key={l.code} value={l.code}>
                   {l.label}
                 </option>
@@ -316,8 +330,13 @@ export default function ChatPage() {
             </select>
             {token && activeChatId && (
               <button type="button" className="share-btn" onClick={handleShare}>
-                Share
+                {t('share')}
               </button>
+            )}
+            {session?.user && (
+              <Link href="/settings" className="chat-nav-link settings-link" title={t('settings')}>
+                ⚙️
+              </Link>
             )}
           </div>
         </header>
@@ -335,8 +354,8 @@ export default function ChatPage() {
           {messages.length === 0 ? (
             <div className="empty-state">
               <Logo />
-              <h1>SikhSituationBot</h1>
-              <p>Seek guidance from the Guru Granth Sahib for your life situations.</p>
+              <h1>{t('appName')}</h1>
+              <p>{t('tagline')}</p>
               {personaSource === 'default' && (
                 <Perspectives activePersona={persona} onPersonaChange={setPersona} />
               )}
@@ -357,7 +376,7 @@ export default function ChatPage() {
             <div className="messages-thread">
               {messages.map((msg, index) => (
                 <div key={index} className={`message message--${msg.role}`}>
-                  <div className="message-label">{msg.role === 'user' ? 'You' : 'Guru'}</div>
+                  <div className="message-label">{msg.role === 'user' ? t('you') : t('guru')}</div>
                   <div className="message-content">
                     <MarkdownRenderer content={msg.content} />
                     {msg.shabad?.sttm_link && (
@@ -376,7 +395,7 @@ export default function ChatPage() {
 
               {loading && (
                 <div className="message message--assistant loading">
-                  <div className="message-label">Seeking Wisdom...</div>
+                  <div className="message-label">{t('seekingWisdom')}</div>
                   <div className="message-content">
                     <div className="typing-dots">
                       <span />
@@ -421,13 +440,8 @@ export default function ChatPage() {
                 />
               }
             />
-            <p className="guidance-mode-hint" aria-live="polite">
-              {guidanceMode === 'parmaan'
-                ? 'Parmaan mode: answers ground in a retrieved shabad when possible.'
-                : 'Situational mode: general Sikhi-aligned guidance without a retrieved verse.'}
-            </p>
-            <p className="footer-disclaimer">
-              SikhSituationBot provides spiritual perspectives, not professional advice.
+            <p className="footer-disclaimer" aria-live="polite">
+              {t('disclaimer')}
             </p>
           </div>
         </footer>
