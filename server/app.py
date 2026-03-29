@@ -48,10 +48,19 @@ is_testing = (
     'unittest' in sys.modules
 )
 
+db_url = os.environ.get('DATABASE_URL')
+if db_url and db_url.startswith("postgresql://"):
+    # SQLAlchemy 1.4+ / 2.0 requires postgresql+psycopg2:// or just handles it
+    # But let's be explicit if we suspect a driver issue
+    pass
+
 if is_testing:
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL_TEST', 'sqlite:///:memory:')
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://localhost/sikhsituationbot')
+    # Use provided URL or default to local postgres
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'postgresql://localhost/sikhsituationbot'
+
+logger.info(f"Database URI configured: {app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1] if '@' in app.config['SQLALCHEMY_DATABASE_URI'] else 'local/sqlite'}")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
