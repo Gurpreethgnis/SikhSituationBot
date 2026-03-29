@@ -1,10 +1,13 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { signIn, getProviders } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import '../auth.css'
+
+const CONFIG_ERROR_HINT =
+  'NextAuth is misconfigured: set NEXTAUTH_SECRET (and NEXTAUTH_URL) in your deployment env. On Vercel: Project → Settings → Environment Variables. Generate a secret: openssl rand -base64 32'
 
 function LoginForm() {
   const router = useRouter()
@@ -14,6 +17,11 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showGoogle, setShowGoogle] = useState(false)
+
+  useEffect(() => {
+    getProviders().then((p) => setShowGoogle(Boolean(p?.google)))
+  }, [])
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -27,6 +35,10 @@ function LoginForm() {
     })
     setLoading(false)
     if (res?.error) {
+      if (res.error === 'Configuration') {
+        setError(CONFIG_ERROR_HINT)
+        return
+      }
       setError('Invalid email or password.')
       return
     }
@@ -40,16 +52,19 @@ function LoginForm() {
         <h1>Sign in</h1>
         <p className="auth-sub">Use your account or Google to save chats across devices.</p>
 
-        <button
-          type="button"
-          className="auth-google"
-          onClick={() => signIn('google', { callbackUrl })}
-          disabled={loading}
-        >
-          Continue with Google
-        </button>
-
-        <div className="auth-divider">or email</div>
+        {showGoogle && (
+          <>
+            <button
+              type="button"
+              className="auth-google"
+              onClick={() => signIn('google', { callbackUrl })}
+              disabled={loading}
+            >
+              Continue with Google
+            </button>
+            <div className="auth-divider">or email</div>
+          </>
+        )}
 
         <form onSubmit={onSubmit} className="auth-form">
           {error && <p className="auth-error">{error}</p>}

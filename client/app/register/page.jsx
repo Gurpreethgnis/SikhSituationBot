@@ -1,11 +1,14 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { signIn, getProviders } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { apiBase } from '../../lib/api'
 import '../auth.css'
+
+const CONFIG_ERROR_HINT =
+  'NextAuth is misconfigured: set NEXTAUTH_SECRET (and NEXTAUTH_URL) in your deployment env. On Vercel: Project → Settings → Environment Variables. Generate a secret: openssl rand -base64 32'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -14,6 +17,11 @@ export default function RegisterPage() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showGoogle, setShowGoogle] = useState(false)
+
+  useEffect(() => {
+    getProviders().then((p) => setShowGoogle(Boolean(p?.google)))
+  }, [])
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -38,14 +46,22 @@ export default function RegisterPage() {
         callbackUrl: '/chat',
       })
       if (sign?.error) {
-        setError('Account created but sign-in failed. Try logging in.')
+        if (sign.error === 'Configuration') {
+          setError(
+            `Account was created on the server, but session sign-in failed: ${CONFIG_ERROR_HINT}`
+          )
+        } else {
+          setError('Account created but sign-in failed. Try logging in.')
+        }
         setLoading(false)
         return
       }
       router.push('/chat')
       router.refresh()
     } catch {
-      setError('Network error')
+      setError(
+        `Cannot reach the API at ${apiBase()}. Set NEXT_PUBLIC_API_URL to your Flask server URL (and ensure CORS allows this origin).`
+      )
       setLoading(false)
     }
   }
@@ -55,6 +71,20 @@ export default function RegisterPage() {
       <div className="auth-card">
         <h1>Create account</h1>
         <p className="auth-sub">Save conversations, share chats, and sync preferences.</p>
+
+        {showGoogle && (
+          <>
+            <button
+              type="button"
+              className="auth-google"
+              onClick={() => signIn('google', { callbackUrl: '/chat' })}
+              disabled={loading}
+            >
+              Continue with Google
+            </button>
+            <div className="auth-divider">or register with email</div>
+          </>
+        )}
 
         <form onSubmit={onSubmit} className="auth-form">
           {error && <p className="auth-error">{error}</p>}
