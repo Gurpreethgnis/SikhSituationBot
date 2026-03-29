@@ -50,9 +50,36 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [guidanceMode, setGuidanceMode] = useState('guidance')
   const [personaSource, setPersonaSource] = useState('default')
+  const [shareStatus, setShareStatus] = useState('')
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
+
+  const handleShare = async () => {
+    if (!activeChatId || !token) {
+      setShareStatus('Please sign in to share')
+      setTimeout(() => setShareStatus(''), 3000)
+      return
+    }
+    try {
+      setShareStatus('Creating share link...')
+      const res = await fetch(`${baseUrl}/api/chats/${activeChatId}/share`, {
+        method: 'POST',
+        headers: authHeaders(token),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to share')
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(data.url)
+      setShareStatus('Link copied to clipboard!')
+      setTimeout(() => setShareStatus(''), 3000)
+    } catch (err) {
+      console.error('Share error:', err)
+      setShareStatus(err.message || 'Failed to share')
+      setTimeout(() => setShareStatus(''), 3000)
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -406,6 +433,27 @@ export default function ChatPage() {
                 </div>
               )}
               {error && <div className="error-message">{error}</div>}
+              
+              {/* Share button - show after conversation */}
+              {messages.length > 0 && !loading && (
+                <div className="share-container">
+                  <button 
+                    type="button" 
+                    className="share-btn"
+                    onClick={handleShare}
+                    disabled={!activeChatId}
+                    title={activeChatId ? t('share') : 'Save chat first to share'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                    {t('share')}
+                  </button>
+                  {shareStatus && <span className="share-status">{shareStatus}</span>}
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}

@@ -164,9 +164,13 @@ class Shabad(db.Model):
         """Public SikhiToTheMax link for this verse identifier."""
         if not shabad_id:
             return ""
-        from urllib.parse import quote
-
-        return f"https://www.sikhitothemax.org/shabad?id={quote(str(shabad_id), safe='')}"
+        
+        # Extract numeric ID from shabad_id format like "sggs_123"
+        numeric_id = shabad_id
+        if shabad_id.startswith("sggs_"):
+            numeric_id = shabad_id[5:]  # Remove "sggs_" prefix
+        
+        return f"https://www.sikhitothemax.org/shabad?id={numeric_id}"
 
     def to_dict(self, include_embedding=True):
         """Full dict including embedding (for internal RAG / tests)."""
