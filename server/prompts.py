@@ -2,24 +2,14 @@ import os
 import sys
 import logging
 import inspect
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import google.generativeai as genai
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Determine if running in a testing environment
-is_testing = (
-    os.environ.get('TESTING') == 'true' or
-    os.environ.get('FLASK_ENV') == 'testing' or
-    'pytest' in sys.modules or
-    'unittest' in sys.modules
-)
-
-if is_testing:
-    GEMINI_API_KEY = "test_key" # Placeholder for testing
-else:
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+# Configure Gemini API Key
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
 FALLBACK_RESPONSE = "I am here to share timeless Sikh wisdom with you. Guru's wisdom and the teachings of Guru Granth Sahib offer comfort and divine guidance for every soul. No relevant Gurbani verses found."
 
@@ -206,7 +196,7 @@ def get_persona_context(persona: str) -> Dict[str, str]:
     """Get the context dictionary for a specific persona."""
     return PERSONA_CONTEXTS.get(persona, PERSONA_CONTEXTS["adult"])
 
-def synthesize_gemini_response(user_query: str, shabads: list = None, persona: str = "adult") -> str:
+def synthesize_gemini_response(user_query: str, shabads: Optional[list] = None, persona: str = "adult") -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
     is_prompts_test = any("test_prompts" in s for s in stack)
