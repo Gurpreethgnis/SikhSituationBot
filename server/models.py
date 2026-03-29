@@ -25,9 +25,9 @@ class Shabad(db.Model):
     # context_tags allows for quick metadata filtering (e.g. filter by 'child' persona)
     context_tags = Column(ARRAY(String))
     
-    # embedding column stores the vector from Vertex AI (text-embedding-004 is 768 dims)
-    # If using the base model, it might be 384 or 768. 768 is default for gecko/004.
-    embedding = Column(Vector(768)) 
+    # embedding column stores the vector from Vertex AI or local models
+    # We use an unconstrained Vector() to support any model dimension (384, 768, 3072)
+    embedding = Column(Vector()) 
     
     created_at = Column(DateTime, default=datetime.utcnow)
 

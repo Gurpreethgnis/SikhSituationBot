@@ -130,6 +130,14 @@ def seed_database(json_file_path: str, batch_size: int = 10, skip_duplicates: bo
             # Ensure tables exist AFTER extension is created
             db.create_all()
 
+            # Ensure the embedding column is unconstrained (in case it was created with a specific dimension previously)
+            try:
+                db.session.execute(text('ALTER TABLE shabads ALTER COLUMN embedding TYPE vector'))
+                db.session.commit()
+            except Exception as e:
+                logger.warning(f"Failed to alter embedding column: {e}")
+                db.session.rollback()
+
             batch_items = []
             for index, item in enumerate(shabads_data):
                 stats.total_processed += 1
