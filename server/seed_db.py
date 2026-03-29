@@ -118,17 +118,17 @@ def seed_database(json_file_path: str, batch_size: int = 10, skip_duplicates: bo
     # Setup database within app context
     try:
         with app.app_context():
-            # Ensure tables exist
-            db.create_all()
-            
             # Try to setup pgvector extension if it doesn't exist (if on Postgres)
             from sqlalchemy import text
             try:
                 db.session.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
                 db.session.commit()
             except Exception as e:
-                logger.warning(f"Failed to setup pgvector (normal for SQLite): {e}")
+                logger.warning(f"Failed to setup pgvector: {e}")
                 db.session.rollback()
+
+            # Ensure tables exist AFTER extension is created
+            db.create_all()
 
             batch_items = []
             for index, item in enumerate(shabads_data):
