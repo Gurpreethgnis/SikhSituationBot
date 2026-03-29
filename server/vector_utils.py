@@ -28,7 +28,35 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'models/embedding-001')
+EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL')
+
+def get_best_embedding_model():
+    """Detect the best available embedding model from the API."""
+    global EMBEDDING_MODEL
+    if EMBEDDING_MODEL:
+        return EMBEDDING_MODEL
+        
+    try:
+        available_models = [
+            m.name for m in genai.list_models() 
+            if 'embedContent' in m.supported_generation_methods
+        ]
+        if available_models:
+            # Prefer text-embedding-004 if available, else pick the first one
+            best_model = 'models/text-embedding-004'
+            if best_model in available_models:
+                EMBEDDING_MODEL = best_model
+            else:
+                EMBEDDING_MODEL = available_models[0]
+            logger.info(f"Auto-selected Gemini embedding model: {EMBEDDING_MODEL}")
+            return EMBEDDING_MODEL
+    except Exception as e:
+        logger.error(f"Failed to list Gemini models: {e}")
+        
+    # Fallback to a known default if listing fails
+    EMBEDDING_MODEL = 'models/text-embedding-004'
+    return EMBEDDING_MODEL
+
 LOCAL_EMBEDDING_MODEL = os.environ.get('LOCAL_EMBEDDING_MODEL', 'all-MiniLM-L6-v2')
 
 # Retry configuration
@@ -60,17 +88,20 @@ def calculate_backoff_delay(attempt: int) -> float:
     return delay + jitter
 
 
-def get_embedding_gemini(text: str, model: str = EMBEDDING_MODEL, timeout: float = 30.0) -> Optional[List[float]]:
+def get_embedding_gemini(text: str, model: Optional[str] = None, timeout: float = 30.0) -> Optional[List[float]]:
     """Get embeddings from Gemini API with retry logic and timeout."""
     if not GEMINI_API_KEY:
         return None
 
+    # Resolve the best model dynamically
+    actual_model = model or get_best_embedding_model()
+
     for attempt in range(MAX_RETRIES):
         try:
-            logger.debug(f"Gemini embedding attempt {attempt + 1}/{MAX_RETRIES} for text length {len(text)}")
+            logger.debug(f"Gemini embedding attempt {attempt + 1}/{MAX_RETRIES} for text length {len(text)} using {actual_model}")
 
             result = genai.embed_content(
-                model=model,
+                model=actual_model,
                 content=text,
                 task_type='retrieval_document'
             )
@@ -136,7 +167,7 @@ def get_embedding_local(text: str) -> Optional[List[float]]:
         return None
 
 
-def get_embedding(text: str, model: str = EMBEDDING_MODEL, prefer_gemini: bool = True) -> Optional[List[float]]:
+def get_embedding(text: str, model: Optional[str] = None, prefer_gemini: bool = True) -> Optional[List[float]]:
     """Return vector embedding for input text, or None if the call failed.
 
     Args:
