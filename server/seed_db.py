@@ -35,12 +35,13 @@ def seed_database(json_file_path):
         shabads_data = json.load(f)
     
     with app.app_context():
-        # Optional: db.drop_all() if you want a clean slate every run, though usually not desired in prod
+        # Create tables if they don't exist
+        db.create_all()
+        
         print(f"Found {len(shabads_data)} shabads. Beginning ingestion...")
         
         for index, item in enumerate(shabads_data):
-            # We want to embed the English translation or the transliteration
-            # as that's what the AI will semantically match against the user's english query
+            # We want to embed the English translation or the theme
             content_to_embed = item.get('translation', '') + " " + item.get('theme', '')
             
             print(f"Processing Shabad {index+1}/{len(shabads_data)}...")
@@ -48,21 +49,21 @@ def seed_database(json_file_path):
             
             if embedding:
                 new_shabad = Shabad(
+                    shabad_id=item.get('shabad_id', f"shabad_{index}"),
                     gurmukhi=item.get('gurmukhi', ''),
-                    transliteration=item.get('transliteration', ''),
-                    translation=item.get('translation', ''),
-                    page=item.get('page', 0),
-                    theme=item.get('theme', ''),
+                    romanization=item.get('transliteration', ''),
+                    english_translation=item.get('translation', ''),
+                    source=item.get('source', 'SGGS'),
                     embedding=embedding
                 )
                 db.session.add(new_shabad)
             
-            # Commit in batches to prevent memory overflow
-            if (index + 1) % 50 == 0:
+            # Commit in batches
+            if (index + 1) % 10 == 0:
                 db.session.commit()
                 print(f"Committed batch up to {index+1}")
                 
-        # Final commit for any remaining items
+        # Final commit
         db.session.commit()
         print("Database seeding complete!")
 

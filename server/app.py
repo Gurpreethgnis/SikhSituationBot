@@ -1,75 +1,122 @@
 import os
+import google.generativeai as genai
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
+from models import db, Shabad
 
-# Load environment variables from the root .env file
+# Load environment variables
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for the frontend to communicate with the backend
+CORS(app)
+
+# Database Configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+# Configure Gemini API
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-pro')
+
+def get_embedding(text):
+    """Generate a vector embedding for the given text using Gemini."""
+    try:
+        result = genai.embed_content(
+            model="models/text-embedding-004",
+            content=text,
+            task_type="retrieval_query"
+        )
+        return result['embedding']
+    except Exception as e:
+        print(f"Error generating embedding: {e}")
+        return None
+
+def generate_ai_response(query, context, persona):
+    """Synthesize an empathetic response using Gemini based on Gurbani context."""
+    prompt = f"""
+    You are the SikhSituationBot, a wise and empathetic companion that provides guidance based on the Sri Guru Granth Sahib (SGGS).
+    
+    User Query: "{query}"
+    User Persona: {persona} (Tailor your tone for this audience: Child, Teen, or Adult)
+    
+    Relevant Wisdom from SGGS:
+    - Gurmukhi: "{context['gurmukhi']}"
+    - English Translation: "{context['translation']}"
+    
+    Task:
+    1. Acknowledge the user's situation with deep empathy.
+    2. Explain the meaning of the provided Gurmukhi verse in the context of their query.
+    3. Provide actionable, spiritual advice aligned with Gurmat (Guru's teachings).
+    4. Keep the tone respectful, calming, and appropriate for a {persona}.
+    
+    Response format: Markdown (use bullet points or short paragraphs for readability).
+    """
+    
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"I am reflecting on the Guru's wisdom for you. (Error: {str(e)})"
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Simple health check endpoint to verify server is running."""
-    return jsonify({
-        "status": "success",
-        "message": "SikhSituationBot backend is running!"
-    }), 200
+    return jsonify({"status": "success", "message": "SikhSituationBot RAG backend is active!"}), 200
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    """Endpoint for chat queries. To be implemented by AI team."""
     data = request.json
-    query = data.get('query', '').lower()
-    persona = data.get('persona', 'adult')
+    query = data.get('query', '')
+    persona = data.get('persona', 'adult').capitalize()
     
     if not query:
         return jsonify({"error": "No query provided"}), 400
         
-    # Mock knowledge base / wired responses
-    responses = {
-        "peace": {
-            "child": "Finding peace is like feeling a warm hug from Waheguru. It means being kind and quiet in your heart.",
-            "teen": "True peace isn't the absence of noise, but a calm mind amidst the chaos of life and social media. Let Gurbani be your anchor.",
-            "adult": "Peace (Shanti) in Gurbani is attained by surrendering the ego and aligning one's consciousness with the Eternal Truth.",
-            "shabad": {
-                "text": "ਤਪਤਿ ਮਾਹਿ ਠਾਢਿ ਵਰਤਾਈ ॥",
-                "title": "In the midst of the heat, a cooling sense has spread.",
-                "transliteration": "Tapat Mahe Thadh Varta-ee"
-            }
-        },
-        "stress": {
-            "child": "When things feel hard, remember you're never alone. Like a superhero's shield, Waheguru protects you.",
-            "teen": "Exam stress or social pressure? Gurbani reminds us that 'Jo Tudh Bhaave Saa-ee Bhalee Kaar'—Whatever pleases You is best. Trust the process.",
-            "adult": "Anxiety arises from attachment. Release the burden of control and find solace in the Hukam (Divine Will).",
-            "shabad": {
-                "text": "ਸਗਲ ਮਨੋਰਥ ਪੂਰਨ ਹੋਏ ਮਨਿ ਤਨਿ ਭਈ ਸੀਤਲਤਾ ॥",
-                "title": "All my desires have been fulfilled; my mind and body are cooled and soothed.",
-                "transliteration": "Sagal Manorath Pooran Ho-e Man Tan Bha-ee Seetalta"
-            }
+    # 1. Generate Query Embedding
+    query_vector = get_embedding(query)
+    if not query_vector:
+        return jsonify({"error": "Failed to process query embedding"}), 500
+
+    # 2. Perform Semantic Search via pgvector
+    try:
+        # Get the single most relevant verse
+        shabad = Shabad.query.order_by(Shabad.embedding.cosine_distance(query_vector)).first()
+        
+        if not shabad:
+            return jsonify({"error": "No matching wisdom found in database"}), 404
+            
+        context = {
+            "gurmukhi": shabad.gurmukhi,
+            "translation": shabad.english_translation,
+            "transliteration": shabad.romanization
         }
-    }
-
-    # Default fallback
-    result = responses.get("peace") if "peace" in query else responses.get("stress") if any(x in query for x in ["stress", "overwhelmed", "anxious", "scared"]) else None
-
-    if result:
+        
+        # 3. Generate AI Synthesis
+        ai_response = generate_ai_response(query, context, persona)
+        
         return jsonify({
-            "response": result.get(persona, result["adult"]),
-            "shabad": result["shabad"]
+            "response": ai_response,
+            "shabad": {
+                "text": context["gurmukhi"],
+                "title": context["translation"],
+                "transliteration": context["transliteration"]
+            }
         }), 200
 
-    # Generic Placeholder
-    return jsonify({
-        "response": f"Received your query about '{query}'. I am still learning, but the Guru's wisdom is infinite. AI synthesis coming soon.",
-        "shabad": {
-            "text": "ੴ ਸਤਿ ਨਾਮੁ ਕਰਤਾ ਪੁਰਖੁ ॥",
-            "title": "One Universal Creator God. The Name Is Truth. Creative Being Personified.",
-            "transliteration": "Ik Onkar Sat Nam Karta Purakh"
-        }
-    }), 200
+    except Exception as e:
+        print(f"Database error: {e}")
+        return jsonify({"error": "A database error occurred. Please ensure pgvector is enabled."}), 500
 
 if __name__ == '__main__':
+    with app.app_context():
+        # Ensure tables exist (database must already have pgvector extension)
+        try:
+            db.create_all()
+        except Exception as e:
+            print(f"Warning: Could not create tables: {e}")
+            
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

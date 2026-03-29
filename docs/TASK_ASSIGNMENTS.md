@@ -49,8 +49,8 @@ git pull origin feature/your-role-branch
 | Create `scripts/clean_data.py` to normalize Gurbani text | ✅ | Done. Used to ensure schema consistency. |
 | Expand `data/shabad.json` with more situational Shabads | ✅ | Target hit: 50 situational Shabads vectorized & ready. |
 | Validate data against schema in `docs/data-strategy.md` | ✅ | Done. All files use unified JSON schema. |
-| **[MVP]** Script data pipeline to embed SGGS JSON via Gemini | ⬜ | See `docs/mvp-plan.md` |
-| **[MVP]** Integrate Gemini API in `/ask` for final response synthesis | ⬜ | RAG combination phase |
+| **[MVP]** Script data pipeline to embed SGGS JSON via Gemini | ✅ | Implemented in `server/seed_db.py` (PR #21) |
+| **[MVP]** Integrate Gemini API in `/ask` for final response synthesis | ✅ | RAG pipeline live in `server/app.py` (PR #21) |
 | **Pointers**: Use `sentence-transformers` in Python if you start on semantic search early. | | |
 
 ### Assigned to @sarnazb (Design)
@@ -59,26 +59,26 @@ git pull origin feature/your-role-branch
 | Define CSS color palette (Deep Blues, Gold accents) | ✅ | Sikh-inspired, calming (`client/src/index.css`) |
 | Create `docs/design-tokens.md` or design spec | ✅ | Created `docs/design-tokens.md` |
 | Design "Perspectives" pills/tabs (Child, Teen, Adult) | ✅ | Integrated into `client/src/index.css` |
-| **[MVP]** Standardize rich text/Markdown styling for AI insights | ⬜ | Make paragraphs and lists look clean |
-| **[MVP]** Refine typography layout for dynamically sized AI content | ⬜ | Ensure long verses map well on mobile |
+| **[MVP]** Standardize rich text/Markdown styling for AI insights | ✅ | `MarkdownRenderer.jsx` + `globals.css` (PR #21) |
+| **[MVP]** Refine typography layout for dynamically sized AI content | ✅ | Dynamic Shabad card + AI insight styling (PR #21) |
 
 ### Assigned to @siddharthchopra (UX)
 | Task | Status | Notes |
 | :--- | :---: | :--- |
-| Build chat input / search bar component | ⬜ | Premium feel |
-| Implement persona toggle (Child/Teen/Adult) UI | ⬜ | Pills or tabs |
-| Wire up chat flow: query → display → loading states | ⬜ | |
-| **[MVP]** Implement polished loading skeleton or "Bot is thinking" UI | ⬜ | Essential for AI latency |
-| **[MVP]** Design failure/error states gracefully | ⬜ | Fallback UI when LLM times out |
+| Build chat input / search bar component | ✅ | `ChatInput.jsx` with premium styling |
+| Implement persona toggle (Child/Teen/Adult) UI | ✅ | `Perspectives.jsx` with pill buttons |
+| Wire up chat flow: query → display → loading states | ✅ | Full flow wired in `page.jsx` (PR #21) |
+| **[MVP]** Implement polished loading skeleton or "Bot is thinking" UI | ✅ | Animated dots loading state (PR #21) |
+| **[MVP]** Design failure/error states gracefully | ✅ | Error catch with user-friendly fallback message (PR #21) |
 
 ### Assigned to @samisingh (Ops)
 | Task | Status | Notes |
 | :--- | :---: | :--- |
-| Initialize Next.js project in `/client` | ⬜ | Per `WEEK_1_TASKS.md` |
-| Set up Flask backend in `/server` | ⬜ | `server/app.py`, basic route |
-| API key setup (Google Gemini) | ⬜ | Use `.env` file (see `.env.example`) |
-| **[MVP]** Provision PostgreSQL DB with `pgvector` (e.g., Railway) | ⬜ | Critical path for MVP |
-| **[MVP]** Manage and secure production `DB_URL` env variables | ⬜ | Vercel & Railway Config |
+| Initialize Next.js project in `/client` | ✅ | Done. Running at `localhost:3000` |
+| Set up Flask backend in `/server` | ✅ | `server/app.py` with RAG `/ask` route |
+| API key setup (Google Gemini) | ✅ | Configured via `.env` |
+| **[MVP]** Provision PostgreSQL DB with `pgvector` (e.g., Railway) | 🔄 | Guide created in deployment docs. Needs team to provision. |
+| **[MVP]** Manage and secure production `DB_URL` env variables | 🔄 | `.env.example` updated; prod config pending deployment |
 | **Pointers**: Check `gh secret set` if we move to GitHub Actions later. | | |
 
 ### Assigned to @ekaskohi (Vision)
@@ -87,8 +87,8 @@ git pull origin feature/your-role-branch
 | Semantic Search Research | ⬜ | Explore `sentence-transformers` for Gurbani |
 | Advanced RAG Architecture | ⬜ | Design multi-stage retrieval flow |
 | Vision: Gurbani fine-tuning plan | ⬜ | Research feasibility of Gurbani-specific LLM |
-| **[MVP]** Implement query vectorization using embedding model | ⬜ | Convert user text to vector in backend |
-| **[MVP]** Write PGVector cosine similarity queries for `/ask` | ⬜ | Link user vector to DB Shabad vectors |
+| **[MVP]** Implement query vectorization using embedding model | ✅ | `text-embedding-004` in `server/app.py` (PR #21) |
+| **[MVP]** Write PGVector cosine similarity queries for `/ask` | ✅ | `Shabad.embedding.cosine_distance()` in `server/app.py` (PR #21) |
 
 ### Assigned to @suveersabharwal13 (AFK / Backup)
 | Task | Status | Notes |
@@ -106,7 +106,7 @@ git pull origin feature/your-role-branch
 | Task | Status | Notes |
 | :--- | :---: | :--- |
 | Frontend: Initialize Vite+React or Next.js | ✅ | Initialized Next.js at `http://localhost:3000` |
-| Backend: Flask app + `/ask` route | ⬜ | Assign to Ops |
+| Backend: Flask app + `/ask` route | ✅ | Full RAG pipeline in `server/app.py` (PR #21) |
 | Data: `scripts/clean_data.py` | ⬜ | Assigned to @sbindra-ai (AI) |
 
 ---

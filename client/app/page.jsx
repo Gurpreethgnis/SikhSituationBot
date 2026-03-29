@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import ChatInput from './components/ChatInput.jsx'
 import Perspectives from './components/Perspectives.jsx'
 import Logo from './components/Logo'
+import MarkdownRenderer from './components/MarkdownRenderer'
 
 function App() {
   const [persona, setPersona] = useState('adult')
@@ -17,7 +18,9 @@ function App() {
     setAiResponse('')
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/ask`, {
+      // Use the Flask server URL if not in production or if NEXT_PUBLIC_API_URL is unset
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const response = await fetch(`${apiUrl}/ask`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,20 +59,33 @@ function App() {
           loading={loading}
         />
 
-        {aiResponse && (
+        {(aiResponse || loading) && (
           <div className="shabad-result">
-            <div className="ai-insight-wrapper">
-              <span className="insight-label">Guru's Guidance ({persona}):</span>
-              <p className="ai-insight">{aiResponse}</p>
-            </div>
-            {shabad && (
-              <div className={`shabad-card ${persona}`}>
-                <div className="ik-onkar-icon">☬</div>
-                <h2 className="gurmukhi-text">{shabad. Gurmukhi || shabad.text}</h2>
-                <p className="transliteration">{shabad.transliteration}</p>
-                <div className="shabad-divider"></div>
-                <p className="translation">“{shabad.title}”</p>
+            {loading ? (
+              <div className="ai-insight-wrapper loading">
+                <span className="insight-label">Seeking the Guru's wisdom...</span>
+                <div className="loading-dots">
+                  <span>.</span><span>.</span><span>.</span>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="ai-insight-wrapper">
+                  <span className="insight-label">Guru's Guidance ({persona}):</span>
+                  <div className="ai-insight">
+                    <MarkdownRenderer content={aiResponse} />
+                  </div>
+                </div>
+                {shabad && (
+                  <div className={`shabad-card ${persona}`}>
+                    <div className="ik-onkar-icon">☬</div>
+                    <h2 className="gurmukhi-text">{shabad.text}</h2>
+                    <p className="transliteration">{shabad.transliteration}</p>
+                    <div className="shabad-divider"></div>
+                    <p className="translation">“{shabad.title}”</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

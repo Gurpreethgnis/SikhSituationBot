@@ -6,5 +6,8 @@ client/node_modules
 node_modules
 .next
 venv
-.env
+venv_img
 .DS_Store
+gh
+use_rembg.py
+remove_bg.py
