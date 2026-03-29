@@ -41,26 +41,31 @@ def add_cors_headers(response):
     return response
 
 # Database Configuration
+# Narrower testing check to avoid accidental fallbacks during seeding
 is_testing = (
     os.environ.get('TESTING') == 'true' or 
-    os.environ.get('FLASK_ENV') == 'testing' or 
-    'pytest' in sys.modules or 
-    'unittest' in sys.modules
+    os.environ.get('FLASK_ENV') == 'testing'
 )
 
 db_url = os.environ.get('DATABASE_URL')
-if db_url and db_url.startswith("postgresql://"):
-    # SQLAlchemy 1.4+ / 2.0 requires postgresql+psycopg2:// or just handles it
-    # But let's be explicit if we suspect a driver issue
-    pass
+
+# SQLAlchemy 1.4/2.0+ requires postgresql+psycopg2:// instead of postgresql:// 
+# for some environments, though many drivers handle both.
+if db_url and db_url.startswith("postgresql://") and not db_url.startswith("postgresql+psycopg2://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 if is_testing:
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL_TEST', 'sqlite:///:memory:')
 else:
     # Use provided URL or default to local postgres
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'postgresql://localhost/sikhsituationbot'
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'postgresql+psycopg2://localhost/sikhsituationbot'
 
-logger.info(f"Database URI configured: {app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1] if '@' in app.config['SQLALCHEMY_DATABASE_URI'] else 'local/sqlite'}")
+# Log the connection target (safely)
+if "sqlite" in app.config['SQLALCHEMY_DATABASE_URI']:
+    logger.info("Database configured for LOCAL SQLITE")
+else:
+    target = app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1] if '@' in app.config['SQLALCHEMY_DATABASE_URI'] else 'local/postgres'
+    logger.info(f"Database configured for POSTGRES: {target}")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
