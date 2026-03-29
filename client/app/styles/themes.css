@@ -1,5 +1,19 @@
 /* Theme tokens override semantic vars used across App.css / Sidebar / ChatInput */
 
+/* Default/fallback composer styles (dark theme base) */
+:root {
+  --composer-gpt-bg: hsl(0, 0%, 18%);
+  --composer-gpt-border: hsla(0, 0%, 100%, 0.12);
+  --composer-gpt-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+  --composer-gpt-shadow-focus: 0 4px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px hsla(0, 0%, 100%, 0.18);
+  --composer-gpt-focus-ring: hsla(0, 0%, 100%, 0.22);
+  --composer-gpt-inner-focus: hsla(0, 0%, 100%, 0.08);
+  --composer-send-active-bg: #ececec;
+  --composer-send-active-fg: #1a1a1a;
+  --composer-send-disabled-bg: hsla(0, 0%, 100%, 0.1);
+  --composer-send-disabled-fg: hsla(0, 0%, 100%, 0.35);
+}
+
 [data-theme='basanti'] {
   --midnight: hsl(45, 30%, 8%);
   --navy-deep: hsl(45, 25%, 12%);
