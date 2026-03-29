@@ -1,5 +1,6 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
+import { fetchGoogleBirthYear } from './googleBirthYear'
 
 const flaskBase = () =>
   process.env.FLASK_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
@@ -9,6 +10,12 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      authorization: {
+        params: {
+          scope:
+            'openid email profile https://www.googleapis.com/auth/user.birthday.read',
+        },
+      },
     }),
     CredentialsProvider({
       name: 'Credentials',
@@ -44,6 +51,10 @@ export const authOptions = {
       if (account?.provider === 'google' && user?.email) {
         const key = process.env.FLASK_INTERNAL_API_KEY
         if (key) {
+          let birthYear = null
+          if (account.access_token) {
+            birthYear = await fetchGoogleBirthYear(account.access_token)
+          }
           const res = await fetch(`${flaskBase()}/api/auth/oauth-sync`, {
             method: 'POST',
             headers: {
@@ -54,6 +65,7 @@ export const authOptions = {
               email: user.email,
               name: user.name,
               avatar_url: user.image,
+              ...(birthYear != null ? { birth_year: birthYear } : {}),
             }),
           })
           const data = await res.json().catch(() => ({}))

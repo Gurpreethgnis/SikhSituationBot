@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import ChatInput from '../components/ChatInput.jsx'
 import Perspectives from '../components/Perspectives.jsx'
+import GuidanceMenu from '../components/GuidanceMenu.jsx'
 import Logo from '../components/Logo'
 import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
@@ -45,6 +46,8 @@ export default function ChatPage() {
   const [suggestions, setSuggestions] = useState([])
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [guidanceMode, setGuidanceMode] = useState('parmaan')
+  const [personaSource, setPersonaSource] = useState('default')
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -85,6 +88,7 @@ export default function ChatPage() {
         if (cancelled) return
         if (u?.preferred_language) setLanguage(u.preferred_language)
         if (u?.preferred_persona) setPersona(u.preferred_persona)
+        if (u?.persona_source) setPersonaSource(u.persona_source)
         if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
           setTheme(u.preferred_theme)
         }
@@ -169,6 +173,10 @@ export default function ChatPage() {
   }
 
   const handleSend = async (query) => {
+    if (!token) {
+      setError('Session expired. Please sign in again.')
+      return
+    }
     setError('')
     setLoading(true)
 
@@ -204,6 +212,7 @@ export default function ChatPage() {
         persona,
         language,
         message_history: messageHistory.slice(-20),
+        guidance_mode: guidanceMode,
       }
       if (chatId) body.chat_id = chatId
 
@@ -310,11 +319,6 @@ export default function ChatPage() {
                 Share
               </button>
             )}
-            {!session && (
-              <Link href="/login" className="chat-nav-link">
-                Sign in
-              </Link>
-            )}
           </div>
         </header>
 
@@ -322,7 +326,9 @@ export default function ChatPage() {
           <button type="button" className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
             ☰
           </button>
-          <div className="mobile-logo">☬</div>
+          <div className="mobile-header-logo">
+            <Logo variant="compact" />
+          </div>
         </header>
 
         <section className="chat-messages">
@@ -331,10 +337,19 @@ export default function ChatPage() {
               <Logo />
               <h1>SikhSituationBot</h1>
               <p>Seek guidance from the Guru Granth Sahib for your life situations.</p>
-              <Perspectives activePersona={persona} onPersonaChange={setPersona} />
-              {!token && (
-                <p className="guest-hint">
-                  <Link href="/login">Sign in</Link> to save conversations by chat.
+              {personaSource === 'default' && (
+                <Perspectives activePersona={persona} onPersonaChange={setPersona} />
+              )}
+              {personaSource === 'google' && (
+                <p className="persona-from-profile-hint">
+                  Response style (child / teen / adult) is set from your Google account birthday. You can change it in{' '}
+                  <Link href="/settings">Settings</Link>.
+                </p>
+              )}
+              {personaSource === 'manual' && (
+                <p className="persona-from-profile-hint">
+                  Response style is saved in <Link href="/settings">Settings</Link>. The bar above is hidden while you use
+                  your saved choice.
                 </p>
               )}
             </div>
@@ -393,7 +408,24 @@ export default function ChatPage() {
                 ))}
               </div>
             )}
-            <ChatInput onSend={handleSend} disabled={loading} />
+            <ChatInput
+              onSend={handleSend}
+              disabled={loading}
+              loading={loading}
+              startAdornment={
+                <GuidanceMenu
+                  mode={guidanceMode}
+                  onModeChange={setGuidanceMode}
+                  disabled={loading}
+                  variant="embed"
+                />
+              }
+            />
+            <p className="guidance-mode-hint" aria-live="polite">
+              {guidanceMode === 'parmaan'
+                ? 'Parmaan mode: answers ground in a retrieved shabad when possible.'
+                : 'Situational mode: general Sikhi-aligned guidance without a retrieved verse.'}
+            </p>
             <p className="footer-disclaimer">
               SikhSituationBot provides spiritual perspectives, not professional advice.
             </p>

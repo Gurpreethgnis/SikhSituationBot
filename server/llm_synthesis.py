@@ -164,13 +164,19 @@ def synthesize_chat_response(
     persona: str = "adult",
     language: str = "en",
     message_history: Any = None,
+    guidance_mode: str = "parmaan",
 ) -> Tuple[str, str, str]:
     """
     Build the RAG prompt and call the configured provider.
     Returns (response_text, provider_used, model_id_used).
     """
     prompt = build_gemini_response_prompt(
-        user_query, shabads, persona, language=language, message_history=message_history
+        user_query,
+        shabads,
+        persona,
+        language=language,
+        message_history=message_history,
+        guidance_mode=guidance_mode,
     )
     provider, model_id = get_llm_settings()
 
@@ -191,7 +197,12 @@ def synthesize_chat_response(
 
     if text is None or not str(text).strip():
         fb = synthesize_gemini_response(
-            user_query, shabads, persona, language=language, message_history=message_history
+            user_query,
+            shabads,
+            persona,
+            language=language,
+            message_history=message_history,
+            guidance_mode=guidance_mode,
         )
         if fb is None or (isinstance(fb, str) and not fb.strip()):
             fb = FALLBACK_RESPONSE

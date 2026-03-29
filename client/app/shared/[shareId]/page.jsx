@@ -32,7 +32,7 @@ export default async function SharedChatPage({ params }) {
     return (
       <div className="shared-page">
         <p>This shared conversation was not found or is no longer public.</p>
-        <Link href="/chat">Start your own conversation</Link>
+        <Link href="/login?callbackUrl=/chat">Sign in to start your own conversation</Link>
       </div>
     )
   }
@@ -45,8 +45,8 @@ export default async function SharedChatPage({ params }) {
         <h1>{title || 'Shared conversation'}</h1>
         <p className="shared-sub">Read-only shared view. Spiritual perspective only — not professional advice.</p>
         <div className="shared-actions">
-          <Link href="/chat" className="shared-cta">
-            Start your own conversation
+          <Link href="/login?callbackUrl=/chat" className="shared-cta">
+            Sign in to start your own conversation
           </Link>
           <Link href="/" className="shared-link">
             Home

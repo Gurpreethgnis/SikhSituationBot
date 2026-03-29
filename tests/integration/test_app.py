@@ -13,6 +13,9 @@ os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-integration")
 
 from app import app  # noqa: E402
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "helpers"))
+from flask_test_auth import ask_auth_headers  # noqa: E402
+
 
 def _mock_shabad_row():
     """ORM-like mock matching ask() expectations."""
@@ -101,7 +104,9 @@ class TestAppIntegration(unittest.TestCase):
         )
 
         response = self.client.post(
-            "/ask", data=json.dumps(self.valid_ask_request), content_type="application/json"
+            "/ask",
+            data=json.dumps(self.valid_ask_request),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
@@ -122,7 +127,9 @@ class TestAppIntegration(unittest.TestCase):
         mock_search.return_value = []
 
         response = self.client.post(
-            "/ask", data=json.dumps(self.valid_ask_request), content_type="application/json"
+            "/ask",
+            data=json.dumps(self.valid_ask_request),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
         )
         self.assertEqual(response.status_code, 404)
         data = json.loads(response.data)
@@ -134,9 +141,21 @@ class TestAppIntegration(unittest.TestCase):
 
     def test_ask_endpoint_empty_query(self):
         response = self.client.post(
-            "/ask", data=json.dumps(self.invalid_ask_request), content_type="application/json"
+            "/ask",
+            data=json.dumps(self.invalid_ask_request),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_ask_requires_authentication(self):
+        response = self.client.post(
+            "/ask",
+            data=json.dumps(self.valid_ask_request),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 401)
+        data = json.loads(response.data)
+        self.assertIn("error", data)
 
     @patch("app.assess_query_clarity")
     @patch("app.get_embedding")
@@ -151,7 +170,7 @@ class TestAppIntegration(unittest.TestCase):
         response = self.client.post(
             "/ask",
             data=json.dumps({"query": "clear specific question about grief", "persona": "invalid"}),
-            content_type="application/json",
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)

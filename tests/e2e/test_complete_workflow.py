@@ -17,6 +17,11 @@ os.environ.setdefault("JWT_SECRET", "test-jwt-secret-e2e")
 
 from app import app  # noqa: E402
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "helpers"))
+from flask_test_auth import ask_auth_headers  # noqa: E402
+
+_E2E_ASK_EMAIL = "e2e-ask@example.com"
+
 
 def _mock_shabad_row():
     m = MagicMock()
@@ -93,7 +98,9 @@ class TestEndToEnd(unittest.TestCase):
         )
 
         request_data = {"query": "How can I find peace when people around me are fighting?", "persona": "adult"}
-        response = self.client.post("/ask", data=json.dumps(request_data), content_type="application/json")
+        response = self.client.post(
+            "/ask", data=json.dumps(request_data), headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL)
+        )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
 
@@ -119,7 +126,7 @@ class TestEndToEnd(unittest.TestCase):
             response = self.client.post(
                 "/ask",
                 data=json.dumps({"query": "What is Sikhism?", "persona": persona}),
-                content_type="application/json",
+                headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL),
             )
             self.assertEqual(response.status_code, 200)
             data = json.loads(response.data)
@@ -143,7 +150,11 @@ class TestEndToEnd(unittest.TestCase):
         response = self.client.post("/ask", data="invalid json", content_type="application/json")
         self.assertEqual(response.status_code, 400)
 
-        response = self.client.post("/ask", data=json.dumps({"query": ""}), content_type="application/json")
+        response = self.client.post(
+            "/ask",
+            data=json.dumps({"query": ""}),
+            headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL),
+        )
         self.assertEqual(response.status_code, 400)
 
     @patch("app.assess_query_clarity")
@@ -156,7 +167,7 @@ class TestEndToEnd(unittest.TestCase):
         response = self.client.post(
             "/ask",
             data=json.dumps({"query": "Some very specific query with no matches", "persona": "adult"}),
-            content_type="application/json",
+            headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL),
         )
         self.assertEqual(response.status_code, 404)
         data = json.loads(response.data)
@@ -172,7 +183,9 @@ class TestEndToEnd(unittest.TestCase):
         mock_search.return_value = [_mock_shabad_row()]
         mock_synthesize.return_value = (None, "gemini", "models/gemini-flash-latest")
         response = self.client.post(
-            "/ask", data=json.dumps({"query": "Test query", "persona": "adult"}), content_type="application/json"
+            "/ask",
+            data=json.dumps({"query": "Test query", "persona": "adult"}),
+            headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL),
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
@@ -193,7 +206,9 @@ class TestEndToEnd(unittest.TestCase):
         mock_search.return_value = [_mock_shabad_row()]
         mock_synthesize.return_value = ("Test response", "gemini", "models/gemini-flash-latest")
         request_data = {"query": "ਦੁੱਖ ਦਾ ਕਾਰਨ ਕੀ ਹੈ?", "persona": "adult"}
-        response = self.client.post("/ask", data=json.dumps(request_data), content_type="application/json")
+        response = self.client.post(
+            "/ask", data=json.dumps(request_data), headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL)
+        )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data["persona"], request_data["persona"])

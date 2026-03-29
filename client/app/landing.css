@@ -13,10 +13,10 @@
   text-align: center;
 }
 
-.landing-logo {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.35));
+.landing-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
 }
 
 .landing h1 {
@@ -55,7 +55,7 @@
 
 .landing-btn-primary {
   background: var(--gold-gradient);
-  color: var(--midnight);
+  color: var(--on-accent-text, var(--midnight));
   box-shadow: var(--gold-glow);
 }
 

@@ -22,6 +22,9 @@ class User(db.Model):
     password_hash = Column(String(256))  # null for OAuth-only accounts
     preferred_language = Column(String(10), default="en")
     preferred_persona = Column(String(20), default="adult")
+    # default = show persona picker; google = inferred from Google birthday; manual = user set in settings
+    persona_source = Column(String(20), default="default", nullable=False)
+    birth_year = Column(Integer, nullable=True)  # from Google when consented; not exposed in public API
     preferred_theme = Column(String(20), default="saffron")
     is_admin = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
@@ -38,6 +41,7 @@ class User(db.Model):
             "avatar_url": self.avatar_url,
             "preferred_language": self.preferred_language,
             "preferred_persona": self.preferred_persona,
+            "persona_source": self.persona_source or "default",
             "preferred_theme": self.preferred_theme,
             "is_admin": self.is_admin,
             "created_at": self.created_at.isoformat() if self.created_at else None,

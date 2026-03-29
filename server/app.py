@@ -16,7 +16,6 @@ from auth_utils import (
     encode_token,
     get_bearer_token,
     hash_password,
-    optional_auth,
     require_admin,
     require_auth,
     verify_password,
@@ -57,6 +56,23 @@ if GEMINI_API_KEY:
 query_assessment_model = None
 ADMIN_EMAIL = (os.environ.get("ADMIN_EMAIL") or "").strip().lower()
 INTERNAL_API_KEY = os.environ.get("FLASK_INTERNAL_API_KEY", "")
+
+
+def _persona_from_birth_year(birth_year: int) -> str:
+    """Map age (from birth year) to child / teen / adult personas."""
+    try:
+        y = int(birth_year)
+    except (TypeError, ValueError):
+        return "adult"
+    now_y = datetime.utcnow().year
+    if y < 1900 or y > now_y:
+        return "adult"
+    age = now_y - y
+    if age < 13:
+        return "child"
+    if age < 18:
+        return "teen"
+    return "adult"
 
 
 def get_assessment_model():
@@ -285,6 +301,14 @@ def oauth_sync():
     email = (data.get("email") or "").strip().lower()
     name = (data.get("name") or "").strip() or None
     avatar_url = (data.get("avatar_url") or data.get("image") or "").strip() or None
+    by_raw = data.get("birth_year")
+    iby: Optional[int] = None
+    if by_raw is not None:
+        try:
+            iby = int(by_raw)
+        except (TypeError, ValueError):
+            iby = None
+    now_y = datetime.utcnow().year
     if not email:
         return jsonify({"error": "email required"}), 400
     user = User.query.filter_by(email=email).first()
@@ -304,6 +328,11 @@ def oauth_sync():
             user.avatar_url = avatar_url
         if is_admin:
             user.is_admin = True
+    if iby is not None and 1900 <= iby <= now_y:
+        user.birth_year = iby
+        if (user.persona_source or "default") != "manual":
+            user.preferred_persona = _persona_from_birth_year(iby)
+            user.persona_source = "google"
     user.last_login = datetime.utcnow()
     db.session.commit()
     token = encode_token(user.id, user.email, user.is_admin)
@@ -325,6 +354,7 @@ def patch_me():
         u.preferred_language = resolve_language(data.get("preferred_language"))
     if "preferred_persona" in data and data.get("preferred_persona") in ("child", "teen", "adult"):
         u.preferred_persona = data["preferred_persona"]
+        u.persona_source = "manual"
     if "preferred_theme" in data and data.get("preferred_theme"):
         u.preferred_theme = str(data["preferred_theme"])[:20]
     if "name" in data and data.get("name"):
@@ -753,6 +783,8 @@ def ask():
     language = resolve_language(data.get("language"))
     chat_id = data.get("chat_id")
     client_history = data.get("message_history") or []
+    gm_raw = (data.get("guidance_mode") or data.get("response_mode") or "parmaan").strip().lower()
+    guidance_mode = gm_raw if gm_raw in ("parmaan", "situational") else "parmaan"
 
     if not query_text:
         return jsonify({"error": "No query provided"}), 400
@@ -760,8 +792,17 @@ def ask():
     valid_personas = ["child", "teen", "adult"]
     persona = persona_input if persona_input in valid_personas else "adult"
 
-    optional_auth()
-    user = getattr(request, "user", None)
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"error": "Authentication required"}), 401
+    tok_payload = decode_token(token)
+    if not tok_payload or not tok_payload.get("sub"):
+        return jsonify({"error": "Invalid or expired token"}), 401
+    user = User.query.get(int(tok_payload["sub"]))
+    if not user or not user.is_active:
+        return jsonify({"error": "User not found or inactive"}), 401
+    request.user_id = user.id
+    request.user = user
 
     message_history: List[Dict[str, str]] = []
     active_chat: Optional[Chat] = None
@@ -784,7 +825,12 @@ def ask():
 
     if needs_clarification:
         raw = synthesize_chat_response(
-            query_text, None, persona, language=language, message_history=message_history
+            query_text,
+            None,
+            persona,
+            language=language,
+            message_history=message_history,
+            guidance_mode="parmaan",
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
         payload = {
@@ -799,6 +845,35 @@ def ask():
         )
         if active_chat and (not active_chat.title or active_chat.title == "New chat"):
             active_chat.title = generate_chat_title(query_text)
+            db.session.commit()
+            payload["chat_title"] = active_chat.title
+        return jsonify(payload), 200
+
+    if guidance_mode == "situational":
+        raw = synthesize_chat_response(
+            query_text,
+            None,
+            persona,
+            language=language,
+            message_history=message_history,
+            guidance_mode="situational",
+        )
+        ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
+        payload = {
+            "response": ai_response,
+            "shabad": None,
+            "persona": persona,
+            "language": language,
+            "is_clarification": False,
+            "guidance_mode": guidance_mode,
+        }
+        _persist_messages(
+            active_chat, query_text, ai_response, None, persona, language, llm_provider, llm_model
+        )
+        if active_chat:
+            active_chat.updated_at = datetime.utcnow()
+            if not active_chat.title or active_chat.title == "New chat":
+                active_chat.title = generate_chat_title(query_text)
             db.session.commit()
             payload["chat_title"] = active_chat.title
         return jsonify(payload), 200
@@ -819,7 +894,12 @@ def ask():
         context_dict = top_shabad.to_dict(include_embedding=True)
         shabad_list = [context_dict]
         raw = synthesize_chat_response(
-            query_text, shabad_list, persona, language=language, message_history=message_history
+            query_text,
+            shabad_list,
+            persona,
+            language=language,
+            message_history=message_history,
+            guidance_mode="parmaan",
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 

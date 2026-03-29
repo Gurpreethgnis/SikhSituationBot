@@ -377,6 +377,7 @@ def synthesize_gemini_response(
     persona: str = "adult",
     language: str = "en",
     message_history: Any = None,
+    guidance_mode: str = "parmaan",
 ) -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
@@ -398,7 +399,12 @@ def synthesize_gemini_response(
             prompt = user_query
         else:
             prompt = build_gemini_response_prompt(
-                user_query, shabads, persona, language=language, message_history=message_history
+                user_query,
+                shabads,
+                persona,
+                language=language,
+                message_history=message_history,
+                guidance_mode=guidance_mode,
             )
 
         response = model.generate_content(prompt)
@@ -424,9 +430,11 @@ def build_gemini_response_prompt(
     persona: str = "adult",
     language: str = "en",
     message_history: Any = None,
+    guidance_mode: str = "parmaan",
 ) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
+    guidance_mode: parmaan (retrieve-backed) or situational (no shabad context).
     """
     # Smart swap for tests that call (query, persona, shabads)
     if isinstance(shabads, str) and shabads in PERSONA_CONTEXTS:
@@ -441,6 +449,27 @@ def build_gemini_response_prompt(
     lang_code = resolve_language(language)
     lang_line = LANGUAGE_INSTRUCTIONS.get(lang_code, LANGUAGE_INSTRUCTIONS["en"])
     history_block = format_conversation_history(message_history)
+
+    gm = (guidance_mode or "parmaan").strip().lower()
+    if gm == "situational":
+        prompt = f"""{SYSTEM_PROMPT}
+
+OUTPUT LANGUAGE: {lang_line}
+
+PERSONA: {p_ctx['context']} {p_ctx['response_style']}
+You are helping someone as {persona}. {p_ctx['key_guidance']}
+Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
+
+MODE: The user chose **situational guidance** (no specific retrieved shabad for this turn).
+Offer compassionate, Sikhi-aligned perspective grounded in general Guru Granth Sahib themes
+(seva, humility, naam, sangat, hukam) without presenting a verse as if it were retrieved from this app.
+Do not invent shabad IDs, page numbers, or long quotations presented as retrieved text.
+Keep the tone warm and practical. End with the [SUGGESTIONS] block with 3 short follow-up prompts.
+
+{history_block}USER'S MESSAGE: {user_query}
+
+Respond with empathy and clear, respectful guidance."""
+        return prompt
 
     shabad_context = format_shabad_context(shabads)
 

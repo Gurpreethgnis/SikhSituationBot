@@ -106,6 +106,20 @@ class TestGeminiSynthesis(unittest.TestCase):
         self.assertIn("vague or incomplete", prompt)
         self.assertIn("clarifying", prompt.lower())
 
+    def test_build_gemini_response_prompt_situational_mode(self):
+        """Situational mode uses dedicated instructions without Gurbani context block."""
+        prompt = build_gemini_response_prompt(
+            "How can I be calmer at work?",
+            None,
+            "adult",
+            language="en",
+            message_history=None,
+            guidance_mode="situational",
+        )
+        self.assertIn("situational guidance", prompt.lower())
+        self.assertNotIn("vague or incomplete", prompt)
+        self.assertNotIn("GURBANI CONTEXT:", prompt)
+
     def test_build_gemini_response_prompt_invalid_persona(self):
         """Test building Gemini prompt with invalid persona."""
         prompt = build_gemini_response_prompt(self.user_query, self.sample_shabads, "invalid")

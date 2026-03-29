@@ -1,12 +1,13 @@
 import Link from 'next/link'
+import Logo from './components/Logo'
 import './landing.css'
 
 export default function LandingPage() {
   return (
     <div className="landing">
       <div className="landing-inner">
-        <div className="landing-logo" aria-hidden>
-          ☬
+        <div className="landing-brand">
+          <Logo />
         </div>
         <h1>SikhSituationBot</h1>
         <p className="landing-tagline">
@@ -14,18 +15,19 @@ export default function LandingPage() {
           guidance and semantic discovery of Gurbani.
         </p>
         <div className="landing-actions">
-          <Link href="/chat" className="landing-btn landing-btn-primary">
-            Open app
+          <Link href="/login?callbackUrl=/chat" className="landing-btn landing-btn-primary">
+            Sign in to chat
           </Link>
-          <Link href="/login" className="landing-btn landing-btn-secondary">
-            Sign in
-          </Link>
-          <Link href="/register" className="landing-btn landing-btn-ghost">
+          <Link href="/register" className="landing-btn landing-btn-secondary">
             Create account
+          </Link>
+          <Link href="/login?callbackUrl=/parmaans" className="landing-btn landing-btn-ghost">
+            Sign in to browse Parmaans
           </Link>
         </div>
         <p className="landing-foot">
-          <Link href="/parmaans">Browse Parmaans &amp; Shabads</Link>
+          Chat and Parmaans require an account —{' '}
+          <Link href="/login?callbackUrl=/chat">Sign in</Link>
           {' · '}
           <span>Spiritual perspective only — not professional advice.</span>
         </p>

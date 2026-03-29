@@ -24,6 +24,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [personaSource, setPersonaSource] = useState('default')
 
   const base = apiBase()
 
@@ -46,6 +47,7 @@ export default function SettingsPage() {
         const u = d.user
         if (u?.preferred_language) setLanguage(u.preferred_language)
         if (u?.preferred_persona) setPersona(u.preferred_persona)
+        if (u?.persona_source) setPersonaSource(u.persona_source)
         if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
           setTheme(u.preferred_theme)
         }
@@ -137,6 +139,12 @@ export default function SettingsPage() {
         <label className="settings-label" htmlFor="pref-persona">
           Default persona
         </label>
+        {personaSource === 'google' && (
+          <p className="settings-hint">
+            This was inferred from your Google account birthday. Choosing a different option below switches you to manual
+            control (and hides the persona bar in chat).
+          </p>
+        )}
         <select
           id="pref-persona"
           className="settings-select"
