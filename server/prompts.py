@@ -255,6 +255,90 @@ def get_persona_context(persona: str) -> Dict[str, str]:
     """Get the context dictionary for a specific persona."""
     return PERSONA_CONTEXTS.get(persona, PERSONA_CONTEXTS["adult"])
 
+
+# Top global languages for response output (ISO-style codes)
+LANGUAGE_INSTRUCTIONS: Dict[str, str] = {
+    "en": "Write your entire response in clear, natural English.",
+    "zh": "用简体中文撰写你的全部回复（简体中文）。",
+    "hi": "पूरा उत्तर देवनागरी हिंदी में लिखें।",
+    "es": "Escribe toda tu respuesta en español.",
+    "fr": "Rédige toute ta réponse en français.",
+    "ar": "اكتب ردك بالكامل باللغة العربية الفصحى البسيطة.",
+    "bn": "সম্পূর্ণ উত্তর বাংলায় লিখুন।",
+    "pt": "Escreva toda a sua resposta em português.",
+    "ru": "Напиши весь ответ на русском языке.",
+    "pa": "ਆਪਣਾ ਸਾਰਾ ਜਵਾਬ ਗੁਰਮੁਖੀ ਪੰਜਾਬੀ ਵਿੱਚ ਲਿਖੋ।",
+}
+
+
+def resolve_language(lang: Optional[str]) -> str:
+    code = (lang or "en").lower().strip()
+    return code if code in LANGUAGE_INSTRUCTIONS else "en"
+
+
+def format_conversation_history(message_history: Any) -> str:
+    """Turn [{role, content}, ...] into a compact transcript block."""
+    if not message_history or not isinstance(message_history, list):
+        return ""
+    lines = []
+    for turn in message_history[-12:]:  # cap context
+        if not isinstance(turn, dict):
+            continue
+        role = turn.get("role", "")
+        content = (turn.get("content") or "").strip()
+        if not content:
+            continue
+        label = "User" if role == "user" else "Assistant"
+        lines.append(f"{label}: {content}")
+    if not lines:
+        return ""
+    return "CONVERSATION SO FAR (continue this thread; stay consistent):\n" + "\n".join(lines) + "\n\n"
+
+
+def generate_chat_title(first_user_message: str) -> str:
+    """Short contextual title (3–6 words) using lightweight model."""
+    if not GEMINI_API_KEY or not first_user_message.strip():
+        return "New chat"
+    try:
+        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        prompt = (
+            "Generate a very short chat title (3 to 6 words, no quotes, no emoji) "
+            "summarizing this user's first message. Spiritual/wellness context.\n\n"
+            f"Message: {first_user_message[:500]}"
+        )
+        r = lite.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(temperature=0.3, max_output_tokens=40),
+        )
+        t = (r.text or "").strip().replace("\n", " ")
+        t = t.strip("'\"")[:200]
+        return t if t else "New chat"
+    except Exception as e:
+        logger.warning("Title generation failed: %s", e)
+        return "New chat"
+
+
+def generate_opposite_theme_query(shabad_summary: str) -> str:
+    """Ask Gemini for a short search phrase to find contrasting Gurbani themes."""
+    if not GEMINI_API_KEY:
+        return "ego attachment pride versus humility surrender"
+    try:
+        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        prompt = (
+            "Given this Gurbani summary, output ONE short English search phrase (max 20 words) "
+            "to find verses with contrasting or complementary spiritual emphasis (e.g. humility vs pride). "
+            "Phrase only, no punctuation lists.\n\n"
+            f"Summary: {shabad_summary[:800]}"
+        )
+        r = lite.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(temperature=0.4, max_output_tokens=60),
+        )
+        return (r.text or "").strip()[:500]
+    except Exception as e:
+        logger.warning("Opposite theme generation failed: %s", e)
+        return "humility peace letting go attachment"
+
 GENERATION_MODEL = None
 
 def get_best_generation_model():
@@ -287,7 +371,13 @@ def get_best_generation_model():
     GENERATION_MODEL = 'gemini-1.5-flash'
     return GENERATION_MODEL
 
-def synthesize_gemini_response(user_query: str, shabads: Optional[list] = None, persona: str = "adult") -> Optional[str]:
+def synthesize_gemini_response(
+    user_query: str,
+    shabads: Optional[list] = None,
+    persona: str = "adult",
+    language: str = "en",
+    message_history: Any = None,
+) -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
     is_prompts_test = any("test_prompts" in s for s in stack)
@@ -307,7 +397,9 @@ def synthesize_gemini_response(user_query: str, shabads: Optional[list] = None, 
         if is_prompts_test and shabads is None and persona == "adult":
             prompt = user_query
         else:
-            prompt = build_gemini_response_prompt(user_query, shabads, persona)
+            prompt = build_gemini_response_prompt(
+                user_query, shabads, persona, language=language, message_history=message_history
+            )
 
         response = model.generate_content(prompt)
         
@@ -326,32 +418,38 @@ def synthesize_gemini_response(user_query: str, shabads: Optional[list] = None, 
             return None
         return FALLBACK_RESPONSE
 
-def build_gemini_response_prompt(user_query: str, shabads: Any = None, persona: str = "adult") -> str:
+def build_gemini_response_prompt(
+    user_query: str,
+    shabads: Any = None,
+    persona: str = "adult",
+    language: str = "en",
+    message_history: Any = None,
+) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
     """
-    # Smart swap for tests that call (query, persona, shabads) 
-    # instead of (query, shabads, persona)
+    # Smart swap for tests that call (query, persona, shabads)
     if isinstance(shabads, str) and shabads in PERSONA_CONTEXTS:
-        # arg2 is a persona, let's see if arg3 looks like shabads/context
-        # if arg3 is None or arg3 is a list or arg3 is a string context
         temp_persona = shabads
         shabads = persona
         persona = temp_persona
 
-    if not persona in PERSONA_CONTEXTS:
+    if persona not in PERSONA_CONTEXTS:
         persona = "adult"
-    
+
     p_ctx = PERSONA_CONTEXTS[persona]
-    
+    lang_code = resolve_language(language)
+    lang_line = LANGUAGE_INSTRUCTIONS.get(lang_code, LANGUAGE_INSTRUCTIONS["en"])
+    history_block = format_conversation_history(message_history)
+
     shabad_context = format_shabad_context(shabads)
-    
-    # Check if this is a clarification scenario (no shabads provided)
+
     is_clarification = shabads is None or (isinstance(shabads, list) and len(shabads) == 0)
 
     if is_clarification:
-        # For vague queries, we want the AI to ask clarifying questions
         prompt = f"""{SYSTEM_PROMPT}
+
+OUTPUT LANGUAGE: {lang_line}
 
 PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
@@ -363,12 +461,13 @@ IMPORTANT: The user's query appears vague or incomplete. Your task is to:
 3. Do NOT provide scripture or full guidance yet - wait for more context
 4. End with the [SUGGESTIONS] block with 3 options to help them share more
 
-USER'S MESSAGE: {user_query}
+{history_block}USER'S MESSAGE: {user_query}
 
 Respond with empathy and gentle clarifying questions."""
     else:
-        # Standard full response with Gurbani context
         prompt = f"""{SYSTEM_PROMPT}
+
+OUTPUT LANGUAGE: {lang_line}
 
 PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
@@ -376,7 +475,7 @@ Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
 GURBANI CONTEXT: {shabad_context}
 
-USER'S QUESTION: {user_query}
+{history_block}USER'S QUESTION: {user_query}
 
 Please provide a compassionate response based on the Gurbani context. Follow the 5-part structure and end with the [SUGGESTIONS] block."""
 

@@ -1,0 +1,272 @@
+.parmaans-page {
+  min-height: 100vh;
+  padding: 1.5rem clamp(1rem, 4vw, 3rem);
+  background: var(--color-background, #1a1a2e);
+  color: var(--color-text-primary, #fff);
+}
+
+.parmaans-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border, #2a3a5c);
+  padding-bottom: 1rem;
+}
+
+.parmaans-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.75rem;
+}
+
+.parmaans-sub {
+  margin: 0;
+  color: var(--color-text-secondary, #b8b8d1);
+  max-width: 42rem;
+}
+
+.parmaans-nav {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.parmaans-nav a {
+  color: var(--color-primary, #ff6b00);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.parmaans-nav a:hover {
+  text-decoration: underline;
+}
+
+.parmaans-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.parmaans-tabs button {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface, #16213e);
+  color: inherit;
+  cursor: pointer;
+}
+
+.parmaans-tabs button.active {
+  border-color: var(--color-primary, #ff6b00);
+  color: var(--color-primary, #ff6b00);
+}
+
+.parmaans-error {
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.parmaans-panel {
+  position: relative;
+}
+
+.parmaans-search-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.parmaans-search-form input {
+  flex: 1;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface-elevated, #1f2b47);
+  color: inherit;
+}
+
+.parmaans-search-form button {
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-primary, #ff6b00);
+  color: #0f0f1a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shabad-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.shabad-card-btn {
+  width: 100%;
+  text-align: left;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface, #16213e);
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 5rem;
+}
+
+.shabad-card-btn:hover {
+  border-color: var(--color-primary, #ff6b00);
+}
+
+.shabad-card-btn .gurmukhi {
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+
+.shabad-card-btn .eng {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #b8b8d1);
+}
+
+.parmaans-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.parmaans-pager button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface, #16213e);
+  color: inherit;
+  cursor: pointer;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.category-tile {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface-elevated, #1f2b47);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.category-tile strong {
+  color: var(--color-accent, #ffd93d);
+}
+
+.category-tile span {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #b8b8d1);
+}
+
+.parmaans-detail {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(440px, 100vw);
+  background: var(--color-surface-elevated, #1f2b47);
+  border-left: 1px solid var(--color-border, #2a3a5c);
+  padding: 1.25rem;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+}
+
+.parmaans-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary, #b8b8d1);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.gurmukhi-large {
+  font-size: 1.25rem;
+  line-height: 1.45;
+  margin: 0 2rem 0.5rem 0;
+}
+
+.eng-large {
+  line-height: 1.5;
+  margin: 0.5rem 0;
+}
+
+.roman {
+  color: var(--color-text-secondary, #b8b8d1);
+  font-size: 0.9rem;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #b8b8d1);
+}
+
+.sttm-btn {
+  display: inline-block;
+  margin: 0.75rem 0 1rem;
+  color: var(--color-primary, #ff6b00);
+  font-weight: 600;
+}
+
+.related-tabs h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary, #b8b8d1);
+  margin: 1rem 0 0.5rem;
+}
+
+.mini-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mini-list li button {
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0;
+  border: none;
+  background: none;
+  color: var(--color-text-primary, #fff);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.mini-list li button:hover {
+  color: var(--color-primary, #ff6b00);
+}
+
+.opposite-q {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #b8b8d1);
+  font-style: italic;
+}

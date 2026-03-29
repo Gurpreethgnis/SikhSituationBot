@@ -1,0 +1,71 @@
+.shared-page {
+  min-height: 100vh;
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--color-background, #1a1a2e);
+  color: var(--color-text-primary, #fff);
+}
+
+.shared-header h1 {
+  margin: 0 0 0.5rem;
+}
+
+.shared-sub {
+  color: var(--color-text-secondary, #b8b8d1);
+  margin: 0 0 1rem;
+}
+
+.shared-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.shared-cta {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  background: var(--color-primary, #ff6b00);
+  color: #0f0f1a;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.shared-link {
+  color: var(--color-primary, #ff6b00);
+  align-self: center;
+}
+
+.shared-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.shared-msg {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface, #16213e);
+}
+
+.shared-msg--assistant {
+  background: var(--color-surface-elevated, #1f2b47);
+}
+
+.shared-msg-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary, #b8b8d1);
+  margin-bottom: 0.5rem;
+}
+
+.shared-sttm {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--color-primary, #ff6b00);
+  font-size: 0.9rem;
+}

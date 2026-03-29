@@ -1,0 +1,121 @@
+/* Theme tokens override semantic vars used across App.css / Sidebar / ChatInput */
+
+[data-theme='saffron'] {
+  --midnight: hsl(230, 60%, 8%);
+  --navy-deep: hsl(230, 50%, 12%);
+  --navy: hsl(230, 45%, 18%);
+  --royal: hsl(225, 60%, 28%);
+  --gold: hsl(25, 100%, 52%);
+  --gold-light: hsl(32, 100%, 62%);
+  --gold-muted: hsl(32, 50%, 45%);
+  --color-bg: #0f1729;
+  --color-bg-elevated: #1a2744;
+  --color-surface: #1e2d4a;
+  --color-border: #2d3d5c;
+  --text-primary: #e8ecf4;
+  --text-secondary: #8b9bb8;
+  --text-muted: hsl(230, 15%, 50%);
+  --surface-glass: hsla(0, 0%, 100%, 0.03);
+  --surface-glass-hover: hsla(0, 0%, 100%, 0.07);
+  --border-glass: hsla(0, 0%, 100%, 0.08);
+  --border-gold: hsla(25, 100%, 52%, 0.25);
+  --color-accent: #ff6b00;
+  --color-text: #e8ecf4;
+  --color-text-muted: #8b9bb8;
+}
+
+[data-theme='royal-blue'] {
+  --midnight: #0f172a;
+  --navy-deep: #1e293b;
+  --navy: #1e3a8a;
+  --royal: #2563eb;
+  --gold: #fbbf24;
+  --gold-light: #fcd34d;
+  --gold-muted: #b45309;
+  --color-bg: #0f172a;
+  --color-bg-elevated: #1e293b;
+  --color-surface: #1e293b;
+  --color-border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --surface-glass: hsla(0, 0%, 100%, 0.04);
+  --surface-glass-hover: hsla(0, 0%, 100%, 0.08);
+  --border-glass: hsla(0, 0%, 100%, 0.1);
+  --border-gold: hsla(43, 96%, 56%, 0.3);
+  --color-accent: #fbbf24;
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+}
+
+[data-theme='light'] {
+  --midnight: #f8fafc;
+  --navy-deep: #f1f5f9;
+  --navy: #e2e8f0;
+  --royal: #1e293b;
+  --gold: #ea580c;
+  --gold-light: #fb923c;
+  --gold-muted: #9a3412;
+  --color-bg: #f5f5f5;
+  --color-bg-elevated: #ffffff;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --surface-glass: hsla(0, 0%, 0%, 0.04);
+  --surface-glass-hover: hsla(0, 0%, 0%, 0.06);
+  --border-glass: hsla(0, 0%, 0%, 0.08);
+  --border-gold: hsla(25, 95%, 48%, 0.35);
+  --color-accent: #ea580c;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+}
+
+[data-theme='khalsa-gold'] {
+  --midnight: #1c1410;
+  --navy-deep: #2d241e;
+  --navy: #3d322a;
+  --royal: #5c4d3d;
+  --gold: #d4af37;
+  --gold-light: #f0c850;
+  --gold-muted: #8b7355;
+  --color-bg: #1c1410;
+  --color-bg-elevated: #2d241e;
+  --color-surface: #2d241e;
+  --color-border: #4d4038;
+  --text-primary: #fff8e7;
+  --text-secondary: #c9b896;
+  --text-muted: #8a7a60;
+  --surface-glass: hsla(40, 40%, 90%, 0.05);
+  --surface-glass-hover: hsla(40, 40%, 90%, 0.09);
+  --border-glass: hsla(40, 30%, 70%, 0.12);
+  --border-gold: hsla(43, 65%, 52%, 0.35);
+  --color-accent: #d4af37;
+  --color-text: #fff8e7;
+  --color-text-muted: #c9b896;
+}
+
+[data-theme='nihangs-navy'] {
+  --midnight: #0a0a1a;
+  --navy-deep: #141428;
+  --navy: #1e1e3c;
+  --royal: #312e81;
+  --gold: #fde047;
+  --gold-light: #fef08a;
+  --gold-muted: #a16207;
+  --color-bg: #0a0a1a;
+  --color-bg-elevated: #141428;
+  --color-surface: #141428;
+  --color-border: #2e2e5c;
+  --text-primary: #e0e0ff;
+  --text-secondary: #9090c0;
+  --text-muted: #6366a0;
+  --surface-glass: hsla(240, 40%, 80%, 0.04);
+  --surface-glass-hover: hsla(240, 40%, 80%, 0.08);
+  --border-glass: hsla(240, 30%, 60%, 0.15);
+  --border-gold: hsla(48, 96%, 63%, 0.3);
+  --color-accent: #fde047;
+  --color-text: #e0e0ff;
+  --color-text-muted: #9090c0;
+}

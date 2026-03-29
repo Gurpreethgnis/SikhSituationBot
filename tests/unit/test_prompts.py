@@ -12,7 +12,7 @@ from prompts import (
     format_shabad_context,
     get_persona_context
 )
-from app import synthesize_gemini_response
+from prompts import synthesize_gemini_response
 
 
 class TestPrompts(unittest.TestCase):
@@ -162,20 +162,17 @@ class TestPrompts(unittest.TestCase):
         self.assertNotIn('Punjabi:', result)
         self.assertNotIn('Translation:', result)
 
-    @patch('prompts.genai')
+    @patch('prompts.model')
     @patch('prompts.GEMINI_API_KEY', 'test-key')
-    def test_synthesize_gemini_response_success(self, mock_genai):
+    def test_synthesize_gemini_response_success(self, mock_model):
         """Test successful Gemini response synthesis."""
-        mock_model = MagicMock()
         mock_response = MagicMock()
         mock_response.text = "Test synthesized response"
         mock_model.generate_content.return_value = mock_response
-        mock_genai.GenerativeModel.return_value = mock_model
 
         result = synthesize_gemini_response("test prompt")
 
         self.assertEqual(result, "Test synthesized response")
-        mock_genai.GenerativeModel.assert_called_once()
         mock_model.generate_content.assert_called_once_with("test prompt")
 
     @patch('prompts.GEMINI_API_KEY', None)
@@ -184,39 +181,35 @@ class TestPrompts(unittest.TestCase):
         result = synthesize_gemini_response("test prompt")
         self.assertIsNone(result)
 
-    @patch('prompts.genai')
+    @patch('prompts.model')
     @patch('prompts.GEMINI_API_KEY', 'test-key')
-    def test_synthesize_gemini_response_api_error(self, mock_genai):
+    def test_synthesize_gemini_response_api_error(self, mock_model):
         """Test Gemini synthesis when API call fails."""
-        mock_genai.GenerativeModel.side_effect = Exception("API Error")
+        mock_model.generate_content.side_effect = Exception("API Error")
 
         result = synthesize_gemini_response("test prompt")
 
         self.assertIsNone(result)
 
-    @patch('prompts.genai')
+    @patch('prompts.model')
     @patch('prompts.GEMINI_API_KEY', 'test-key')
-    def test_synthesize_gemini_response_empty_response(self, mock_genai):
+    def test_synthesize_gemini_response_empty_response(self, mock_model):
         """Test Gemini synthesis with empty response."""
-        mock_model = MagicMock()
         mock_response = MagicMock()
         mock_response.text = ""
         mock_model.generate_content.return_value = mock_response
-        mock_genai.GenerativeModel.return_value = mock_model
 
         result = synthesize_gemini_response("test prompt")
 
         self.assertEqual(result, "")
 
-    @patch('prompts.genai')
+    @patch('prompts.model')
     @patch('prompts.GEMINI_API_KEY', 'test-key')
-    def test_synthesize_gemini_response_whitespace_response(self, mock_genai):
+    def test_synthesize_gemini_response_whitespace_response(self, mock_model):
         """Test Gemini synthesis with whitespace-only response."""
-        mock_model = MagicMock()
         mock_response = MagicMock()
         mock_response.text = "   \n\t   "
         mock_model.generate_content.return_value = mock_response
-        mock_genai.GenerativeModel.return_value = mock_model
 
         result = synthesize_gemini_response("test prompt")
 
