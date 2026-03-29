@@ -49,8 +49,8 @@ git pull origin feature/your-role-branch
 | Create `scripts/clean_data.py` to normalize Gurbani text | ✅ | Done. Used to ensure schema consistency. |
 | Expand `data/shabad.json` with more situational Shabads | ✅ | Target hit: 50 situational Shabads vectorized & ready. |
 | Validate data against schema in `docs/data-strategy.md` | ✅ | Done. All files use unified JSON schema. |
-| **[MVP]** Script data pipeline to embed SGGS JSON via Gemini | ✅ | Implemented in `server/seed_db.py` (PR #21) |
-| **[MVP]** Integrate Gemini API in `/ask` for final response synthesis | ✅ | RAG pipeline live in `server/app.py` (PR #21) |
+<| **[MVP]** Script data pipeline to embed SGGS JSON via Gemini | ✅ | COMPLETED: Enhanced `server/seed_db.py` with robust error handling, batch processing, pgvector setup, and progress logging. |
+| **[MVP]** Integrate Gemini API in `/ask` for final response synthesis | ✅ | COMPLETED: Updated `/ask` endpoint with Gemini synthesis, persona-aware prompts, and structured responses. |
 | **Pointers**: Use `sentence-transformers` in Python if you start on semantic search early. | | |
 
 ### Assigned to @sarnazb (Design)
@@ -59,8 +59,9 @@ git pull origin feature/your-role-branch
 | Define CSS color palette (Deep Blues, Gold accents) | ✅ | Sikh-inspired, calming (`client/src/index.css`) |
 | Create `docs/design-tokens.md` or design spec | ✅ | Created `docs/design-tokens.md` |
 | Design "Perspectives" pills/tabs (Child, Teen, Adult) | ✅ | Integrated into `client/src/index.css` |
-| **[MVP]** Standardize rich text/Markdown styling for AI insights | ✅ | `MarkdownRenderer.jsx` + `globals.css` (PR #21) |
-| **[MVP]** Refine typography layout for dynamically sized AI content | ✅ | Dynamic Shabad card + AI insight styling (PR #21) |
+| **[MVP]** Standardize rich text/Markdown styling for AI insights | ✅ | COMPLETED: Integrated `MarkdownRenderer.jsx` and standardized `.prose-gurbani` in `globals.css`. |
+| **[MVP]** Refine typography layout for dynamically sized AI content | ✅ | COMPLETED: Implemented `clamp()` typography and responsive `shabad-card` layout for dynamic content. |
+| **[MVP]** Add comprehensive testing guide and verify suite | ✅ | Created `docs/tests-guide.md` and verified all backend tests |
 
 ### Assigned to @siddharthchopra (UX)
 | Task | Status | Notes |

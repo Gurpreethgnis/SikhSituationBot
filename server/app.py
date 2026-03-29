@@ -4,111 +4,148 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
+import logging
+import sys
+from typing import List, Dict, Any
+
 from models import db, Shabad
+from vector_utils import get_embedding
+from retrieval import search_similar_shabads, get_random_shabads, get_shabad_by_id
+from prompts import build_gemini_response_prompt, format_shabad_context, synthesize_gemini_response, FALLBACK_RESPONSE
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Configure Gemini API
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for the frontend to communicate with the backend
+CORS(app, resources={r"/*": {
+    "origins": "*",
+    "methods": ["GET", "POST", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization"]
+}})
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
 
 # Database Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+is_testing = (
+    os.environ.get('TESTING') == 'true' or 
+    os.environ.get('FLASK_ENV') == 'testing' or 
+    'pytest' in sys.modules or 
+    'unittest' in sys.modules
+)
+
+if is_testing:
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL_TEST', 'sqlite:///:memory:')
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://localhost/sikhsituationbot')
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-# Configure Gemini API
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-pro')
-
-def get_embedding(text):
-    """Generate a vector embedding for the given text using Gemini."""
-    try:
-        result = genai.embed_content(
-            model="models/text-embedding-004",
-            content=text,
-            task_type="retrieval_query"
-        )
-        return result['embedding']
-    except Exception as e:
-        print(f"Error generating embedding: {e}")
-        return None
-
-def generate_ai_response(query, context, persona):
-    """Synthesize an empathetic response using Gemini based on Gurbani context."""
-    prompt = f"""
-    You are the SikhSituationBot, a wise and empathetic companion that provides guidance based on the Sri Guru Granth Sahib (SGGS).
-    
-    User Query: "{query}"
-    User Persona: {persona} (Tailor your tone for this audience: Child, Teen, or Adult)
-    
-    Relevant Wisdom from SGGS:
-    - Gurmukhi: "{context['gurmukhi']}"
-    - English Translation: "{context['translation']}"
-    
-    Task:
-    1. Acknowledge the user's situation with deep empathy.
-    2. Explain the meaning of the provided Gurmukhi verse in the context of their query.
-    3. Provide actionable, spiritual advice aligned with Gurmat (Guru's teachings).
-    4. Keep the tone respectful, calming, and appropriate for a {persona}.
-    
-    Response format: Markdown (use bullet points or short paragraphs for readability).
-    """
-    
-    try:
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        return f"I am reflecting on the Guru's wisdom for you. (Error: {str(e)})"
-
+@app.route('/health', methods=['GET'])
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "success", "message": "SikhSituationBot RAG backend is active!"}), 200
+    """Simple health check endpoint to verify server is running."""
+    import datetime
+    return jsonify({
+        "status": "healthy",
+        "message": "SikhSituationBot backend is running!",
+        "timestamp": datetime.datetime.now().isoformat()
+    }), 200
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    data = request.json
-    query = data.get('query', '')
-    persona = data.get('persona', 'adult').capitalize()
-    
-    if not query:
+    """Endpoint for chat queries with semantic search and AI synthesis."""
+    try:
+        data = request.get_json(silent=True)
+        if data is None:
+            return jsonify({"error": "Request must be JSON"}), 400
+    except Exception:
+        return jsonify({"error": "Invalid JSON"}), 400
+
+    query_text = data.get('query', '').strip()
+    persona_input = data.get('persona', 'adult').lower().strip()
+
+    if not query_text:
         return jsonify({"error": "No query provided"}), 400
         
+    # Validate persona
+    valid_personas = ['child', 'teen', 'adult']
+    persona = persona_input if persona_input in valid_personas else 'adult'
+
+    logger.info(f"Processing query: '{query_text}' for persona: {persona}")
+
     # 1. Generate Query Embedding
-    query_vector = get_embedding(query)
+    query_vector = get_embedding(query_text)
     if not query_vector:
+        logger.error("Embedding generation failed")
         return jsonify({"error": "Failed to process query embedding"}), 500
 
-    # 2. Perform Semantic Search via pgvector
+    # 2. Perform Semantic Search via pgvector (or search_similar_shabads)
     try:
-        # Get the single most relevant verse
-        shabad = Shabad.query.order_by(Shabad.embedding.cosine_distance(query_vector)).first()
+        similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=1, persona=persona)
         
-        if not shabad:
+        if not similar_shabads:
+            # Fallback to general search if persona-specific search returns nothing
+            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=1)
+            
+        if not similar_shabads:
             return jsonify({"error": "No matching wisdom found in database"}), 404
             
-        context = {
-            "gurmukhi": shabad.gurmukhi,
-            "translation": shabad.english_translation,
-            "transliteration": shabad.romanization
-        }
+        # For MVP compatibility, we use the first (most relevant) shabad
+        top_shabad = similar_shabads[0]
+        context_dict = top_shabad.to_dict()
         
         # 3. Generate AI Synthesis
-        ai_response = generate_ai_response(query, context, persona)
+        # Convert to list for the synthesis function which expects it
+        shabad_list = [context_dict]
+        ai_response = synthesize_gemini_response(query_text, shabad_list, persona)
         
+        # Return response in format expected by the frontend
         return jsonify({
             "response": ai_response,
             "shabad": {
-                "text": context["gurmukhi"],
-                "title": context["translation"],
-                "transliteration": context["transliteration"]
-            }
+                "text": context_dict["gurmukhi"],
+                "title": context_dict["english_translation"],
+                "transliteration": context_dict["romanization"]
+            },
+            "persona": persona
         }), 200
 
     except Exception as e:
-        print(f"Database error: {e}")
-        return jsonify({"error": "A database error occurred. Please ensure pgvector is enabled."}), 500
+        logger.error(f"Error during retrieval or synthesis: {e}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/random-shabads', methods=['GET'])
+def random_shabads():
+    """Endpoint to get random shabads."""
+    limit = request.args.get('limit', default=3, type=int)
+    shabads = get_random_shabads(limit=limit)
+    return jsonify({"shabads": [s.to_dict() for s in shabads]}), 200
+
+if __name__ == '__main__':
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception as e:
+            print(f"Warning: Could not create tables: {e}")
+            
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 if __name__ == '__main__':
     with app.app_context():

@@ -1,13 +1,45 @@
+# Environment files
 .env
-server/venv
-server/__pycache__
-client/.next
-client/node_modules
-node_modules
-.next
-venv
-venv_img
+.env.test
+.env.local
+
+# Virtual environments
+venv/
+.venv/
+server/venv/
+venv_img/
+
+# Python cache and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+server/__pycache__/
+
+# Testing
+.pytest_cache/
+pytest_output*
+pytest_diagnostic*
+pytest_fail_report*
+pytest_final_tests.txt
+pytest_latest_run.txt
+pytest_retest.txt
+pytest_run_latest.txt
+pytest_server_tests_report*
+pytest_skip_vectorutils.txt
+pytest_tests_dir_report*
+
+# Frontend
+client/.next/
+client/node_modules/
+node_modules/
+.next/
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Scratch and Binary files
 gh
 use_rembg.py
 remove_bg.py
+SikhSituationBot.code-workspace
