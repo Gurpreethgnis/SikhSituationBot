@@ -5,7 +5,10 @@ from typing import List, Optional, Dict, Any
 
 import google.generativeai as genai
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    SentenceTransformer = None
 
 # Import Google API exceptions
 try:
@@ -25,7 +28,7 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'models/text-embedding-004')
+EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'models/embedding-001')
 LOCAL_EMBEDDING_MODEL = os.environ.get('LOCAL_EMBEDDING_MODEL', 'all-MiniLM-L6-v2')
 
 # Retry configuration
@@ -36,9 +39,13 @@ MAX_DELAY = 10.0  # seconds
 _local_model = None
 
 
-def load_local_model() -> SentenceTransformer:
+def load_local_model() -> Optional[Any]:
     """Load the local sentence-transformers model with caching."""
     global _local_model
+    if SentenceTransformer is None:
+        logger.error("sentence-transformers package is not installed. Local embeddings unavailable.")
+        return None
+        
     if _local_model is None:
         logger.info(f"Loading local embedding model: {LOCAL_EMBEDDING_MODEL}")
         _local_model = SentenceTransformer(LOCAL_EMBEDDING_MODEL)
@@ -80,7 +87,7 @@ def get_embedding_gemini(text: str, model: str = EMBEDDING_MODEL, timeout: float
             if google_exceptions and hasattr(google_exceptions, 'ResourceExhausted') and isinstance(e, google_exceptions.ResourceExhausted):
                 # Rate limit exceeded
                 if attempt < MAX_RETRIES - 1:
-                    delay = _calculate_backoff_delay(attempt)
+                    delay = calculate_backoff_delay(attempt)
                     logger.warning(f"Gemini rate limit exceeded, retrying in {delay:.1f}s: {e}")
                     time.sleep(delay)
                     continue
@@ -89,7 +96,7 @@ def get_embedding_gemini(text: str, model: str = EMBEDDING_MODEL, timeout: float
             elif google_exceptions and hasattr(google_exceptions, 'ServiceUnavailable') and isinstance(e, google_exceptions.ServiceUnavailable):
                 # Service temporarily unavailable
                 if attempt < MAX_RETRIES - 1:
-                    delay = _calculate_backoff_delay(attempt)
+                    delay = calculate_backoff_delay(attempt)
                     logger.warning(f"Gemini service unavailable, retrying in {delay:.1f}s: {e}")
                     time.sleep(delay)
                     continue
@@ -115,6 +122,9 @@ def get_embedding_local(text: str) -> Optional[List[float]]:
     """Get embeddings from local sentence-transformers model."""
     try:
         local_model = load_local_model()
+        if local_model is None:
+            return None
+            
         logger.debug(f"Generating local embedding for text length {len(text)}")
         emb = local_model.encode(text, normalize_embeddings=True)
         embedding = emb.tolist()
