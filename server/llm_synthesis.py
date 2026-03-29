@@ -28,7 +28,7 @@ LLM_PROVIDER_MODELS: Dict[str, List[str]] = {
     "gemini": [
         "models/gemini-flash-latest",
         "models/gemini-2.0-flash",
-        "models/gemini-2.0-flash-lite",
+        "models/gemini-2.5-flash",
         "models/gemini-1.5-flash",
         "models/gemini-1.5-pro",
     ],
