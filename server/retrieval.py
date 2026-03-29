@@ -12,9 +12,9 @@ def find_similar_shabads(query_embedding: List[float], limit: int = 5, persona: 
     try:
         query = Shabad.query
 
-        # Optional persona-based pre-filtering (if persona is stored)
+        # Persona-based filtering: include specific persona matches and general 'any' category
         if persona:
-            query = query.filter(Shabad.recommended_persona == persona)
+            query = query.filter(Shabad.recommended_persona.in_([persona, 'any']))
 
         # Cosine distance based on pgvector; smaller is better
         return query.order_by(Shabad.embedding.cosine_distance(query_embedding)).limit(limit).all()
