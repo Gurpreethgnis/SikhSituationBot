@@ -52,6 +52,15 @@
   box-sizing: border-box;
 }
 
+/*
+ * Native select dropdowns often render options on a light surface while inheriting
+ * the select’s light text color — unreadable. Force readable option colors.
+ */
+select option {
+  background-color: #ffffff;
+  color: #1a1a2e;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;

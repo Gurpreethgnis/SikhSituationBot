@@ -65,11 +65,6 @@
   color: var(--gold);
 }
 
-.landing-btn-ghost {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
 .landing-btn:hover {
   transform: translateY(-1px);
 }
@@ -78,13 +73,5 @@
   margin-top: 2.5rem;
   font-size: 0.85rem;
   color: var(--text-muted);
-}
-
-.landing-foot a {
-  color: var(--gold);
-  text-decoration: none;
-}
-
-.landing-foot a:hover {
-  text-decoration: underline;
+  line-height: 1.5;
 }

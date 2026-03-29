@@ -16,20 +16,14 @@ export default function LandingPage() {
         </p>
         <div className="landing-actions">
           <Link href="/login?callbackUrl=/chat" className="landing-btn landing-btn-primary">
-            Sign in to chat
+            Sign in!
           </Link>
           <Link href="/register" className="landing-btn landing-btn-secondary">
             Create account
           </Link>
-          <Link href="/login?callbackUrl=/parmaans" className="landing-btn landing-btn-ghost">
-            Sign in to browse Parmaans
-          </Link>
         </div>
         <p className="landing-foot">
-          Chat and Parmaans require an account —{' '}
-          <Link href="/login?callbackUrl=/chat">Sign in</Link>
-          {' · '}
-          <span>Spiritual perspective only — not professional advice.</span>
+          Chat and Parmaans use your account after you sign in. Spiritual perspective only — not professional advice.
         </p>
       </div>
     </div>
