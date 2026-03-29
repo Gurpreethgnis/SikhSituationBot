@@ -544,3 +544,84 @@ h1, h2, h3, h4, h5, h6 {
   border-left-color: var(--gold);
 }
 
+/* Mini Shabad Card for Chat Bubbles */
+.shabad-card.mini {
+  margin: 1rem 0 0 0;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: none;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.shabad-card.mini .gurmukhi-text {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.shabad-card.mini .translation {
+  font-size: 0.95rem;
+  margin-bottom: 0;
+  max-width: 100%;
+}
+
+/* Chat Welcome Screen */
+.chat-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1;
+  padding: 2rem;
+  gap: 1.5rem;
+  opacity: 0.8;
+  animation: fadeIn 1s ease-out;
+}
+
+.chat-welcome h2 {
+  font-size: 2rem;
+  margin: 0;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app__title--small {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 0;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.footer-disclaimer {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.75rem;
+    opacity: 0.6;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
