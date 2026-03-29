@@ -93,8 +93,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 2rem;
-    background: linear-gradient(transparent, var(--navy) 60%);
+    padding: 1.5rem 2rem 2rem;
+    background: linear-gradient(transparent, var(--color-bg) 40%);
     pointer-events: none;
     z-index: 10;
 }
@@ -103,6 +103,45 @@
     max-width: 800px;
     margin: 0 auto;
     pointer-events: auto;
+}
+
+.suggestions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.suggestion-chip {
+    background: var(--surface-glass);
+    border: 1px solid var(--border-gold);
+    color: var(--gold-light);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+    max-width: 280px;
+    text-align: left;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-chip:hover {
+    background: var(--surface-glass-hover);
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(201, 162, 39, 0.25);
+    color: var(--gold);
+}
+
+.suggestion-chip:active {
+    transform: translateY(0);
 }
 
 /* Assistant-UI Style Message Bubbles */
@@ -168,6 +207,43 @@
     padding: 2rem;
 }
 
+/* Empty State (Initial Screen) */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex: 1;
+    padding: 2rem;
+    gap: 1rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.empty-state h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem 0;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .app__title--small {
     font-size: 1.4rem;
     font-weight: 800;
@@ -226,10 +302,66 @@
     z-index: 90;
 }
 
+.mobile-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(15, 23, 41, 0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-glass);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.menu-toggle {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.menu-toggle:hover {
+    background: var(--surface-glass-hover);
+}
+
+.mobile-logo {
+    font-size: 1.5rem;
+    color: var(--gold);
+}
+
 @media (max-width: 768px) {
+    .mobile-header {
+        display: flex;
+    }
+    
     .message { max-width: 95%; }
-    .chat-messages { padding: 1rem; }
+    
+    .chat-messages { 
+        padding: 1rem;
+        padding-top: 0;
+    }
+    
     .sidebar-overlay.open {
         display: block;
+    }
+    
+    .suggestions-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .suggestion-chip {
+        max-width: 100%;
+        white-space: normal;
+    }
+    
+    .chat-footer {
+        padding: 1rem;
     }
 }
