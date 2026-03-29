@@ -1,24 +1,26 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import { useTranslation } from '../contexts/TranslationContext.jsx'
 import './GuidanceMenu.css'
-
-const MODES = [
-  {
-    id: 'parmaan',
-    label: 'Parmaan-grounded',
-    hint: 'Retrieve a relevant shabad and reflect on it.',
-  },
-  {
-    id: 'situational',
-    label: 'Situational advice',
-    hint: 'General Sikhi-aligned perspective without a retrieved verse.',
-  },
-]
 
 export default function GuidanceMenu({ mode, onModeChange, disabled, variant }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
+  const { t } = useTranslation()
+
+  const MODES = [
+    {
+      id: 'guidance',
+      label: t('parmaanGrounded'),
+      hint: t('guidanceModeHint'),
+    },
+    {
+      id: 'parmaan',
+      label: t('situationalAdvice'),
+      hint: t('parmaanModeHint'),
+    },
+  ]
 
   useEffect(() => {
     if (!open) return
@@ -45,7 +47,7 @@ export default function GuidanceMenu({ mode, onModeChange, disabled, variant }) 
         className="guidance-menu__trigger"
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label="Choose guidance type"
+        aria-label={t('chooseGuidanceType')}
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
       >
@@ -54,7 +56,7 @@ export default function GuidanceMenu({ mode, onModeChange, disabled, variant }) 
         </span>
       </button>
       {open && (
-        <div className="guidance-menu__popover" role="menu" aria-label="Guidance type">
+        <div className="guidance-menu__popover" role="menu" aria-label={t('guidanceType')}>
           {MODES.map((m) => (
             <button
               key={m.id}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useTranslation } from '../contexts/TranslationContext.jsx'
 import './ChatInput.css'
 
 /**
@@ -9,6 +10,7 @@ import './ChatInput.css'
 export default function ChatInput({ onSend, placeholder, disabled, loading, startAdornment }) {
   const [value, setValue] = useState('')
   const inputRef = useRef(null)
+  const { t } = useTranslation()
 
   const handleSubmit = (e) => {
     e?.preventDefault()
@@ -33,19 +35,19 @@ export default function ChatInput({ onSend, placeholder, disabled, loading, star
           ref={inputRef}
           type="text"
           className="chat-input__field"
-          placeholder={placeholder ?? 'Message SikhSituationBot…'}
+          placeholder={placeholder ?? t('messagePlaceholder')}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          aria-label="Message"
+          aria-label={t('message')}
           autoComplete="off"
         />
         <button
           type="submit"
           className="chat-input__send"
           disabled={!value.trim() || disabled || loading}
-          aria-label="Send message"
+          aria-label={t('sendMessage')}
         >
           {loading ? (
             <span className="chat-input__spinner" aria-hidden />

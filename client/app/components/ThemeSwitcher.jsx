@@ -2,10 +2,12 @@
 
 import React from 'react'
 import { useTheme } from '../contexts/ThemeContext'
+import { useTranslation } from '../contexts/TranslationContext.jsx'
 import './ThemeSwitcher.css'
 
 export default function ThemeSwitcher({ compact = false }) {
   const { theme, setTheme, themes } = useTheme()
+  const { t } = useTranslation()
 
   if (compact) {
     return (
@@ -13,11 +15,11 @@ export default function ThemeSwitcher({ compact = false }) {
         className="theme-switcher-select"
         value={theme}
         onChange={(e) => setTheme(e.target.value)}
-        aria-label="Theme"
+        aria-label={t('theme')}
       >
-        {themes.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
+        {themes.map((th) => (
+          <option key={th.id} value={th.id}>
+            {th.name}
           </option>
         ))}
       </select>
@@ -26,18 +28,18 @@ export default function ThemeSwitcher({ compact = false }) {
 
   return (
     <div className="theme-switcher">
-      <span className="theme-switcher-label">Theme</span>
+      <span className="theme-switcher-label">{t('theme')}</span>
       <div className="theme-switcher-grid">
-        {themes.map((t) => (
+        {themes.map((th) => (
           <button
-            key={t.id}
+            key={th.id}
             type="button"
-            className={`theme-switcher-btn ${theme === t.id ? 'active' : ''}`}
-            data-theme-preview={t.id}
-            title={t.description}
-            onClick={() => setTheme(t.id)}
+            className={`theme-switcher-btn ${theme === th.id ? 'active' : ''}`}
+            data-theme-preview={th.id}
+            title={th.description}
+            onClick={() => setTheme(th.id)}
           >
-            {t.name}
+            {th.name}
           </button>
         ))}
       </div>

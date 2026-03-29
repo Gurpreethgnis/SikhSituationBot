@@ -377,7 +377,7 @@ def synthesize_gemini_response(
     persona: str = "adult",
     language: str = "en",
     message_history: Any = None,
-    guidance_mode: str = "parmaan",
+    guidance_mode: str = "guidance",
 ) -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
@@ -430,11 +430,11 @@ def build_gemini_response_prompt(
     persona: str = "adult",
     language: str = "en",
     message_history: Any = None,
-    guidance_mode: str = "parmaan",
+    guidance_mode: str = "guidance",
 ) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
-    guidance_mode: parmaan (retrieve-backed) or situational (no shabad context).
+    guidance_mode: 'guidance' (life situation → shabad + summary) or 'parmaan' (search shabads by topic).
     """
     # Smart swap for tests that call (query, persona, shabads)
     if isinstance(shabads, str) and shabads in PERSONA_CONTEXTS:
@@ -450,8 +450,11 @@ def build_gemini_response_prompt(
     lang_line = LANGUAGE_INSTRUCTIONS.get(lang_code, LANGUAGE_INSTRUCTIONS["en"])
     history_block = format_conversation_history(message_history)
 
-    gm = (guidance_mode or "parmaan").strip().lower()
-    if gm == "situational":
+    gm = (guidance_mode or "guidance").strip().lower()
+    
+    if gm == "parmaan":
+        # Parmaan mode: User is searching for shabads on a topic or similar/dissimilar to a shabad
+        shabad_context = format_shabad_context(shabads)
         prompt = f"""{SYSTEM_PROMPT}
 
 OUTPUT LANGUAGE: {lang_line}
@@ -460,15 +463,22 @@ PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
-MODE: The user chose **situational guidance** (no specific retrieved shabad for this turn).
-Offer compassionate, Sikhi-aligned perspective grounded in general Guru Granth Sahib themes
-(seva, humility, naam, sangat, hukam) without presenting a verse as if it were retrieved from this app.
-Do not invent shabad IDs, page numbers, or long quotations presented as retrieved text.
-Keep the tone warm and practical. End with the [SUGGESTIONS] block with 3 short follow-up prompts.
+MODE: The user is in **Parmaan Search Mode** - they are looking for shabads on a specific topic, 
+or asking for shabads similar/dissimilar to a given shabad.
 
-{history_block}USER'S MESSAGE: {user_query}
+RETRIEVED SHABADS: {shabad_context}
 
-Respond with empathy and clear, respectful guidance."""
+{history_block}USER'S REQUEST: {user_query}
+
+Your task:
+1. Briefly introduce the shabads found that match their request
+2. Present each shabad clearly with its Gurmukhi, translation, and source
+3. Explain the themes or connections between the shabads
+4. If they asked for similar shabads, highlight what makes them similar
+5. If they asked for dissimilar/contrasting shabads, highlight the contrasts
+6. End with the [SUGGESTIONS] block with 3 follow-up options (e.g., "Find more shabads on this theme", "Explain this shabad deeper", "Find contrasting perspectives")
+
+Keep the focus on presenting the shabads rather than providing life guidance."""
         return prompt
 
     shabad_context = format_shabad_context(shabads)
@@ -494,6 +504,7 @@ IMPORTANT: The user's query appears vague or incomplete. Your task is to:
 
 Respond with empathy and gentle clarifying questions."""
     else:
+        # Default: Guidance mode - life situation + shabad-based guidance with summary
         prompt = f"""{SYSTEM_PROMPT}
 
 OUTPUT LANGUAGE: {lang_line}
@@ -502,10 +513,14 @@ PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
-GURBANI CONTEXT: {shabad_context}
+GURBANI CONTEXT (one or more relevant shabads to draw wisdom from):
+{shabad_context}
 
 {history_block}USER'S QUESTION: {user_query}
 
-Please provide a compassionate response based on the Gurbani context. Follow the 5-part structure and end with the [SUGGESTIONS] block."""
+Please provide a compassionate response based on the Gurbani context above. 
+- If multiple shabads are provided, weave insights from all of them to give a richer perspective.
+- The primary shabad should be quoted in the "Timeless Shabad" section, but insights from secondary shabads can be incorporated throughout.
+- Follow the 5-part Markdown structure and end with the [SUGGESTIONS] block."""
 
     return prompt
