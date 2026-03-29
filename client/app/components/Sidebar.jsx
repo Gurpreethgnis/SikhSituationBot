@@ -3,9 +3,9 @@
 import React from 'react'
 import './Sidebar.css'
 
-function Sidebar({ history, onSelectHistory, onNewChat }) {
+function Sidebar({ history, onSelectHistory, onNewChat, isOpen }) {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar__header">
         <button className="new-chat-btn" onClick={onNewChat}>
           <span className="plus-icon">+</span> New Chat
