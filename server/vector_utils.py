@@ -42,19 +42,24 @@ def get_best_embedding_model():
             if 'embedContent' in m.supported_generation_methods
         ]
         if available_models:
-            # Prefer text-embedding-004 if available, else pick the first one
-            best_model = 'models/text-embedding-004'
-            if best_model in available_models:
-                EMBEDDING_MODEL = best_model
-            else:
+            # Prefer text-embedding-004 -> gemini-embedding-001 -> first available
+            candidates = ['models/text-embedding-004', 'models/gemini-embedding-001']
+            for cand in candidates:
+                if cand in available_models:
+                    EMBEDDING_MODEL = cand
+                    break
+            
+            if not EMBEDDING_MODEL:
                 EMBEDDING_MODEL = available_models[0]
-            logger.info(f"Auto-selected Gemini embedding model: {EMBEDDING_MODEL}")
+                
+            logger.info(f"Using Gemini embedding model: {EMBEDDING_MODEL}")
             return EMBEDDING_MODEL
     except Exception as e:
         logger.error(f"Failed to list Gemini models: {e}")
         
     # Fallback to a known default if listing fails
     EMBEDDING_MODEL = 'models/text-embedding-004'
+    logger.info(f"Fallback Gemini embedding model: {EMBEDDING_MODEL}")
     return EMBEDDING_MODEL
 
 LOCAL_EMBEDDING_MODEL = os.environ.get('LOCAL_EMBEDDING_MODEL', 'all-MiniLM-L6-v2')
