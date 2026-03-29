@@ -1,25 +1,64 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import ChatInput from './components/ChatInput.jsx'
 import Perspectives from './components/Perspectives.jsx'
 import Logo from './components/Logo'
+import Sidebar from './components/Sidebar.jsx'
 import MarkdownRenderer from './components/MarkdownRenderer'
+import './App.css'
 
 function App() {
   const [persona, setPersona] = useState('adult')
   const [loading, setLoading] = useState(false)
-  const [shabad, setShabad] = useState(null)
-  const [aiResponse, setAiResponse] = useState('')
-  const [lastQuery, setLastQuery] = useState('')
+  const [messages, setMessages] = useState([])
+  const [history, setHistory] = useState([])
   const [error, setError] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  
+  const messagesEndRef = useRef(null)
+
+  // Scroll to bottom whenever messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, loading])
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('sikh_bot_history')
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory))
+      } catch (e) {
+        console.error('Failed to parse history', e)
+      }
+    }
+  }, [])
+
+  // Save history to localStorage
+  const saveToHistory = (query) => {
+    const newHistoryItem = { 
+      title: query.length > 30 ? query.substring(0, 30) + '...' : query,
+      query: query,
+      timestamp: new Date().toISOString()
+    }
+    const updatedHistory = [newHistoryItem, ...history.filter(h => h.query !== query)].slice(0, 20)
+    setHistory(updatedHistory)
+    localStorage.setItem('sikh_bot_history', JSON.stringify(updatedHistory))
+  }
 
   const handleSend = async (query) => {
-    setLastQuery(query)
     setError('')
     setLoading(true)
-    setShabad(null)
-    setAiResponse('')
+    
+    // Add user message to thread
+    const userMessage = { role: 'user', content: query }
+    setMessages(prev => [...prev, userMessage])
+    saveToHistory(query)
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
@@ -38,97 +77,150 @@ function App() {
       }
 
       const data = await response.json()
-      setAiResponse(data.response)
-      setShabad(data.shabad)
-    } catch (error) {
-      console.error('Chat query failed:', error)
-      setError(`Sorry, I am having trouble connecting to Gurbani wisdom right now. (${error.message})`)
-      setAiResponse('')
+      
+      // Add AI message to thread
+      const aiMessage = { 
+        role: 'assistant', 
+        content: data.response,
+        shabad: data.shabad,
+        persona: data.persona
+      }
+      if (data.error) {
+        setError(data.error)
+      } else {
+        // Parse suggestions out of the content
+        let content = data.response
+        let extractedSuggestions = []
+        
+        if (content.includes('[SUGGESTIONS]')) {
+          const parts = content.split('[SUGGESTIONS]')
+          content = parts[0].trim()
+          const suggestionLines = parts[1].trim().split('\n')
+          extractedSuggestions = suggestionLines
+            .map(s => s.replace(/^- /, '').trim())
+            .filter(s => s.length > 0)
+        }
+
+        const aiMessage = { role: 'assistant', content: content }
+        setMessages(prev => [...prev, aiMessage])
+        setSuggestions(extractedSuggestions)
+        
+        // Save to history (sidebar)
+        setHistory(prev => {
+          const newHistory = [{ id: Date.now(), title: query, query }, ...prev]
+          localStorage.setItem('chatHistory', JSON.stringify(newHistory.slice(0, 20)))
+          return newHistory.slice(0, 20)
+        })
+      }
+    } catch (err) {
+      console.error('Chat error:', err)
+      setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleNewChat = () => {
+    setMessages([])
+    setSuggestions([])
+    setError('')
+  }
+
+  const handleSelectHistory = (historyItem) => {
+    setMessages([])
+    setSuggestions([])
+    handleSend(historyItem.query)
+  }
+
+  const handleSuggestionClick = (suggestion) => {
+    handleSend(suggestion)
+  }
+
   return (
-    <div className="app">
-      <header className="app__header">
-        <Logo />
-        <h1 className="app__title">SikhSituationBot</h1>
-        <p className="app__tagline">Gurbani-based guidance for life's moments</p>
-      </header>
+    <div className="app-container">
+      <div 
+        className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} 
+        onClick={() => setSidebarOpen(false)}
+      />
+      <Sidebar 
+        history={history} 
+        onSelectHistory={handleSelectHistory} 
+        onNewChat={handleNewChat}
+        isOpen={sidebarOpen}
+      />
+      
+      <main className="chat-main">
+        <header className="mobile-header">
+          <button 
+            className="menu-toggle" 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            ☰
+          </button>
+          <div className="mobile-logo">☬</div>
+        </header>
 
-      <main className="app__main container">
-        <Perspectives activePersona={persona} onPersonaChange={setPersona} />
-        <ChatInput
-          onSend={handleSend}
-          placeholder={`Share how you're feeling as a ${persona}...`}
-          loading={loading}
-        />
-
-        {/* Loading skeleton */}
-        {loading && !aiResponse && !error && (
-          <div className="shabad-result">
-            <div className="ai-insight-wrapper loading">
-              <span className="insight-label">Seeking the Guru's wisdom...</span>
-              <div className="loading-dots">
-                <span>.</span><span>.</span><span>.</span>
-              </div>
-              <div className="ai-skeleton" aria-hidden>
-                <div className="skeleton-line" style={{ width: '70%' }} />
-                <div className="skeleton-line" style={{ width: '90%' }} />
-                <div className="typing-dots"><span></span><span></span><span></span></div>
-              </div>
+        <section className="chat-messages">
+          {messages.length === 0 ? (
+            <div className="empty-state">
+              <Logo />
+              <h1>SikhSituationBot</h1>
+              <p>Seek guidance from the Guru Granth Sahib for your life situations.</p>
+              <Perspectives activePersona={persona} onPersonaChange={setPersona} />
             </div>
-            <div className={`shabad-card skeleton ${persona}`}>
-              <div className="ik-onkar-icon">☬</div>
-              <h2 className="gurmukhi-text">&nbsp;</h2>
-              <p className="transliteration">&nbsp;</p>
-              <div className="shabad-divider"></div>
-              <p className="translation">&nbsp;</p>
-            </div>
-          </div>
-        )}
-
-        {/* Error state with retry */}
-        {error && (
-          <div className="shabad-result">
-            <div className="ai-insight-wrapper">
-              <span className="insight-label">Guru's Guidance ({persona}):</span>
-              <div className="error-card" role="alert">
-                <p className="error-message">{error}</p>
-                <div className="error-actions">
-                  <button className="error-retry" onClick={() => handleSend(lastQuery)}>Retry</button>
+          ) : (
+            <div className="messages-thread">
+              {messages.map((msg, index) => (
+                <div key={index} className={`message message--${msg.role}`}>
+                  <div className="message-label">
+                    {msg.role === 'user' ? 'You' : 'Guru'}
+                  </div>
+                  <div className="message-content">
+                    <MarkdownRenderer content={msg.content} />
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+              ))}
+              
+              {suggestions.length > 0 && !loading && (
+                <div className="suggestions-container">
+                  <p className="suggestions-label">Continue your journey:</p>
+                  <div className="suggestions-list">
+                    {suggestions.map((suggestion, i) => (
+                      <button 
+                        key={i} 
+                        className="suggestion-btn"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Normal AI response */}
-        {aiResponse && !error && (
-          <div className="shabad-result" aria-live="polite">
-            <div className="ai-insight-wrapper">
-              <span className="insight-label">Guru's Guidance ({persona}):</span>
-              <div className="ai-insight">
-                <MarkdownRenderer content={aiResponse} />
-              </div>
+              {loading && (
+                <div className="message message--assistant loading">
+                  <div className="message-label">Seeking Wisdom...</div>
+                  <div className="message-content">
+                    <div className="typing-dots"><span></span><span></span><span></span></div>
+                  </div>
+                </div>
+              )}
+              {error && <div className="error-message">{error}</div>}
+              <div ref={messagesEndRef} />
             </div>
-            {shabad && (
-              <div className={`shabad-card ${persona}`}>
-                <div className="ik-onkar-icon">☬</div>
-                <h2 className="gurmukhi-text">{shabad.text}</h2>
-                <p className="transliteration">{shabad.transliteration}</p>
-                <div className="shabad-divider"></div>
-                <p className="translation">“{shabad.title}”</p>
-              </div>
-            )}
+          )}
+        </section>
+
+        <footer className="chat-footer">
+          <div className="chat-input-wrapper">
+            <ChatInput onSend={handleSend} disabled={loading} />
+            <p className="footer-disclaimer">
+              SikhSituationBot provides spiritual perspectives, not professional advice.
+            </p>
           </div>
-        )}
+        </footer>
       </main>
-
-      <footer className="app__footer">
-        <p>Seek guidance. Find peace.</p>
-      </footer>
     </div>
   )
 }

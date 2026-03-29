@@ -1,0 +1,136 @@
+.sidebar {
+  width: 260px;
+  background-color: var(--midnight);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  border-right: 1px solid var(--border-glass);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.sidebar__header {
+  padding: 1rem;
+}
+
+.new-chat-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.new-chat-btn:hover {
+  background-color: var(--surface-glass-hover);
+  border-color: var(--gold-muted);
+}
+
+.sidebar__history {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.history-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-item {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-align: left;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  background-color: var(--surface-glass-hover);
+  color: var(--text-primary);
+}
+
+.history-item.active {
+  background-color: var(--surface-glass-hover);
+  border: 1px solid var(--border-gold);
+}
+
+.sidebar__footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border-glass);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.user-profile:hover {
+  background-color: var(--surface-glass-hover);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--gold-gradient);
+  color: var(--midnight);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+

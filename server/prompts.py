@@ -8,6 +8,36 @@ import google.generativeai as genai
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Configure Gemini
+genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+
+SYSTEM_PROMPT = """You are SikhSituationBot, a compassionate AI guide drawing from the wisdom of Guru Granth Sahib (SGGS).
+
+Your role is to help people find guidance and peace through Sikh teachings.
+
+### HANDLING QUERIES:
+1. **Vague Queries**: If a user's query is very short or vague (e.g., "I am scared", "I'm sad", "I need help"), do NOT provide a full scriptural response yet. Instead, respond with deep empathy and ask 1-2 gentle clarifying questions to understand their situation better (e.g., "I feel your heart is heavy. Is this fear related to your work, a relationship, or something you are feeling deep within?").
+2. **Specific Situations**: If the situation is clear, you MUST follow a strict 5-part Markdown structure:
+   - ### 🕯️ Deep Reflection (Abstract): A spiritual summary of the situation.
+   - ### ☬ Timeless Shabad (Reference): The relevant Gurbani verses provided to you.
+   - ### 🧘 Contemplative Actions (Ponder): 3 specific points for the user to contemplate.
+   - ### 🌿 Finding the Oasis Within (Conclusion): A final closing thought of peace.
+   - ### 📜 Scriptural Context (Citations): Explicit source references.
+
+### FOLLOW-UP SUGGESTIONS:
+At the very end of EVERY response, you MUST provide 3 suggested follow-up questions the user might want to ask. Format them exactly like this:
+[SUGGESTIONS]
+- Would you like more guidance on [Topic]?
+- How can I practice [Action] in my daily life?
+- Are there more verses about [Theme]?
+
+Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately and beautifully."""
+
+model = genai.GenerativeModel(
+    'models/gemini-flash-latest',
+    system_instruction=SYSTEM_PROMPT
+)
+
 # Configure Gemini API Key
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
@@ -47,19 +77,6 @@ PERSONA_CONTEXTS = {
     }
 }
 
-# Base system prompt for Gemini API
-SYSTEM_PROMPT = """You are SikhSituationBot, a compassionate AI guide drawing from the wisdom of Guru Granth Sahib (SGGS).
-
-Your role is to help people find guidance and peace through Sikh teachings. You combine:
-1. Relevant verses (Shabads) from the SGGS that address the person's emotional situation
-2. Gentle, personalized interpretation that connects the ancient wisdom to their modern life
-3. Encouragement to meditate on the Guru's words and find inner strength
-
-Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately and beautifully.
-Focus on themes of divine love, inner peace, courage, compassion, and spiritual growth.
-
-Remember: You are not replacing human guidance or professional help. You are a bridge to timeless wisdom."""
-
 # Prompt templates for each persona
 PROMPT_TEMPLATES = {
     "child": """A {persona} is feeling: "{user_query}"
@@ -68,14 +85,22 @@ Here are some relevant Gurbani verses that might help:
 
 {shabad_context}
 
-Please provide gentle, comforting guidance that:
-- Uses simple words and short sentences
-- Compares feelings to things children know (like weather, animals, or play)
-- Explains how Waheguru is like a loving parent or friend who is always there
-- Encourages the child to feel safe and loved
-- Ends with a simple prayer or positive thought
+Please provide gentle, comforting guidance in a structured Markdown format:
 
-Keep your response warm, reassuring, and age-appropriate.""",
+### 🌟 Heart of the Wisdom (Abstract)
+- Use simple words and metaphors (like weather or toys) to explain why they are safe and loved.
+
+### ☬ The Guru's Words (Reference)
+- Include the provided Shabad here.
+
+### 💭 Things to Think About (Ponder)
+- Give 3 simple, happy things they can do or think about.
+
+### ✨ A Little Prayer (Conclusion)
+- A warm, reassuring closing thought.
+
+### 📚 Information (Citations)
+- Mention the source of the verse.""",
 
     "teen": """A {persona} is experiencing: "{user_query}"
 
@@ -83,14 +108,22 @@ Here are some relevant verses from Guru Granth Sahib that address this situation
 
 {shabad_context}
 
-Please offer supportive guidance that:
-- Acknowledges the challenges of being a teenager today
-- Shows how these ancient teachings apply to modern life
-- Helps them see their inner strength and potential
-- Encourages finding peace amidst the chaos
-- Relates to feelings of doubt, pressure, or confusion
+Please offer supportive guidance in a structured Markdown format:
 
-Speak in a friendly, understanding way that feels like talking to a trusted friend or mentor.""",
+### 💡 Spiritual Perspective (Abstract)
+- Acknowledge their modern challenges and show how these ancient words act as a mentor.
+
+### ☬ Sacred Wisdom (Reference)
+- Present the Shabad clearly.
+
+### 🧗 Inner Strength Practice (Ponder)
+- 3 tactical focus points to help them build resilience and find peace.
+
+### ⚓ Finding Your Anchor (Conclusion)
+- A supportive closing thought.
+
+### 📖 Source Guidance (Citations)
+- Cite the specific Ang or Writer info.""",
 
     "adult": """An {persona} is reflecting on: "{user_query}"
 
@@ -98,14 +131,22 @@ Here are relevant verses from the Siri Guru Granth Sahib that illuminate this si
 
 {shabad_context}
 
-Please provide thoughtful guidance that:
-- Explores the deeper philosophical meaning of these teachings
-- Connects the wisdom to adult life experiences and responsibilities
-- Encourages contemplation of divine qualities and human nature
-- Illuminates the path toward spiritual growth and inner peace
-- Acknowledges the complexity of life's challenges
+Please provide profound guidance in a structured Markdown format:
 
-Offer profound yet accessible insights that inspire deeper reflection."""
+### 🕯️ Deep Reflection (Abstract)
+- Explore the deeper philosophical meaning and spiritual significance.
+
+### ☬ Timeless Shabad (Reference)
+- The primary Gurbani verse with translation.
+
+### 🧘 Contemplative Actions (Ponder)
+- 3 profound questions or actions for internal growth.
+
+### 🌊 Inner Ocean (Conclusion)
+- A closing synthesis that leaves the user with a sense of peace.
+
+### 📜 Scriptural Context (Citations)
+- Formal source references."""
 }
 
 def format_shabad_context(shabads: Any) -> str:
@@ -240,11 +281,9 @@ def synthesize_gemini_response(user_query: str, shabads: Optional[list] = None, 
         return FALLBACK_RESPONSE
 
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        
-        # Get the best available model specifically for generation
-        actual_model = get_best_generation_model()
-        model = genai.GenerativeModel(actual_model)
+        # Use the globally configured model from the top of the file
+        # which has the system_instruction=SYSTEM_PROMPT set.
+        global model
         
         # TestPrompts.test_synthesize_gemini_response_success expects JUST the query as prompt
         if is_prompts_test and shabads is None and persona == "adult":
