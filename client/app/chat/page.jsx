@@ -184,23 +184,6 @@ export default function ChatPage() {
     setSidebarOpen(false)
   }
 
-  const handleShare = async () => {
-    if (!token || !activeChatId) return
-    try {
-      const r = await fetch(`${baseUrl}/api/chats/${activeChatId}/share`, {
-        method: 'POST',
-        headers: authHeaders(token),
-      })
-      const d = await r.json()
-      if (r.ok && d.url) {
-        await navigator.clipboard.writeText(d.url)
-        alert('Share link copied to clipboard.')
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-
   const handleSend = async (query) => {
     if (!token) {
       setError('Session expired. Please sign in again.')
