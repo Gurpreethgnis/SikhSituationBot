@@ -19,7 +19,7 @@ class User(db.Model):
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(100))
     avatar_url = Column(String(500))
-    password_hash = Column(String(256))  # null for OAuth-only accounts
+    password_hash = Column(String(512))  # null for OAuth-only; scrypt hashes can be long
     preferred_language = Column(String(10), default="en")
     preferred_persona = Column(String(20), default="adult")
     # default = show persona picker; google = inferred from Google birthday; manual = user set in settings

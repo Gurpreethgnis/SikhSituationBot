@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from sqlalchemy import desc
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from auth_utils import (
     decode_token,
@@ -259,19 +260,50 @@ def register():
     name = (data.get("name") or "").strip() or None
     if not email or not password or len(password) < 8:
         return jsonify({"error": "Valid email and password (8+ chars) required"}), 400
-    if User.query.filter_by(email=email).first():
-        return jsonify({"error": "Email already registered"}), 409
+
+    existing = User.query.filter_by(email=email).first()
+    if existing:
+        if existing.password_hash:
+            return jsonify({"error": "Email already registered"}), 409
+        # Same email as Google (or other OAuth) sign-in: add a password to the existing account.
+        try:
+            existing.password_hash = hash_password(password)
+            if name:
+                existing.name = name
+            existing.last_login = datetime.utcnow()
+            db.session.commit()
+            token = encode_token(existing.id, existing.email, existing.is_admin)
+            return jsonify({"token": token, "user": existing.to_dict()}), 201
+        except SQLAlchemyError:
+            db.session.rollback()
+            logger.exception("register: failed to add password for oauth-only user %s", email)
+            return jsonify({"error": "Could not complete registration. Please try again."}), 500
+
     is_admin = bool(ADMIN_EMAIL and email == ADMIN_EMAIL)
     user = User(
         email=email,
         name=name,
         password_hash=hash_password(password),
         is_admin=is_admin,
+        persona_source="default",
     )
-    db.session.add(user)
-    db.session.commit()
-    token = encode_token(user.id, user.email, user.is_admin)
-    return jsonify({"token": token, "user": user.to_dict()}), 201
+    try:
+        db.session.add(user)
+        db.session.commit()
+        token = encode_token(user.id, user.email, user.is_admin)
+        return jsonify({"token": token, "user": user.to_dict()}), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Email already registered"}), 409
+    except SQLAlchemyError:
+        db.session.rollback()
+        logger.exception("register failed for email %s", email)
+        return jsonify(
+            {
+                "error": "Registration failed. If you already signed in with Google using this email, "
+                "use Google sign-in or choose a different email.",
+            }
+        ), 500
 
 
 @app.route("/api/auth/login", methods=["POST"])

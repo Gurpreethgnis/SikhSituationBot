@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import unittest
+import uuid
 from unittest.mock import MagicMock, patch
 
 # Add server directory to path for imports
@@ -214,6 +215,41 @@ class TestAppIntegration(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         data = json.loads(r.data)
         self.assertTrue(data["shabads"])
+
+    def test_register_new_user(self):
+        email = f"reg-{uuid.uuid4().hex[:10]}@example.com"
+        r = self.client.post(
+            "/api/auth/register",
+            data=json.dumps({"email": email, "password": "password12", "name": "New"}),
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 201, r.data)
+        data = json.loads(r.data)
+        self.assertIn("token", data)
+        self.assertEqual(data["user"]["email"], email)
+
+    def test_register_oauth_only_adds_password(self):
+        from models import User, db
+
+        oemail = f"oauth-{uuid.uuid4().hex[:10]}@example.com"
+        with app.app_context():
+            db.session.add(User(email=oemail, name="O", password_hash=None))
+            db.session.commit()
+
+        r = self.client.post(
+            "/api/auth/register",
+            data=json.dumps({"email": oemail, "password": "password12"}),
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 201, r.data)
+        self.assertIn("token", json.loads(r.data))
+
+        r2 = self.client.post(
+            "/api/auth/register",
+            data=json.dumps({"email": oemail, "password": "otherpwd12"}),
+            content_type="application/json",
+        )
+        self.assertEqual(r2.status_code, 409)
 
 
 if __name__ == "__main__":
