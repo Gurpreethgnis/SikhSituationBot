@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import ChatInput from './components/ChatInput.jsx'
 import Perspectives from './components/Perspectives.jsx'
 import Logo from './components/Logo'
+import MarkdownRenderer from './components/MarkdownRenderer'
 
 function App() {
   const [persona, setPersona] = useState('adult')
@@ -32,8 +33,8 @@ function App() {
       })
 
       if (!response.ok) {
-        const devErrorText = await response.text().catch(() => '[no body]')
-        throw new Error(`Failed to fetch guidance from ${endpoint}: ${response.status} ${devErrorText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to fetch guidance: ${response.status}`)
       }
 
       const data = await response.json()
@@ -67,8 +68,11 @@ function App() {
         {/* Loading skeleton */}
         {loading && !aiResponse && !error && (
           <div className="shabad-result">
-            <div className="ai-insight-wrapper">
-              <span className="insight-label">Guru's Guidance ({persona}):</span>
+            <div className="ai-insight-wrapper loading">
+              <span className="insight-label">Seeking the Guru's wisdom...</span>
+              <div className="loading-dots">
+                <span>.</span><span>.</span><span>.</span>
+              </div>
               <div className="ai-skeleton" aria-hidden>
                 <div className="skeleton-line" style={{ width: '70%' }} />
                 <div className="skeleton-line" style={{ width: '90%' }} />
@@ -105,12 +109,14 @@ function App() {
           <div className="shabad-result" aria-live="polite">
             <div className="ai-insight-wrapper">
               <span className="insight-label">Guru's Guidance ({persona}):</span>
-              <div className="ai-insight prose-gurbani">{aiResponse}</div>
+              <div className="ai-insight">
+                <MarkdownRenderer content={aiResponse} />
+              </div>
             </div>
             {shabad && (
               <div className={`shabad-card ${persona}`}>
                 <div className="ik-onkar-icon">☬</div>
-                <h2 className="gurmukhi-text">{shabad?.Gurmukhi || shabad?.text}</h2>
+                <h2 className="gurmukhi-text">{shabad.text}</h2>
                 <p className="transliteration">{shabad.transliteration}</p>
                 <div className="shabad-divider"></div>
                 <p className="translation">“{shabad.title}”</p>
