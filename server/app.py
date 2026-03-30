@@ -883,6 +883,50 @@ def admin_interactions():
     ), 200
 
 
+def _normalize_parmaan_discovery(raw: Optional[str]) -> str:
+    """Map client/UI values to prompts retrieval types: similar | topic | dissimilar."""
+    s = (raw or "similar").strip().lower()
+    if s in ("dissimilar", "opposite", "contrasts", "contrast"):
+        return "dissimilar"
+    if s == "topic":
+        return "topic"
+    return "similar"
+
+
+def _retrieve_parmaan_shabads_for_chat(
+    query_vector: List[float],
+    discovery_type: str,
+    limit: int,
+    persona: str,
+) -> List[Shabad]:
+    """
+    Parmaan chat retrieval: similar/topic use semantic search on the user query embedding;
+    dissimilar finds the closest verse to the query, then searches using an opposite-theme phrase.
+    """
+    limit = max(1, min(int(limit), 15))
+    if discovery_type == "dissimilar":
+        anchors = search_similar_shabads(query_embedding=query_vector, limit=1, persona=persona)
+        if not anchors:
+            anchors = search_similar_shabads(query_embedding=query_vector, limit=1)
+        if not anchors:
+            return []
+        anchor = anchors[0]
+        summary = f"{anchor.english_translation or ''}\n{(anchor.gurmukhi or '')[:200]}"
+        phrase = generate_opposite_theme_query(summary)
+        opp_vec = get_embedding(phrase)
+        if not opp_vec:
+            return []
+        rows = search_similar_shabads(query_embedding=opp_vec, limit=limit + 2, persona=persona)
+        if not rows:
+            rows = search_similar_shabads(query_embedding=opp_vec, limit=limit + 2)
+        return [r for r in rows if r.id != anchor.id][:limit]
+
+    rows = search_similar_shabads(query_embedding=query_vector, limit=limit, persona=persona)
+    if not rows:
+        rows = search_similar_shabads(query_embedding=query_vector, limit=limit)
+    return rows
+
+
 # --- Main ask ---
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -974,13 +1018,23 @@ def ask():
     guidance_shabad_count = getattr(llm_settings, 'guidance_shabad_count', 3) if llm_settings else 3
     parmaan_shabad_count = getattr(llm_settings, 'parmaan_shabad_count', 5) if llm_settings else 5
 
+    parmaan_discovery = _normalize_parmaan_discovery(data.get("parmaan_discovery_type"))
+    effective_parmaan_count = parmaan_shabad_count
+    try:
+        pc_raw = data.get("parmaan_shabad_count")
+        if pc_raw is not None:
+            pc = int(pc_raw)
+            if 1 <= pc <= 15:
+                effective_parmaan_count = pc
+    except (TypeError, ValueError):
+        pass
+
     try:
         if guidance_mode == "parmaan":
-            # Parmaan mode: search for similar/dissimilar shabads or shabads on a topic
-            # Return multiple shabads without synthesized guidance
-            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=parmaan_shabad_count, persona=persona)
-            if not similar_shabads:
-                similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=parmaan_shabad_count)
+            # Parmaan mode: similar / by-topic (same retrieval) / dissimilar (opposite-theme search)
+            similar_shabads = _retrieve_parmaan_shabads_for_chat(
+                query_vector, parmaan_discovery, effective_parmaan_count, persona
+            )
             if not similar_shabads:
                 return jsonify({"error": "No matching shabads found for this topic"}), 404
 
@@ -997,6 +1051,7 @@ def ask():
                 language=language,
                 message_history=message_history,
                 guidance_mode="parmaan",
+                parmaan_discovery_type=parmaan_discovery,
             )
             ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 
@@ -1008,6 +1063,8 @@ def ask():
                 "language": language,
                 "is_clarification": False,
                 "guidance_mode": guidance_mode,
+                "parmaan_discovery_type": parmaan_discovery,
+                "parmaan_shabad_count": effective_parmaan_count,
             }
             _persist_messages(
                 active_chat, query_text, ai_response, similar_shabads[0].id if similar_shabads else None,

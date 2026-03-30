@@ -412,6 +412,7 @@ def synthesize_gemini_response(
     language: str = "en",
     message_history: Any = None,
     guidance_mode: str = "guidance",
+    parmaan_discovery_type: str = "similar",
 ) -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
@@ -439,6 +440,7 @@ def synthesize_gemini_response(
                 language=language,
                 message_history=message_history,
                 guidance_mode=guidance_mode,
+                parmaan_discovery_type=parmaan_discovery_type,
             )
 
         response = model.generate_content(prompt, safety_settings=_RELAXED_SAFETY)
@@ -466,10 +468,12 @@ def build_gemini_response_prompt(
     language: str = "en",
     message_history: Any = None,
     guidance_mode: str = "guidance",
+    parmaan_discovery_type: str = "similar",
 ) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
     guidance_mode: 'guidance' (life situation → shabad + summary) or 'parmaan' (search shabads by topic).
+    parmaan_discovery_type: 'similar' | 'topic' | 'dissimilar' (only used when guidance_mode is parmaan).
     """
     # Smart swap for tests that call (query, persona, shabads)
     if isinstance(shabads, str) and shabads in PERSONA_CONTEXTS:
@@ -486,10 +490,41 @@ def build_gemini_response_prompt(
     history_block = format_conversation_history(message_history)
 
     gm = (guidance_mode or "guidance").strip().lower()
-    
+    pdt = (parmaan_discovery_type or "similar").strip().lower()
+    if pdt in ("dissimilar", "opposite", "contrasts", "contrast"):
+        pdt = "dissimilar"
+    elif pdt != "topic":
+        pdt = "similar"
+
     if gm == "parmaan":
-        # Parmaan mode: User is searching for shabads on a topic or similar/dissimilar to a shabad
+        # Parmaan mode: retrieval type is chosen in the UI (similar / topic / dissimilar)
         shabad_context = format_shabad_context(shabads)
+        if pdt == "topic":
+            discovery_line = (
+                "DISCOVERY TYPE: **By topic** — the user named a theme or subject; treat the verses as "
+                "breadth around that theme, not personal life coaching."
+            )
+            task_extra = (
+                "Frame the intro around the topic they named. Show how the retrieved shabads illuminate "
+                "different facets of that theme."
+            )
+        elif pdt == "dissimilar":
+            discovery_line = (
+                "DISCOVERY TYPE: **Contrasts** — verses were retrieved to emphasize themes that contrast or "
+                "complement the spiritual tone of what matched the user's words (e.g. humility vs pride). "
+                "Explain those contrasts clearly."
+            )
+            task_extra = (
+                "Lead with why these shabads offer a contrasting or complementary angle, then present each verse. "
+                "Do not imply the user asked for life advice; stay on discovery and theme."
+            )
+        else:
+            discovery_line = (
+                "DISCOVERY TYPE: **Similar** — verses are semantically close to the user's text (a line, idea, or theme). "
+                "Highlight shared imagery, virtues, or doctrinal threads."
+            )
+            task_extra = "Explain what makes these shabads resonate with the user's wording or intent."
+
         prompt = f"""{SYSTEM_PROMPT}
 
 OUTPUT LANGUAGE: {lang_line}
@@ -498,20 +533,18 @@ PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
-MODE: The user is in **Parmaan Search Mode** - they are looking for shabads on a specific topic, 
-or asking for shabads similar/dissimilar to a given shabad.
+MODE: The user is in **Parmaan Search Mode** — they want Gurbani discovery (not situational counselling).
+{discovery_line}
 
 RETRIEVED SHABADS: {shabad_context}
 
 {history_block}USER'S REQUEST: {user_query}
 
 Your task:
-1. Briefly introduce the shabads found that match their request
+1. Briefly introduce the shabads in light of the discovery type above
 2. Present each shabad clearly with its Gurmukhi, translation, and source
-3. Explain the themes or connections between the shabads
-4. If they asked for similar shabads, highlight what makes them similar
-5. If they asked for dissimilar/contrasting shabads, highlight the contrasts
-6. End with the [SUGGESTIONS] block with 3 follow-up options (e.g., "Find more shabads on this theme", "Explain this shabad deeper", "Find contrasting perspectives")
+3. {task_extra}
+4. End with the [SUGGESTIONS] block with 3 short follow-up options suited to discovery (e.g. more on this theme, deeper on one shabad, try contrasting shabads)
 
 Keep the focus on presenting the shabads rather than providing life guidance."""
         return prompt

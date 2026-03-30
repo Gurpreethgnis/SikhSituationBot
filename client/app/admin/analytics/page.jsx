@@ -48,14 +48,14 @@ export default function AdminAnalyticsPage() {
               <span>Shabads in index</span>
             </div>
           </div>
-          <section>
-            <h2 style={{ fontSize: '1rem' }}>Response languages (API)</h2>
-            <ul>
+          <section className="admin-analytics-section">
+            <h2 className="admin-section-title">Response languages (API)</h2>
+            <ul className="admin-list">
               {(data.languages_supported || []).map((l) => (
                 <li key={l}>{l}</li>
               ))}
             </ul>
-            <p style={{ color: 'var(--color-text-secondary, #b8b8d1)', fontSize: '0.85rem' }}>
+            <p className="admin-muted" style={{ fontSize: '0.85rem' }}>
               For deeper charts (DAU, topics), wire a metrics pipeline or export logs — this dashboard shows
               datastore counts only.
             </p>

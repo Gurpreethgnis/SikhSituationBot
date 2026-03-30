@@ -82,10 +82,10 @@ export default function AdminShabadsPage() {
     <div>
       <h1 className="admin-page-title">Shabads</h1>
       {err && <p className="admin-error">{err}</p>}
-      {msg && <p style={{ color: '#86efac' }}>{msg}</p>}
+      {msg && <p className="admin-success">{msg}</p>}
 
       <form className="admin-form" onSubmit={submitCreate}>
-        <h2 style={{ margin: 0, fontSize: '1rem' }}>Add Shabad</h2>
+        <h2 className="admin-section-title">Add Shabad</h2>
         <label>
           Shabad key (STTM id / unique)
           <input
@@ -128,7 +128,9 @@ export default function AdminShabadsPage() {
             onChange={(e) => setForm((f) => ({ ...f, recommended_persona: e.target.value }))}
           />
         </label>
-        <button type="submit">Create &amp; embed</button>
+        <button type="submit" className="admin-btn-primary">
+          Create &amp; embed
+        </button>
       </form>
 
       <form
@@ -137,14 +139,16 @@ export default function AdminShabadsPage() {
           setPage(1)
           load()
         }}
-        className="admin-form"
+        className="admin-form admin-form--inline"
         style={{ maxWidth: '100%', flexDirection: 'row', alignItems: 'flex-end' }}
       >
         <label style={{ flex: 1 }}>
           Search
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gurmukhi / English / source" />
         </label>
-        <button type="submit">Search</button>
+        <button type="submit" className="admin-btn">
+          Search
+        </button>
       </form>
 
       <div className="admin-table-wrap">
@@ -173,12 +177,12 @@ export default function AdminShabadsPage() {
           </tbody>
         </table>
       </div>
-      <p>
+      <p className="admin-pagination-note">
         Page {page} — {total} total{' '}
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+        <button type="button" className="admin-btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
           Prev
         </button>{' '}
-        <button type="button" disabled={page * 25 >= total} onClick={() => setPage((p) => p + 1)}>
+        <button type="button" className="admin-btn" disabled={page * 25 >= total} onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </p>

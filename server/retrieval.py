@@ -95,7 +95,8 @@ def browse_shabads(
 
 def find_similar_to_shabad(shabad: Shabad, limit: int = 6, exclude_self: bool = True) -> List[Shabad]:
     """Neighbors in embedding space (excluding same row)."""
-    if not shabad or not shabad.embedding:
+    # embedding may be a numpy vector from pgvector; never use `not embedding` (ambiguous truth value).
+    if shabad is None or shabad.embedding is None:
         return []
     try:
         q = Shabad.query.filter(Shabad.embedding.isnot(None))
