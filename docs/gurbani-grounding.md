@@ -21,6 +21,12 @@ The bot’s English strings come from BaniDB steek fields (bdb/ms/ssk ordering i
 
 If a row has suspiciously short `gurmukhi` or `english_translation`, re-run bulk ingest or fix the row in admin. Embeddings and RAG quality depend on full verse text from BaniDB.
 
+## Parmaan search quality (Raag/Mehla headers)
+
+BaniDB shabad ids include **section headers** (e.g. "Aasaa, Fifth Mehla") that are not full hymns. Those rows are flagged at ingest (`is_header_only`, `verse_count`, `content_length` in `server/models.py`) and **skipped on new bulk ingest** when detected. Parmaan discovery (`/api/parmaans/*`, Parmaan chat retrieval) runs vector search with `exclude_parmaan_low_quality=True`: rows with `is_header_only` set, or below minimum Gurmukhi/English length, are filtered out. See `server/gurbani_content_quality.py` and `server/retrieval.py`.
+
+**Existing databases:** run `cd server && python backfill_shabad_quality.py` after deploying the migration so header stubs are flagged. Postgres hosts get new columns via startup migration in `server/app.py` (same pattern as `llm_settings`).
+
 ## Related code
 
 - `server/gurbani_display.py` — canonical markdown, substring checks, Ang allow-list.

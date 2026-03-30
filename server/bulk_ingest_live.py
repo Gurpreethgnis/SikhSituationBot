@@ -15,6 +15,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app import app, db
+from gurbani_content_quality import compute_shabad_quality_fields, infer_verse_count_from_banidb_verses
 from models import Shabad
 from vector_utils import get_embedding, get_best_embedding_model
 
@@ -26,7 +27,9 @@ logger = logging.getLogger(__name__)
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-SGGS_MAX_SHABADS = 5867
+# BaniDB v2 GET /shabads/{id} returns error (no shabadInfo) for id > 5540 for SGGS.
+# Do not raise the loop limit without re-checking https://api.banidb.com/v2/shabads/{id}
+SGGS_MAX_SHABADS = 5540
 
 def get_best_generation_model():
     """Detect the best available generation model from the API."""
@@ -43,6 +46,17 @@ def fetch_shabad_text(shabad_id: int):
     """Fetch Gurmukhi, Romanization, and English translation for a specific Shabad."""
     try:
         raw_shabad = banidb.shabad(shabad_id)
+    except KeyError as e:
+        # banidb.shabad() indexes json['shabadInfo']; API error payloads omit it.
+        if e.args and e.args[0] == "shabadInfo":
+            logger.warning(
+                "Skipping Shabad %s: not in BaniDB (invalid id or past max SGGS shabad id %s).",
+                shabad_id,
+                SGGS_MAX_SHABADS,
+            )
+        else:
+            logger.error("Failed to fetch Shabad %s from BaniDB API: %s", shabad_id, e)
+        return None
     except Exception as e:
         logger.error(f"Failed to fetch Shabad {shabad_id} from BaniDB API: {e}")
         return None
@@ -54,21 +68,32 @@ def fetch_shabad_text(shabad_id: int):
     english_lines = []
     roman_lines = []
 
-    for verse in raw_shabad.get("verses", []):
+    verses = raw_shabad.get("verses") or []
+    for verse in verses:
         gurmukhi_lines.append(verse.get("verse", ""))
-        
+
         steek = verse.get("steek", {}).get("en", {})
         eng_text = steek.get("bdb") or steek.get("ms") or steek.get("ssk") or ""
         english_lines.append(eng_text)
-        
+
         translit = verse.get("transliteration", {}).get("english", "")
         roman_lines.append(translit)
 
     full_gurmukhi = " ".join([line for line in gurmukhi_lines if line]).strip()
     full_english = " ".join([line for line in english_lines if line]).strip()
     full_roman = " ".join([line for line in roman_lines if line]).strip()
-    
+
     if not full_gurmukhi or not full_english:
+        return None
+
+    verse_count = infer_verse_count_from_banidb_verses(verses)
+    quality = compute_shabad_quality_fields(full_gurmukhi, full_english, verse_count)
+    if quality["is_header_only"]:
+        logger.info(
+            "Skipping Shabad %s: Raag/Mehla header stub (verse_count=%s)",
+            shabad_id,
+            verse_count,
+        )
         return None
 
     return {
@@ -78,7 +103,10 @@ def fetch_shabad_text(shabad_id: int):
         "romanization": full_roman,
         "english_translation": full_english,
         "source": f"SGGS Ang {raw_shabad.get('ang')}",
-        "writer": raw_shabad.get('writer', 'Unknown')
+        "writer": raw_shabad.get("writer", "Unknown"),
+        "is_header_only": False,
+        "verse_count": quality["verse_count"],
+        "content_length": quality["content_length"],
     }
 
 def generate_context_tags(english_text: str, model) -> List[str]:
@@ -178,7 +206,10 @@ def main():
                     context_tags=json.dumps(tags),
                     source=shabad_data["source"],
                     recommended_persona="any",
-                    embedding=embedding
+                    is_header_only=shabad_data.get("is_header_only", False),
+                    verse_count=shabad_data.get("verse_count"),
+                    content_length=shabad_data.get("content_length"),
+                    embedding=embedding,
                 )
                 db.session.add(new_shabad)
                 db.session.commit()
