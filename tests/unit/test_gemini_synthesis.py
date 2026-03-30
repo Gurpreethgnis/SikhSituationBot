@@ -101,9 +101,24 @@ class TestGeminiSynthesis(unittest.TestCase):
         """Test building Gemini prompt when no shabads are found."""
         prompt = build_gemini_response_prompt(self.user_query, [], "adult")
 
-        # Should handle empty shabad list gracefully
+        # Empty list triggers clarification-style branch (no scripture yet)
         self.assertIn(self.user_query, prompt)
-        self.assertIn("No specific verses were found", prompt)
+        self.assertIn("vague or incomplete", prompt)
+        self.assertIn("clarifying", prompt.lower())
+
+    def test_build_gemini_response_prompt_situational_mode(self):
+        """Situational mode uses dedicated instructions without Gurbani context block."""
+        prompt = build_gemini_response_prompt(
+            "How can I be calmer at work?",
+            None,
+            "adult",
+            language="en",
+            message_history=None,
+            guidance_mode="situational",
+        )
+        self.assertIn("situational guidance", prompt.lower())
+        self.assertNotIn("vague or incomplete", prompt)
+        self.assertNotIn("GURBANI CONTEXT:", prompt)
 
     def test_build_gemini_response_prompt_invalid_persona(self):
         """Test building Gemini prompt with invalid persona."""
@@ -131,44 +146,35 @@ class TestGeminiSynthesis(unittest.TestCase):
         self.assertIn("compassionate", SYSTEM_PROMPT)
         self.assertIn("wisdom", SYSTEM_PROMPT)
 
-    @patch('prompts.genai')
+    @patch('prompts.model')
     @patch('prompts.GEMINI_API_KEY', 'test-key')
-    def test_synthesize_gemini_response_success(self, mock_genai):
+    def test_synthesize_gemini_response_success(self, mock_model):
         """Test successful Gemini response synthesis."""
-        # Mock the Gemini API response
         mock_response = MagicMock()
         mock_response.text = "This is a test response from Gemini."
-        mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
-        mock_genai.GenerativeModel.return_value = mock_model
 
         from prompts import synthesize_gemini_response
 
         result = synthesize_gemini_response("test query", self.sample_shabads, "adult")
 
         self.assertEqual(result, "This is a test response from Gemini.")
-        mock_genai.GenerativeModel.assert_called_with('gemini-1.5-flash')
         mock_model.generate_content.assert_called_once()
 
-    @patch('prompts.genai')
     @patch('prompts.GEMINI_API_KEY', None)
-    def test_synthesize_gemini_response_no_api_key(self, mock_genai):
+    def test_synthesize_gemini_response_no_api_key(self):
         """Test Gemini synthesis when API key is not configured."""
         from prompts import synthesize_gemini_response
 
         result = synthesize_gemini_response("test query", self.sample_shabads, "adult")
 
         self.assertIn("timeless Sikh wisdom", result)
-        mock_genai.GenerativeModel.assert_not_called()
 
-    @patch('prompts.genai')
+    @patch('prompts.model')
     @patch('prompts.GEMINI_API_KEY', 'test-key')
-    def test_synthesize_gemini_response_api_error(self, mock_genai):
+    def test_synthesize_gemini_response_api_error(self, mock_model):
         """Test Gemini synthesis when API call fails."""
-        # Mock API failure
-        mock_model = MagicMock()
         mock_model.generate_content.side_effect = Exception("API Error")
-        mock_genai.GenerativeModel.return_value = mock_model
 
         from prompts import synthesize_gemini_response
 
@@ -177,16 +183,13 @@ class TestGeminiSynthesis(unittest.TestCase):
         self.assertIn("Sikh wisdom", result)
         self.assertIn("Guru Granth Sahib", result)
 
-    @patch('prompts.genai')
+    @patch('prompts.model')
     @patch('prompts.GEMINI_API_KEY', 'test-key')
-    def test_synthesize_gemini_response_empty_response(self, mock_genai):
+    def test_synthesize_gemini_response_empty_response(self, mock_model):
         """Test Gemini synthesis when API returns empty response."""
-        # Mock empty response
         mock_response = MagicMock()
         mock_response.text = ""
-        mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
-        mock_genai.GenerativeModel.return_value = mock_model
 
         from prompts import synthesize_gemini_response
 

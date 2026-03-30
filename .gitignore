@@ -29,6 +29,7 @@ pytest_skip_vectorutils.txt
 pytest_tests_dir_report*
 
 # Frontend
+client/.vercel/
 client/.next/
 client/node_modules/
 node_modules/
@@ -38,8 +39,12 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Cache files
+server/cache.dat
+
 # Scratch and Binary files
 gh
 use_rembg.py
 remove_bg.py
 SikhSituationBot.code-workspace
+.vercel

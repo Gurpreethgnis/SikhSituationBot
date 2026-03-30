@@ -1,32 +1,44 @@
-.chat-input {
+/* ChatGPT-like single-bar composer */
+/* Theme-specific composer variables are defined in themes.css */
+
+/* Form wrapper: do not inherit legacy .chat-input visuals from globals.css */
+.chat-input.chat-input--gpt {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  max-width: none;
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
 }
 
-.chat-input__wrapper {
+.chat-input__shell {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-glass);
-  border-radius: 24px;
-  padding: 0.5rem 0.5rem 0.5rem 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  backdrop-filter: blur(12px);
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 8px 6px 10px;
+  border-radius: 28px;
+  background: var(--composer-gpt-bg);
+  border: 1px solid var(--composer-gpt-border);
+  box-shadow: var(--composer-gpt-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.chat-input__wrapper:focus-within {
-  border-color: var(--gold);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 15px hsla(48, 100%, 55%, 0.15);
+.chat-input__shell:focus-within {
+  border-color: var(--composer-gpt-focus-ring);
+  box-shadow: var(--composer-gpt-shadow-focus);
 }
 
 .chat-input__field {
   flex: 1;
   min-width: 0;
-  padding: 0.75rem 0;
+  padding: 10px 8px;
   font-size: 1rem;
   line-height: 1.5;
   color: var(--text-primary);
@@ -37,52 +49,65 @@
 
 .chat-input__field::placeholder {
   color: var(--text-muted);
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
-.chat-input__submit {
+.chat-input__send {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  background: var(--gold-gradient);
-  color: var(--midnight);
+  flex-shrink: 0;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+  background: var(--composer-send-active-bg);
+  color: var(--composer-send-active-fg);
 }
 
-.chat-input__submit:hover:not(:disabled) {
-  transform: scale(1.1);
-  box-shadow: var(--gold-glow);
+.chat-input__send:hover:not(:disabled) {
+  transform: scale(1.04);
+  opacity: 0.92;
 }
 
-.chat-input__submit:disabled {
-  background: var(--border-glass);
-  color: var(--text-muted);
-  opacity: 0.5;
+.chat-input__send:disabled {
+  background: var(--composer-send-disabled-bg);
+  color: var(--composer-send-disabled-fg);
   cursor: not-allowed;
+  transform: none;
+  opacity: 1;
 }
 
-.chat-input__icon {
-  width: 18px;
-  height: 18px;
+.chat-input__send-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: 1px;
 }
 
 .chat-input__spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-  border-top-color: var(--midnight);
+  border: 2px solid var(--composer-send-disabled-fg);
+  border-top-color: transparent;
   border-radius: 50%;
   animation: chat-input-spin 0.7s linear infinite;
 }
 
 @keyframes chat-input-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+/* Legacy: outer row if used elsewhere */
+.chat-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+}

@@ -1,0 +1,232 @@
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-background, #1a1a2e);
+  color: var(--color-text-primary, #fff);
+}
+
+.admin-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border, #2a3a5c);
+  padding: 1.25rem 1rem;
+  background: var(--color-surface, #16213e);
+}
+
+.admin-brand {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-nav a {
+  color: var(--color-text-secondary, #b8b8d1);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.admin-nav a:hover {
+  color: var(--color-primary, #ff6b00);
+}
+
+.admin-main {
+  flex: 1;
+  padding: 1.5rem clamp(1rem, 3vw, 2rem);
+  overflow-x: auto;
+}
+
+.admin-page-title {
+  margin: 0 0 1rem;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-card {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface-elevated, #1f2b47);
+}
+
+.admin-card strong {
+  display: block;
+  font-size: 1.5rem;
+  color: var(--color-primary, #ff6b00);
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid var(--color-border, #2a3a5c);
+  text-align: left;
+}
+
+.admin-table button {
+  margin-right: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface, #16213e);
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 520px;
+  margin-bottom: 2rem;
+}
+
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface-elevated, #1f2b47);
+  color: inherit;
+}
+
+.admin-form textarea {
+  min-height: 80px;
+}
+
+.admin-error {
+  color: #f87171;
+  margin-bottom: 1rem;
+}
+
+.admin-muted {
+  color: var(--color-text-secondary, #b8b8d1);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.admin-success {
+  color: #4ade80;
+  margin: 0;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.admin-field input {
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface-elevated, #1f2b47);
+  color: inherit;
+  min-width: 200px;
+}
+
+.admin-check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.admin-btn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-surface, #16213e);
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-primary {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-primary, #ff6b00);
+  color: #111;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-nowrap {
+  white-space: nowrap;
+}
+
+.admin-llm-cell small {
+  display: block;
+  color: var(--color-text-secondary, #b8b8d1);
+  font-size: 0.7rem;
+}
+
+.admin-content-cell {
+  max-width: 420px;
+}
+
+.admin-content-preview {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.admin-shabad-ref {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #b8b8d1);
+}
+
+.admin-pagination {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}

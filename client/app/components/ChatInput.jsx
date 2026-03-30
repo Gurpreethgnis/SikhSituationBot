@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useTranslation } from '../contexts/TranslationContext.jsx'
 import './ChatInput.css'
 
 /**
- * Premium chat input / search bar for SikhSituationBot.
- * Supports Enter to submit, optional send button, and clear loading/disabled states.
+ * Chat composer styled like ChatGPT: single rounded bar, optional left control (+ menu), send on the right.
  */
-export default function ChatInput({ onSend, placeholder, disabled, loading }) {
+export default function ChatInput({ onSend, placeholder, disabled, loading, startAdornment }) {
   const [value, setValue] = useState('')
   const inputRef = useRef(null)
+  const { t } = useTranslation()
 
   const handleSubmit = (e) => {
     e?.preventDefault()
@@ -27,31 +28,32 @@ export default function ChatInput({ onSend, placeholder, disabled, loading }) {
   }
 
   return (
-    <form className="chat-input" onSubmit={handleSubmit}>
-      <div className="chat-input__wrapper">
+    <form className="chat-input chat-input--gpt" onSubmit={handleSubmit}>
+      <div className="chat-input__shell">
+        {startAdornment}
         <input
           ref={inputRef}
           type="text"
           className="chat-input__field"
-          placeholder={placeholder ?? 'Share how you\'re feeling or ask for guidance...'}
+          placeholder={placeholder ?? t('messagePlaceholder')}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          aria-label="Chat message or search"
+          aria-label={t('message')}
           autoComplete="off"
         />
         <button
           type="submit"
-          className="chat-input__submit"
+          className="chat-input__send"
           disabled={!value.trim() || disabled || loading}
-          aria-label="Send"
+          aria-label={t('sendMessage')}
         >
           {loading ? (
             <span className="chat-input__spinner" aria-hidden />
           ) : (
-            <svg className="chat-input__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+            <svg className="chat-input__send-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.167.75.75 0 0 0 0-1.666A60.517 60.517 0 0 0 3.478 2.404Z" />
             </svg>
           )}
         </button>

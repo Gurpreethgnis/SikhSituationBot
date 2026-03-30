@@ -56,8 +56,7 @@ class TestRetrieval(unittest.TestCase):
         result = find_similar_shabads(self.test_embedding, limit=3, persona='adult')
 
         self.assertEqual(result, self.test_shabads)
-        # Should call filter once for persona
-        mock_query.filter.assert_called_once_with(mock_shabad_class.recommended_persona == 'adult')
+        mock_shabad_class.recommended_persona.in_.assert_called_once_with(['adult', 'any'])
         mock_query.order_by.assert_called_once()
         mock_query.limit.assert_called_once_with(3)
 
