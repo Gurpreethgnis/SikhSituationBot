@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-SGGS_MAX_SHABADS = 5867
+# BaniDB v2 GET /shabads/{id} returns error (no shabadInfo) for id > 5540 for SGGS.
+# Do not raise the loop limit without re-checking https://api.banidb.com/v2/shabads/{id}
+SGGS_MAX_SHABADS = 5540
 
 def get_best_generation_model():
     """Detect the best available generation model from the API."""
@@ -43,6 +45,17 @@ def fetch_shabad_text(shabad_id: int):
     """Fetch Gurmukhi, Romanization, and English translation for a specific Shabad."""
     try:
         raw_shabad = banidb.shabad(shabad_id)
+    except KeyError as e:
+        # banidb.shabad() indexes json['shabadInfo']; API error payloads omit it.
+        if e.args and e.args[0] == "shabadInfo":
+            logger.warning(
+                "Skipping Shabad %s: not in BaniDB (invalid id or past max SGGS shabad id %s).",
+                shabad_id,
+                SGGS_MAX_SHABADS,
+            )
+        else:
+            logger.error("Failed to fetch Shabad %s from BaniDB API: %s", shabad_id, e)
+        return None
     except Exception as e:
         logger.error(f"Failed to fetch Shabad {shabad_id} from BaniDB API: {e}")
         return None

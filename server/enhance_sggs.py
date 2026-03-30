@@ -21,8 +21,8 @@ except ImportError as e:
     logger.error(f"Missing dependency: {e}. Please run: pip3 install banidb google-generativeai")
     sys.exit(1)
 
-# Configuration
-SGGS_MAX_SHABADS = 5867
+# Configuration — must match BaniDB v2 max SGGS shabad id (see bulk_ingest_live.py).
+SGGS_MAX_SHABADS = 5540
 OUTPUT_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'sggs_enhanced.json')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
@@ -71,6 +71,16 @@ def fetch_shabad_text(shabad_id: int):
     """Fetch Gurmukhi, Romanization, and English translation for a specific Shabad."""
     try:
         raw_shabad = banidb.shabad(shabad_id)
+    except KeyError as e:
+        if e.args and e.args[0] == "shabadInfo":
+            logger.warning(
+                "Skipping Shabad %s: not in BaniDB (invalid id or past max SGGS shabad id %s).",
+                shabad_id,
+                SGGS_MAX_SHABADS,
+            )
+        else:
+            logger.error("Failed to fetch Shabad %s from BaniDB API: %s", shabad_id, e)
+        return None
     except Exception as e:
         logger.error(f"Failed to fetch Shabad {shabad_id} from BaniDB API: {e}")
         return None
