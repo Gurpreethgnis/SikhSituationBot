@@ -40,3 +40,7 @@ pytest_skip_vectorutils.txt
 pytest_tests_dir_report_utf8.txt
 pytest_tests_dir_report.txt
 SikhSituationBot.code-workspace
+
+# IDE specific
+.vscode/
+.sfdx/
