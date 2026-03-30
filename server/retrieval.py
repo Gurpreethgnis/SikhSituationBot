@@ -1,9 +1,77 @@
+import re
 from typing import List, Optional, Tuple
 
 from gurbani_content_quality import MIN_ENGLISH_CHARS_PARMAAN, MIN_GURMUKHI_CHARS_PARMAAN
 from models import Shabad, db
+from parmaan_search_normalize import latin_token_search_variants, token_has_gurmukhi
 from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
+
+
+def _tokenize_search_words(query: str) -> List[str]:
+    """Split query into non-trivial tokens for AND-style text match (Latin or Gurmukhi)."""
+    q = (query or "").strip()
+    if not q:
+        return []
+    parts = re.split(r"\s+", q)
+    out: List[str] = []
+    for p in parts:
+        p = p.strip('.,;:!?|•·"\'()[]')
+        if len(p) >= 2:
+            out.append(p)
+    return out
+
+
+def _filter_shabad_matches_token(base, token: str):
+    """
+    AND-filter step: row must match this token in gurmukhi OR romanization OR english.
+    Latin tokens expand via phonetic variants; Gurmukhi tokens match literally.
+    """
+    if token_has_gurmukhi(token):
+        variants = [token]
+    else:
+        variants = latin_token_search_variants(token)
+    token_clauses = []
+    for v in variants:
+        pattern = f"%{v}%"
+        token_clauses.append(
+            or_(
+                Shabad.gurmukhi.ilike(pattern),
+                Shabad.romanization.ilike(pattern),
+                Shabad.english_translation.ilike(pattern),
+            )
+        )
+    return base.filter(or_(*token_clauses))
+
+
+def find_shabads_by_text_match(query: str, limit: int = 12) -> List[Shabad]:
+    """
+    Find shabads whose Gurmukhi, romanization, or English contains the search text.
+    Uses AND across tokens when multiple words are present (narrower matches).
+    Applies Parmaan quality filters (excludes header-only stubs and very short rows).
+    """
+    q = (query or "").strip()
+    if len(q) < 3:
+        return []
+    words = _tokenize_search_words(q)
+    if not words and len(q.strip()) >= 2:
+        words = [q.strip()]
+    if not words:
+        return []
+    try:
+        base = Shabad.query.filter(Shabad.embedding.isnot(None))
+        base = _apply_parmaan_quality_filters(base, True)
+        for w in words:
+            base = _filter_shabad_matches_token(base, w)
+        rows = (
+            base.order_by(func.coalesce(Shabad.content_length, 0).desc(), Shabad.id.asc())
+            .limit(limit)
+            .all()
+        )
+        return rows
+    except SQLAlchemyError as e:
+        print(f"[retrieval] text match failure: {e}")
+        return []
 
 
 def _apply_parmaan_quality_filters(query, exclude_parmaan_low_quality: bool):
@@ -131,6 +199,7 @@ def find_similar_to_shabad(
     limit: int = 6,
     exclude_self: bool = True,
     exclude_parmaan_low_quality: bool = False,
+    persona: Optional[str] = None,
 ) -> List[Shabad]:
     """Neighbors in embedding space (excluding same row)."""
     # embedding may be a numpy vector from pgvector; never use `not embedding` (ambiguous truth value).
@@ -138,6 +207,8 @@ def find_similar_to_shabad(
         return []
     try:
         q = Shabad.query.filter(Shabad.embedding.isnot(None))
+        if persona:
+            q = q.filter(Shabad.recommended_persona.in_([persona, "any"]))
         if exclude_self:
             q = q.filter(Shabad.id != shabad.id)
         q = _apply_parmaan_quality_filters(q, exclude_parmaan_low_quality)

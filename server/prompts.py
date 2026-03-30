@@ -442,6 +442,7 @@ def synthesize_gemini_response(
     message_history: Any = None,
     guidance_mode: str = "guidance",
     parmaan_discovery_type: str = "similar",
+    user_memory_context: Any = None,
 ) -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
@@ -470,6 +471,7 @@ def synthesize_gemini_response(
                 message_history=message_history,
                 guidance_mode=guidance_mode,
                 parmaan_discovery_type=parmaan_discovery_type,
+                user_memory_context=user_memory_context,
             )
 
         response = model.generate_content(prompt, safety_settings=_RELAXED_SAFETY)
@@ -499,6 +501,7 @@ def build_gemini_response_prompt(
     guidance_mode: str = "guidance",
     parmaan_discovery_type: str = "similar",
     grounding_retry: bool = False,
+    user_memory_context: Any = None,
 ) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
@@ -518,6 +521,9 @@ def build_gemini_response_prompt(
     lang_code = resolve_language(language)
     lang_line = LANGUAGE_INSTRUCTIONS.get(lang_code, LANGUAGE_INSTRUCTIONS["en"])
     history_block = format_conversation_history(message_history)
+    umc = (user_memory_context or "").strip() if isinstance(user_memory_context, str) else ""
+    if umc:
+        history_block = umc + ("\n\n" + history_block if history_block.strip() else "")
 
     gm = (guidance_mode or "guidance").strip().lower()
     pdt = (parmaan_discovery_type or "similar").strip().lower()

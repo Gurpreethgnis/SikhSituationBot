@@ -1,35 +1,73 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import ThemeSwitcher from './ThemeSwitcher.jsx'
 import { useTranslation } from '../contexts/TranslationContext.jsx'
+import { apiBase, authHeaders } from '../../lib/api'
 import './Sidebar.css'
 
-function ChatGroup({ label, items, activeChatId, onSelectChat }) {
+function ChatGroup({ label, items, activeChatId, onSelectChat, token, onChatDeleted }) {
   const { t } = useTranslation()
+  const [deletingId, setDeletingId] = useState(null)
+  const base = apiBase()
+
   if (!items?.length) return null
+
+  const handleDelete = async (e, chat) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!token || !onChatDeleted) return
+    const ok = typeof window !== 'undefined' && window.confirm(t('deleteChatConfirm'))
+    if (!ok) return
+    setDeletingId(chat.id)
+    try {
+      const r = await fetch(`${base}/api/chats/${chat.id}`, {
+        method: 'DELETE',
+        headers: authHeaders(token),
+      })
+      if (r.ok) onChatDeleted(chat.id)
+    } catch {
+      /* ignore */
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="sidebar__group">
       <h4 className="sidebar__group-label">{label}</h4>
       <div className="history-list">
         {items.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            className={`history-item ${activeChatId === c.id ? 'active' : ''}`}
-            onClick={() => onSelectChat(c)}
-          >
-            <span className="chat-icon">💬</span>
-            <span className="history-text">{c.title || t('chat')}</span>
-          </button>
+          <div key={c.id} className={`history-item-row ${activeChatId === c.id ? 'active' : ''}`}>
+            <button
+              type="button"
+              className="history-item"
+              onClick={() => onSelectChat(c)}
+            >
+              <span className="chat-icon">💬</span>
+              <span className="history-text">{c.title || t('chat')}</span>
+            </button>
+            {token && onChatDeleted && (
+              <button
+                type="button"
+                className="history-delete"
+                onClick={(e) => handleDelete(e, c)}
+                disabled={deletingId === c.id}
+                aria-label={t('deleteChat')}
+                title={t('deleteChat')}
+              >
+                {deletingId === c.id ? '…' : '×'}
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </div>
   )
 }
 
-function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeChatId, onSignOut }) {
+function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeChatId, onSignOut, token, onChatDeleted }) {
   const user = session?.user
   const { t } = useTranslation()
 
@@ -39,14 +77,6 @@ function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeC
         <button type="button" className="new-chat-btn" onClick={onNewChat}>
           <span className="plus-icon">+</span> {t('newChat')}
         </button>
-      </div>
-
-      <div className="sidebar__nav">
-        {user?.isAdmin && (
-          <Link href="/admin" className="sidebar-link">
-            {t('admin')}
-          </Link>
-        )}
       </div>
 
       <div className="sidebar__history">
@@ -59,24 +89,32 @@ function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeC
               items={chatGroups?.today}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
+              token={token}
+              onChatDeleted={onChatDeleted}
             />
             <ChatGroup
               label={t('yesterday')}
               items={chatGroups?.yesterday}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
+              token={token}
+              onChatDeleted={onChatDeleted}
             />
             <ChatGroup
               label={t('last7Days')}
               items={chatGroups?.week}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
+              token={token}
+              onChatDeleted={onChatDeleted}
             />
             <ChatGroup
               label={t('older')}
               items={chatGroups?.older}
               activeChatId={activeChatId}
               onSelectChat={onSelectChat}
+              token={token}
+              onChatDeleted={onChatDeleted}
             />
             {!chatGroups?.today?.length &&
               !chatGroups?.yesterday?.length &&

@@ -4,7 +4,7 @@ import GoogleProvider from 'next-auth/providers/google'
 const flaskBase = () =>
   process.env.FLASK_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
-/** Re-sync is_admin from Flask so JWT matches DB after ADMIN_EMAIL / manual admin changes. */
+/** Re-sync is_admin and birth-year gate from Flask so JWT matches DB after ADMIN_EMAIL / manual admin changes. */
 const CLAIMS_REFRESH_MS = 60_000
 
 async function refreshAdminFromFlask(token) {
@@ -21,6 +21,7 @@ async function refreshAdminFromFlask(token) {
     if (res.ok && data.user) {
       token.isAdmin = Boolean(data.user.is_admin)
       if (data.user.id != null) token.flaskUserId = String(data.user.id)
+      token.needsBirthYear = data.user.birth_year == null
     }
   } catch {
     /* ignore */
@@ -67,6 +68,7 @@ const providers = [
           image: data.user.avatar_url || undefined,
           accessToken: data.token,
           isAdmin: Boolean(data.user.is_admin),
+          needsBirthYear: data.user.birth_year == null,
         }
       },
     }),
@@ -75,7 +77,11 @@ const providers = [
 export const authOptions = {
   providers,
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
+      if (trigger === 'update' && session?.birthYearComplete) {
+        token.needsBirthYear = false
+      }
+
       if (account?.provider === 'google' && user?.email) {
         token.authProvider = 'google'
         if (user.email) token.email = user.email
@@ -103,6 +109,7 @@ export const authOptions = {
             token.accessToken = data.token
             token.isAdmin = Boolean(data.user?.is_admin)
             token.flaskUserId = String(data.user?.id ?? user.id)
+            token.needsBirthYear = data.user?.birth_year == null
           } else if (!res.ok) {
             console.warn(
               '[next-auth] Flask oauth-sync failed:',
@@ -118,6 +125,9 @@ export const authOptions = {
         token.accessToken = user.accessToken
         token.isAdmin = Boolean(user.isAdmin)
         token.flaskUserId = user.id
+        if (typeof user.needsBirthYear === 'boolean') {
+          token.needsBirthYear = user.needsBirthYear
+        }
       }
 
       // Retry Flask sync for Google sessions still missing an API token (transient errors or key fixed later).
@@ -152,6 +162,7 @@ export const authOptions = {
             token.accessToken = data.token
             token.isAdmin = Boolean(data.user?.is_admin)
             if (data.user?.id != null) token.flaskUserId = String(data.user.id)
+            token.needsBirthYear = data.user?.birth_year == null
           }
         }
       }
@@ -160,6 +171,7 @@ export const authOptions = {
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken
+      session.needsBirthYear = Boolean(token.needsBirthYear)
       if (session.user) {
         session.user.isAdmin = Boolean(token.isAdmin)
         if (token.flaskUserId) session.user.id = token.flaskUserId

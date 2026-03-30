@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import MarkdownRenderer from '../../components/MarkdownRenderer'
+import SharedMessageCopy from '../SharedMessageCopy.jsx'
 import '../../landing.css'
 import './shared.css'
 
@@ -59,11 +60,18 @@ export default async function SharedChatPage({ params }) {
             <div className="shared-msg-label">{m.role === 'user' ? 'You' : 'Guru'}</div>
             <div className="shared-msg-body">
               <MarkdownRenderer content={m.content || ''} />
-              {m.shabad?.sttm_link && (
+              <SharedMessageCopy
+                content={m.content || ''}
+                copyLabel="Copy message"
+                copiedLabel="Copied"
+              />
+              {m.shabad?.sttm_link &&
+              typeof m.content === 'string' &&
+              !m.content.includes('## Retrieved Gurbani') ? (
                 <a className="shared-sttm" href={m.shabad.sttm_link} target="_blank" rel="noopener noreferrer">
                   View on SikhiToTheMax ↗
                 </a>
-              )}
+              ) : null}
             </div>
           </article>
         ))}

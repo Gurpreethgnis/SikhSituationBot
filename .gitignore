@@ -41,6 +41,7 @@ Thumbs.db
 
 # Cache files
 server/cache.dat
+cache.dat
 
 # Scratch and Binary files
 gh

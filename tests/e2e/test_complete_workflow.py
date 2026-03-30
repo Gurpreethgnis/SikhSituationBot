@@ -117,16 +117,22 @@ class TestEndToEnd(unittest.TestCase):
     @patch("app.search_similar_shabads")
     @patch("app.synthesize_chat_response")
     def test_ask_workflow_different_personas(self, mock_synthesize, mock_search, mock_emb, mock_assess):
+        """Persona comes from the user's birth year, not the JSON body."""
         mock_assess.return_value = (False, "")
         mock_emb.return_value = [0.1] * 8
         mock_search.return_value = [_mock_shabad_row()]
 
-        for persona, expected in [("child", "simple"), ("teen", "teen"), ("adult", "adult")]:
+        for persona, expected, birth_year in [
+            ("child", "simple", 2015),
+            ("teen", "teen", 2010),
+            ("adult", "adult", 1990),
+        ]:
             mock_synthesize.return_value = (expected, "gemini", "models/gemini-2.5-flash-lite")
+            email = f"e2e-{persona}@example.com"
             response = self.client.post(
                 "/ask",
-                data=json.dumps({"query": "What is Sikhism?", "persona": persona}),
-                headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL),
+                data=json.dumps({"query": "What is Sikhism?", "persona": "ignored"}),
+                headers=ask_auth_headers(self.app, email=email, birth_year=birth_year),
             )
             self.assertEqual(response.status_code, 200)
             data = json.loads(response.data)
@@ -211,7 +217,7 @@ class TestEndToEnd(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        self.assertEqual(data["persona"], request_data["persona"])
+        self.assertEqual(data["persona"], "adult")
         sb = data["shabad"]
         self.assertIsInstance(sb.get("id"), int)
         self.assertIsInstance(sb.get("text"), str)

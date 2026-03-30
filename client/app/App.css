@@ -231,16 +231,41 @@
     align-self: flex-start;
 }
 
+.message-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+}
+
 .message-label {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     color: var(--text-muted);
 }
 
-.message--user .message-label {
-    text-align: right;
+.message--user .message-toolbar {
+    flex-direction: row-reverse;
+}
+
+.message-copy-btn {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-glass);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.message-copy-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-gold);
 }
 
 .message-content {
@@ -554,6 +579,55 @@
     margin-top: 0.75rem;
     font-size: 0.85rem;
     color: var(--gold);
+}
+
+.disambiguation-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.disambiguation-btn {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    background: var(--surface-glass);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    font-family: inherit;
+}
+
+.disambiguation-btn:hover:not(:disabled) {
+    background: var(--surface-glass-hover);
+    border-color: var(--border-gold);
+}
+
+.disambiguation-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disambiguation-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.disambiguation-gurmukhi {
+    display: block;
+    font-size: 1.05rem;
+    line-height: 1.45;
+}
+
+.disambiguation-roman {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-top: 0.35rem;
 }
 
 .guest-hint {

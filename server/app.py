@@ -1,8 +1,9 @@
 import json
 import logging
 import os
+import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import google.generativeai as genai
@@ -28,7 +29,7 @@ from llm_synthesis import (
     synthesize_chat_response,
 )
 from gurbani_content_quality import recompute_quality_for_stored_row
-from models import Chat, LLMSettings, Message, Shabad, User, db
+from models import Chat, LLMSettings, Message, Shabad, User, UserMemory, db
 from prompts import (
     FALLBACK_RESPONSE,
     LANGUAGE_INSTRUCTIONS,
@@ -40,11 +41,17 @@ from prompts import (
 )
 from retrieval import (
     browse_shabads,
+    find_shabads_by_text_match,
     find_similar_to_shabad,
     get_random_shabads,
     get_shabad_by_id,
     get_shabad_by_pk,
     search_similar_shabads,
+)
+from user_memory import (
+    format_memory_context_for_prompt,
+    load_active_memories_for_user,
+    maybe_extract_and_save_after_guidance_turn,
 )
 from vector_utils import get_embedding
 
@@ -71,6 +78,45 @@ if not INTERNAL_API_KEY:
         "FLASK_INTERNAL_API_KEY is not set; Next.js cannot call /api/auth/oauth-sync. "
         "Google sign-in will not receive a Flask JWT or admin flags from the API."
     )
+
+# Throttle global purge of stale chats (10-day retention) when listing chats.
+_last_stale_chat_purge_utc: Optional[datetime] = None
+CHAT_RETENTION_DAYS = 10
+STALE_CHAT_PURGE_INTERVAL_SEC = 3600
+
+
+def _maybe_purge_stale_chats_globally() -> None:
+    """Delete chats not updated in CHAT_RETENTION_DAYS; throttled to avoid per-request heavy deletes."""
+    global _last_stale_chat_purge_utc
+    now = datetime.utcnow()
+    if _last_stale_chat_purge_utc and (now - _last_stale_chat_purge_utc).total_seconds() < STALE_CHAT_PURGE_INTERVAL_SEC:
+        return
+    _last_stale_chat_purge_utc = now
+    cutoff = now - timedelta(days=CHAT_RETENTION_DAYS)
+    try:
+        n = Chat.query.filter(Chat.updated_at < cutoff).delete(synchronize_session=False)
+        if n:
+            db.session.commit()
+            logger.info("Purged %s chat(s) older than %s days (by updated_at)", n, CHAT_RETENTION_DAYS)
+        else:
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.warning("Stale chat purge failed: %s", e)
+
+
+def _parse_birth_year(data: dict) -> Optional[int]:
+    raw = data.get("birth_year")
+    if raw is None:
+        return None
+    try:
+        y = int(raw)
+    except (TypeError, ValueError):
+        return None
+    now_y = datetime.utcnow().year
+    if y < 1900 or y > now_y:
+        return None
+    return y
 
 
 def _persona_from_birth_year(birth_year: int) -> str:
@@ -290,6 +336,24 @@ def _shabad_response_payload(row: Shabad) -> Dict[str, Any]:
     }
 
 
+def _disambiguation_candidate_dict(row: Shabad) -> Dict[str, Any]:
+    """Compact shabad row for Parmaan text-match disambiguation UI."""
+    ang = None
+    if row.source:
+        m = re.search(r"Ang\s*(\d+)", str(row.source), re.I)
+        if m:
+            ang = int(m.group(1))
+    return {
+        "shabad_id": row.shabad_id,
+        "gurmukhi": row.gurmukhi or "",
+        "english_translation": row.english_translation or "",
+        "romanization": row.romanization or "",
+        "source": row.source or "",
+        "ang": ang,
+        "sttm_link": Shabad.sttm_url_for(row.shabad_id),
+    }
+
+
 # --- Health ---
 @app.route("/health", methods=["GET"])
 @app.route("/api/health", methods=["GET"])
@@ -333,6 +397,11 @@ def register():
             existing.password_hash = hash_password(password)
             if name:
                 existing.name = name
+            by = _parse_birth_year(data)
+            if by is not None and existing.birth_year is None:
+                existing.birth_year = by
+                existing.preferred_persona = _persona_from_birth_year(by)
+                existing.persona_source = "profile"
             existing.last_login = datetime.utcnow()
             db.session.commit()
             token = encode_token(existing.id, existing.email, existing.is_admin)
@@ -343,12 +412,20 @@ def register():
             return jsonify({"error": "Could not complete registration. Please try again."}), 500
 
     is_admin = bool(ADMIN_EMAIL and email == ADMIN_EMAIL)
+    by = _parse_birth_year(data)
+    ps = "default"
+    pref_p = "adult"
+    if by is not None:
+        ps = "profile"
+        pref_p = _persona_from_birth_year(by)
     user = User(
         email=email,
         name=name,
         password_hash=hash_password(password),
         is_admin=is_admin,
-        persona_source="default",
+        persona_source=ps,
+        birth_year=by,
+        preferred_persona=pref_p,
     )
     try:
         db.session.add(user)
@@ -425,8 +502,9 @@ def oauth_sync():
         if ADMIN_EMAIL and email == ADMIN_EMAIL:
             user.is_admin = True
     if iby is not None and 1900 <= iby <= now_y:
-        user.birth_year = iby
-        if (user.persona_source or "default") != "manual":
+        # Do not overwrite birth year the user set in-app (Settings / onboarding).
+        if (user.persona_source or "default") != "profile":
+            user.birth_year = iby
             user.preferred_persona = _persona_from_birth_year(iby)
             user.persona_source = "google"
     user.last_login = datetime.utcnow()
@@ -441,6 +519,48 @@ def me():
     return jsonify({"user": request.user.to_dict()}), 200
 
 
+@app.route("/api/memory", methods=["GET"])
+@require_auth
+def list_user_memories():
+    rows = (
+        UserMemory.query.filter_by(user_id=request.user_id, is_deleted=False)
+        .order_by(desc(UserMemory.created_at))
+        .limit(50)
+        .all()
+    )
+    return jsonify({"memories": [m.to_dict() for m in rows]}), 200
+
+
+@app.route("/api/memory/<int:memory_id>", methods=["DELETE"])
+@require_auth
+def delete_user_memory(memory_id: int):
+    row = UserMemory.query.filter_by(id=memory_id, user_id=request.user_id).first()
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+    row.is_deleted = True
+    db.session.commit()
+    return jsonify({"ok": True}), 200
+
+
+@app.route("/api/memory/<int:memory_id>/pin", methods=["POST"])
+@require_auth
+def pin_user_memory(memory_id: int):
+    row = UserMemory.query.filter_by(id=memory_id, user_id=request.user_id).first()
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+    row.is_pinned = not bool(row.is_pinned)
+    db.session.commit()
+    return jsonify({"pinned": row.is_pinned}), 200
+
+
+@app.route("/api/memory/clear", methods=["POST"])
+@require_auth
+def clear_user_memories():
+    UserMemory.query.filter_by(user_id=request.user_id).update({"is_deleted": True})
+    db.session.commit()
+    return jsonify({"ok": True}), 200
+
+
 @app.route("/api/auth/me", methods=["PATCH"])
 @require_auth
 def patch_me():
@@ -448,13 +568,26 @@ def patch_me():
     u = request.user
     if "preferred_language" in data:
         u.preferred_language = resolve_language(data.get("preferred_language"))
-    if "preferred_persona" in data and data.get("preferred_persona") in ("child", "teen", "adult"):
-        u.preferred_persona = data["preferred_persona"]
-        u.persona_source = "manual"
+    if "birth_year" in data:
+        by = _parse_birth_year(data)
+        if by is None:
+            return jsonify({"error": "Invalid birth_year (use a year between 1900 and the current year)"}), 400
+        u.birth_year = by
+        u.preferred_persona = _persona_from_birth_year(by)
+        u.persona_source = "profile"
     if "preferred_theme" in data and data.get("preferred_theme"):
         u.preferred_theme = str(data["preferred_theme"])[:20]
     if "name" in data and data.get("name"):
         u.name = str(data["name"])[:100]
+    if "memory_enabled" in data:
+        u.memory_enabled = bool(data["memory_enabled"])
+    if "memory_retention_days" in data:
+        try:
+            rd = int(data["memory_retention_days"])
+            if 1 <= rd <= 3650:
+                u.memory_retention_days = rd
+        except (TypeError, ValueError):
+            pass
     db.session.commit()
     return jsonify({"user": u.to_dict()}), 200
 
@@ -463,6 +596,7 @@ def patch_me():
 @app.route("/api/chats", methods=["GET"])
 @require_auth
 def list_chats():
+    _maybe_purge_stale_chats_globally()
     chats = (
         Chat.query.filter_by(user_id=request.user_id)
         .order_by(desc(Chat.updated_at), desc(Chat.created_at))
@@ -928,26 +1062,35 @@ def _retrieve_parmaan_shabads_for_chat(
     discovery_type: str,
     limit: int,
     persona: str,
+    anchor_shabad: Optional[Shabad] = None,
 ) -> List[Shabad]:
     """
-    Parmaan chat retrieval: similar/topic use semantic search on the user query embedding;
-    dissimilar finds the closest verse to the query, then searches using an opposite-theme phrase.
+    Parmaan chat retrieval: similar/topic use semantic search on the user query embedding,
+    or neighbors of an explicit anchor shabad when the user chose one after disambiguation;
+    dissimilar finds the closest verse to the query (or uses the explicit anchor), then
+    searches using an opposite-theme phrase.
     """
     limit = max(1, min(int(limit), 15))
+    if anchor_shabad is not None and anchor_shabad.embedding is None:
+        return []
+
     if discovery_type == "dissimilar":
-        anchors = search_similar_shabads(
-            query_embedding=query_vector,
-            limit=1,
-            persona=persona,
-            exclude_parmaan_low_quality=True,
-        )
-        if not anchors:
+        if anchor_shabad is not None:
+            anchor = anchor_shabad
+        else:
             anchors = search_similar_shabads(
-                query_embedding=query_vector, limit=1, exclude_parmaan_low_quality=True
+                query_embedding=query_vector,
+                limit=1,
+                persona=persona,
+                exclude_parmaan_low_quality=True,
             )
-        if not anchors:
-            return []
-        anchor = anchors[0]
+            if not anchors:
+                anchors = search_similar_shabads(
+                    query_embedding=query_vector, limit=1, exclude_parmaan_low_quality=True
+                )
+            if not anchors:
+                return []
+            anchor = anchors[0]
         summary = f"{anchor.english_translation or ''}\n{(anchor.gurmukhi or '')[:200]}"
         phrase = generate_opposite_theme_query(summary)
         opp_vec = get_embedding(phrase)
@@ -964,6 +1107,14 @@ def _retrieve_parmaan_shabads_for_chat(
                 query_embedding=opp_vec, limit=limit + 2, exclude_parmaan_low_quality=True
             )
         return [r for r in rows if r.id != anchor.id][:limit]
+
+    if anchor_shabad is not None:
+        return find_similar_to_shabad(
+            anchor_shabad,
+            limit=limit,
+            exclude_parmaan_low_quality=True,
+            persona=persona,
+        )
 
     rows = search_similar_shabads(
         query_embedding=query_vector,
@@ -989,7 +1140,6 @@ def ask():
         return jsonify({"error": "Invalid JSON"}), 400
 
     query_text = (data.get("query") or "").strip()
-    persona_input = (data.get("persona") or "adult").lower().strip()
     language = resolve_language(data.get("language"))
     chat_id = data.get("chat_id")
     client_history = data.get("message_history") or []
@@ -1000,7 +1150,6 @@ def ask():
         return jsonify({"error": "No query provided"}), 400
 
     valid_personas = ["child", "teen", "adult"]
-    persona = persona_input if persona_input in valid_personas else "adult"
 
     token = get_bearer_token()
     if not token:
@@ -1013,6 +1162,20 @@ def ask():
         return jsonify({"error": "User not found or inactive"}), 401
     request.user_id = user.id
     request.user = user
+
+    if user.birth_year is None:
+        return (
+            jsonify(
+                {
+                    "error": "Please add your year of birth in Settings or onboarding to continue.",
+                    "code": "birth_year_required",
+                }
+            ),
+            403,
+        )
+
+    persona_db = (user.preferred_persona or "adult").lower().strip()
+    persona = persona_db if persona_db in valid_personas else _persona_from_birth_year(int(user.birth_year))
 
     message_history: List[Dict[str, str]] = []
     active_chat: Optional[Chat] = None
@@ -1033,6 +1196,12 @@ def ask():
 
     logger.info("Processing query: '%s' persona=%s lang=%s chat=%s", query_text, persona, language, chat_id)
 
+    user_memory_for_prompt = None
+    if guidance_mode != "parmaan" and getattr(user, "memory_enabled", True):
+        _mem_block = format_memory_context_for_prompt(load_active_memories_for_user(user))
+        if _mem_block.strip():
+            user_memory_for_prompt = _mem_block
+
     # Parmaan search: short lines and themes are expected; do not run guidance-style clarification.
     if needs_clarification and guidance_mode != "parmaan":
         raw = synthesize_chat_response(
@@ -1042,6 +1211,7 @@ def ask():
             language=language,
             message_history=message_history,
             guidance_mode="guidance",
+            user_memory_context=user_memory_for_prompt,
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
         payload = {
@@ -1051,24 +1221,29 @@ def ask():
             "language": language,
             "is_clarification": True,
         }
-        _persist_messages(
+        msg_ids = _persist_messages(
             active_chat, query_text, ai_response, None, persona, language, llm_provider, llm_model
         )
+        if msg_ids and getattr(user, "memory_enabled", True):
+            umid, amid = msg_ids
+            maybe_extract_and_save_after_guidance_turn(
+                user,
+                active_chat.id if active_chat else None,
+                query_text,
+                ai_response,
+                umid,
+                amid,
+            )
         if active_chat and (not active_chat.title or active_chat.title == "New chat"):
             active_chat.title = generate_chat_title(query_text)
             db.session.commit()
             payload["chat_title"] = active_chat.title
         return jsonify(_finalize_ask_response_payload(payload)), 200
 
-    query_vector = get_embedding(query_text)
-    if not query_vector:
-        logger.error("Embedding generation failed")
-        return jsonify({"error": "Failed to process query embedding"}), 500
-
-    # Get configurable shabad counts from settings
+    # Configurable shabad counts (needed before Parmaan text-match disambiguation branch)
     llm_settings = LLMSettings.query.get(1)
-    guidance_shabad_count = getattr(llm_settings, 'guidance_shabad_count', 3) if llm_settings else 3
-    parmaan_shabad_count = getattr(llm_settings, 'parmaan_shabad_count', 5) if llm_settings else 5
+    guidance_shabad_count = getattr(llm_settings, "guidance_shabad_count", 3) if llm_settings else 3
+    parmaan_shabad_count = getattr(llm_settings, "parmaan_shabad_count", 5) if llm_settings else 5
 
     parmaan_discovery = _normalize_parmaan_discovery(data.get("parmaan_discovery_type"))
     effective_parmaan_count = parmaan_shabad_count
@@ -1081,11 +1256,62 @@ def ask():
     except (TypeError, ValueError):
         pass
 
+    anchor_raw = (data.get("anchor_shabad_id") or "").strip()
+    anchor_row: Optional[Shabad] = get_shabad_by_id(anchor_raw) if anchor_raw else None
+    if anchor_raw and anchor_row is None:
+        return jsonify({"error": "Unknown shabad id for anchor selection"}), 400
+
+    # Parmaan: multiple literal text hits -> ask user to pick before similar-shabad retrieval
+    # Single text hit -> auto-select as anchor (skip embedding search, use matched shabad)
+    if guidance_mode == "parmaan" and anchor_row is None:
+        text_hits = find_shabads_by_text_match(query_text, limit=12)
+        if len(text_hits) > 1:
+            dis_msg = (
+                "I found several shabads that may match your search. "
+                "Which one did you mean? Choose an option below to see similar shabads."
+            )
+            candidates = [_disambiguation_candidate_dict(r) for r in text_hits]
+            payload = {
+                "response": dis_msg,
+                "is_disambiguation": True,
+                "is_clarification": False,
+                "disambiguation_candidates": candidates,
+                "original_query": query_text,
+                "shabad": None,
+                "shabads": [],
+                "persona": persona,
+                "language": language,
+                "guidance_mode": guidance_mode,
+                "parmaan_discovery_type": parmaan_discovery,
+                "parmaan_shabad_count": effective_parmaan_count,
+            }
+            _persist_messages(
+                active_chat, query_text, dis_msg, None, persona, language, None, None
+            )
+            if active_chat:
+                active_chat.updated_at = datetime.utcnow()
+                if not active_chat.title or active_chat.title == "New chat":
+                    active_chat.title = generate_chat_title(query_text)
+                db.session.commit()
+                payload["chat_title"] = active_chat.title
+            return jsonify(_finalize_ask_response_payload(payload)), 200
+        elif len(text_hits) == 1:
+            anchor_row = text_hits[0]
+
+    query_vector = get_embedding(query_text)
+    if not query_vector:
+        logger.error("Embedding generation failed")
+        return jsonify({"error": "Failed to process query embedding"}), 500
+
     try:
         if guidance_mode == "parmaan":
-            # Parmaan mode: similar / by-topic (same retrieval) / dissimilar (opposite-theme search)
+            # Parmaan mode: similar / by-topic / dissimilar; optional explicit anchor after disambiguation
             similar_shabads = _retrieve_parmaan_shabads_for_chat(
-                query_vector, parmaan_discovery, effective_parmaan_count, persona
+                query_vector,
+                parmaan_discovery,
+                effective_parmaan_count,
+                persona,
+                anchor_shabad=anchor_row,
             )
             if not similar_shabads:
                 return jsonify({"error": "No matching shabads found for this topic"}), 404
@@ -1104,6 +1330,7 @@ def ask():
                 message_history=message_history,
                 guidance_mode="parmaan",
                 parmaan_discovery_type=parmaan_discovery,
+                user_memory_context=None,
             )
             ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 
@@ -1146,6 +1373,7 @@ def ask():
             language=language,
             message_history=message_history,
             guidance_mode="guidance",
+            user_memory_context=user_memory_for_prompt,
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 
@@ -1162,7 +1390,7 @@ def ask():
             "is_clarification": False,
             "guidance_mode": guidance_mode,
         }
-        _persist_messages(
+        msg_ids = _persist_messages(
             active_chat,
             query_text,
             ai_response,
@@ -1172,6 +1400,16 @@ def ask():
             llm_provider,
             llm_model,
         )
+        if msg_ids and getattr(user, "memory_enabled", True):
+            umid, amid = msg_ids
+            maybe_extract_and_save_after_guidance_turn(
+                user,
+                active_chat.id if active_chat else None,
+                query_text,
+                ai_response,
+                umid,
+                amid,
+            )
         if active_chat:
             active_chat.updated_at = datetime.utcnow()
             if not active_chat.title or active_chat.title == "New chat":
@@ -1195,35 +1433,38 @@ def _persist_messages(
     language: str,
     llm_provider: Optional[str] = None,
     llm_model: Optional[str] = None,
-) -> None:
+) -> Optional[Tuple[int, int]]:
+    """Persist user + assistant turns; returns (user_message_id, assistant_message_id) when chat exists."""
     if not chat:
-        return
+        return None
     try:
-        db.session.add(
-            Message(
-                chat_id=chat.id,
-                role="user",
-                content=user_text,
-                persona=persona,
-                language=language,
-            )
+        user_msg = Message(
+            chat_id=chat.id,
+            role="user",
+            content=user_text,
+            persona=persona,
+            language=language,
         )
-        db.session.add(
-            Message(
-                chat_id=chat.id,
-                role="assistant",
-                content=assistant_text,
-                shabad_row_id=shabad_row_id,
-                persona=persona,
-                language=language,
-                llm_provider=llm_provider,
-                llm_model=llm_model,
-            )
+        asst_msg = Message(
+            chat_id=chat.id,
+            role="assistant",
+            content=assistant_text,
+            shabad_row_id=shabad_row_id,
+            persona=persona,
+            language=language,
+            llm_provider=llm_provider,
+            llm_model=llm_model,
         )
+        db.session.add(user_msg)
+        db.session.add(asst_msg)
+        db.session.flush()
+        uid, aid = user_msg.id, asst_msg.id
         db.session.commit()
+        return (uid, aid)
     except Exception as e:
         logger.warning("Failed to persist messages: %s", e)
         db.session.rollback()
+        return None
 
 
 @app.route("/random-shabads", methods=["GET"])
