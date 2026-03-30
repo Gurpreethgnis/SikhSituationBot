@@ -11,6 +11,40 @@ logger = logging.getLogger(__name__)
 # Configure Gemini
 genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 
+_RELAXED_SAFETY = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+]
+
+
+def _safe_response_text(response) -> str:
+    """Extract text from a Gemini response, returning '' if safety-blocked or empty.
+
+    Inspects ``candidates[0].content.parts[0].text`` to avoid the crash that
+    ``response.text`` triggers when ``finish_reason`` is SAFETY (2).  Falls back
+    to ``response.text`` for compatibility with test mocks.
+    """
+    try:
+        candidates = getattr(response, "candidates", None)
+        if candidates and len(candidates) > 0:
+            candidate = candidates[0]
+            fr = getattr(candidate, "finish_reason", None)
+            # finish_reason 2 = SAFETY, 3 = RECITATION — blocked by the API
+            if fr in (2, 3):
+                return ""
+            content = getattr(candidate, "content", None)
+            if content:
+                parts = getattr(content, "parts", None)
+                if parts and len(parts) > 0:
+                    return getattr(parts[0], "text", "") or ""
+        # Fallback: works for simple mocks or non-standard responses
+        return getattr(response, "text", "") or ""
+    except (AttributeError, IndexError, ValueError):
+        return ""
+
+
 SYSTEM_PROMPT = """You are SikhSituationBot, a compassionate AI guide drawing from the wisdom of Guru Granth Sahib (SGGS).
 
 Your role is to help people find guidance and peace through Sikh teachings.
@@ -52,7 +86,7 @@ For full guidance responses, make suggestions that deepen their spiritual journe
 Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately and beautifully."""
 
 model = genai.GenerativeModel(
-    'models/gemini-flash-latest',
+    'models/gemini-2.0-flash-lite',
     system_instruction=SYSTEM_PROMPT
 )
 
@@ -300,7 +334,7 @@ def generate_chat_title(first_user_message: str) -> str:
     if not GEMINI_API_KEY or not first_user_message.strip():
         return "New chat"
     try:
-        lite = genai.GenerativeModel("models/gemini-flash-latest")
+        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
         prompt = (
             "Generate a very short chat title (3 to 6 words, no quotes, no emoji) "
             "summarizing this user's first message. Spiritual/wellness context.\n\n"
@@ -309,8 +343,9 @@ def generate_chat_title(first_user_message: str) -> str:
         r = lite.generate_content(
             prompt,
             generation_config=genai.GenerationConfig(temperature=0.3, max_output_tokens=40),
+            safety_settings=_RELAXED_SAFETY,
         )
-        t = (r.text or "").strip().replace("\n", " ")
+        t = _safe_response_text(r).strip().replace("\n", " ")
         t = t.strip("'\"")[:200]
         return t if t else "New chat"
     except Exception as e:
@@ -323,7 +358,7 @@ def generate_opposite_theme_query(shabad_summary: str) -> str:
     if not GEMINI_API_KEY:
         return "ego attachment pride versus humility surrender"
     try:
-        lite = genai.GenerativeModel("models/gemini-flash-latest")
+        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
         prompt = (
             "Given this Gurbani summary, output ONE short English search phrase (max 20 words) "
             "to find verses with contrasting or complementary spiritual emphasis (e.g. humility vs pride). "
@@ -333,8 +368,9 @@ def generate_opposite_theme_query(shabad_summary: str) -> str:
         r = lite.generate_content(
             prompt,
             generation_config=genai.GenerationConfig(temperature=0.4, max_output_tokens=60),
+            safety_settings=_RELAXED_SAFETY,
         )
-        return (r.text or "").strip()[:500]
+        return _safe_response_text(r).strip()[:500] or "humility peace letting go attachment"
     except Exception as e:
         logger.warning("Opposite theme generation failed: %s", e)
         return "humility peace letting go attachment"
@@ -407,16 +443,17 @@ def synthesize_gemini_response(
                 guidance_mode=guidance_mode,
             )
 
-        response = model.generate_content(prompt)
-        
-        # Preserve whitespace for TestPrompts
-        if is_prompts_test:
-            return response.text if response.text is not None else ""
+        response = model.generate_content(prompt, safety_settings=_RELAXED_SAFETY)
 
-        if not response.text or not response.text.strip():
+        text = _safe_response_text(response)
+
+        if is_prompts_test:
+            return text
+
+        if not text.strip():
             return FALLBACK_RESPONSE
-            
-        return response.text
+
+        return text
     except Exception as e:
         logger.error(f"Error generating content from Gemini API: {e}")
         if is_prompts_test:

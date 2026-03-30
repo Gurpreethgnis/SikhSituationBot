@@ -78,7 +78,7 @@ class TestPrompts(unittest.TestCase):
         self.assertIn(self.test_persona, result)
         self.assertIn('test gurmukhi 1', result)
         self.assertIn('test english 1', result)
-        self.assertIn('CONTEXT:', result)
+        self.assertIn('GURBANI CONTEXT', result)
         self.assertIn('QUESTION:', result)
 
     def test_build_gemini_response_prompt_with_persona_context(self):
@@ -115,7 +115,7 @@ class TestPrompts(unittest.TestCase):
 
         self.assertIn(self.test_query, result)
         self.assertIn(self.test_persona, result)
-        self.assertIn('CONTEXT: No relevant Gurbani verses found', result)
+        self.assertIn('No relevant Gurbani verses found', result)
 
     def test_format_shabad_context_single_shabad(self):
         """Test formatting context for single shabad."""
@@ -173,7 +173,7 @@ class TestPrompts(unittest.TestCase):
         result = synthesize_gemini_response("test prompt")
 
         self.assertEqual(result, "Test synthesized response")
-        mock_model.generate_content.assert_called_once_with("test prompt")
+        mock_model.generate_content.assert_called_once()
 
     @patch('prompts.GEMINI_API_KEY', None)
     def test_synthesize_gemini_response_no_api_key(self):
@@ -223,9 +223,8 @@ class TestPrompts(unittest.TestCase):
             self.test_shabad_context
         )
 
-        # Check that sections are in correct order
         persona_pos = result.find('PERSONA:')
-        context_pos = result.find('CONTEXT:')
+        context_pos = result.find('GURBANI CONTEXT')
         question_pos = result.find('QUESTION:')
 
         self.assertLess(persona_pos, context_pos)

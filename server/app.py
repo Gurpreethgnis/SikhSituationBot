@@ -31,6 +31,8 @@ from models import Chat, LLMSettings, Message, Shabad, User, db
 from prompts import (
     FALLBACK_RESPONSE,
     LANGUAGE_INSTRUCTIONS,
+    _RELAXED_SAFETY,
+    _safe_response_text,
     generate_chat_title,
     generate_opposite_theme_query,
     resolve_language,
@@ -91,7 +93,7 @@ def get_assessment_model():
     global query_assessment_model
     if query_assessment_model is None and GEMINI_API_KEY:
         # gemini-2.0-flash returns 404 for many new API keys; use rolling latest.
-        query_assessment_model = genai.GenerativeModel("models/gemini-flash-latest")
+        query_assessment_model = genai.GenerativeModel("models/gemini-2.0-flash-lite")
     return query_assessment_model
 
 
@@ -125,8 +127,9 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
         response = model.generate_content(
             assessment_prompt,
             generation_config=genai.GenerationConfig(temperature=0.1, max_output_tokens=150),
+            safety_settings=_RELAXED_SAFETY,
         )
-        result_text = response.text.strip()
+        result_text = _safe_response_text(response).strip()
         if result_text.startswith("```"):
             result_text = result_text.split("\n", 1)[1] if "\n" in result_text else result_text
             result_text = result_text.rsplit("```", 1)[0] if "```" in result_text else result_text
