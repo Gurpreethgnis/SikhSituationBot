@@ -28,10 +28,9 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 # Curated options for admin UI (model IDs are provider-native strings)
 LLM_PROVIDER_MODELS: Dict[str, List[str]] = {
     "gemini": [
-        "models/gemini-2.0-flash-lite",
+        "models/gemini-2.5-flash-lite",
         "models/gemini-2.5-flash",
-        "models/gemini-1.5-flash",
-        "models/gemini-1.5-pro",
+        "models/gemini-2.5-pro",
     ],
     "openai": [
         "gpt-4o-mini",
@@ -49,7 +48,7 @@ LLM_PROVIDER_MODELS: Dict[str, List[str]] = {
 }
 
 DEFAULT_PROVIDER = os.environ.get("DEFAULT_LLM_PROVIDER", "gemini").strip().lower()
-DEFAULT_MODEL = os.environ.get("DEFAULT_LLM_MODEL", "models/gemini-2.0-flash-lite").strip()
+DEFAULT_MODEL = os.environ.get("DEFAULT_LLM_MODEL", "models/gemini-2.5-flash-lite").strip()
 
 
 def ensure_llm_settings_row() -> None:
@@ -84,26 +83,24 @@ def llm_options_for_admin() -> Dict[str, Any]:
     return {"providers": list(LLM_PROVIDER_MODELS.keys()), "models_by_provider": LLM_PROVIDER_MODELS}
 
 
-def _normalize_gemini_model_id(model_id: str) -> str:
-    if not model_id:
-        return "models/gemini-2.0-flash-lite"
-    if model_id.startswith("models/"):
-        return model_id
-    return f"models/{model_id}"
-
-
-_GEMINI_DEPRECATED_MODEL_REMAP: Dict[str, str] = {
-    "models/gemini-flash-latest": "models/gemini-2.0-flash-lite",
+_GEMINI_DEPRECATED_MODELS: Dict[str, str] = {
+    "models/gemini-2.0-flash-lite": "models/gemini-2.5-flash-lite",
+    "models/gemini-flash-latest": "models/gemini-2.5-flash-lite",
+    "models/gemini-2.0-flash": "models/gemini-2.5-flash",
+    "models/gemini-1.5-flash": "models/gemini-2.5-flash-lite",
+    "models/gemini-1.5-pro": "models/gemini-2.5-pro",
 }
 
 
 def resolve_gemini_model_id(model_id: str) -> str:
-    """Normalize and remap deprecated Gemini model IDs."""
-    mid = _normalize_gemini_model_id(model_id)
-    mapped = _GEMINI_DEPRECATED_MODEL_REMAP.get(mid)
-    if mapped:
-        logger.warning("Remapping deprecated Gemini model %s -> %s", mid, mapped)
-        return mapped
+    """Normalize and migrate deprecated Gemini model IDs to current successors."""
+    if not model_id:
+        return "models/gemini-2.5-flash-lite"
+    mid = model_id if model_id.startswith("models/") else f"models/{model_id}"
+    replacement = _GEMINI_DEPRECATED_MODELS.get(mid)
+    if replacement:
+        logger.warning("Migrating deprecated Gemini model %s -> %s", mid, replacement)
+        return replacement
     return mid
 
 
@@ -182,6 +179,7 @@ def synthesize_chat_response(
     language: str = "en",
     message_history: Any = None,
     guidance_mode: str = "guidance",
+    parmaan_discovery_type: str = "similar",
 ) -> Tuple[str, str, str]:
     """
     Build the RAG prompt and call the configured provider.
@@ -194,6 +192,7 @@ def synthesize_chat_response(
         language=language,
         message_history=message_history,
         guidance_mode=guidance_mode,
+        parmaan_discovery_type=parmaan_discovery_type,
     )
     provider, model_id = get_llm_settings()
 
@@ -220,6 +219,7 @@ def synthesize_chat_response(
             language=language,
             message_history=message_history,
             guidance_mode=guidance_mode,
+            parmaan_discovery_type=parmaan_discovery_type,
         )
         if fb is None or (isinstance(fb, str) and not fb.strip()):
             fb = FALLBACK_RESPONSE

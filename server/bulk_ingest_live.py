@@ -32,12 +32,12 @@ def get_best_generation_model():
     """Detect the best available generation model from the API."""
     try:
         available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        for best in ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']:
+        for best in ['models/gemini-2.5-flash-lite', 'models/gemini-2.5-flash', 'models/gemini-2.5-pro']:
             if best in available_models:
                 return best
-        return available_models[0] if available_models else 'gemini-1.5-flash'
+        return available_models[0] if available_models else 'models/gemini-2.5-flash-lite'
     except Exception:
-        return 'gemini-1.5-flash'
+        return 'models/gemini-2.5-flash-lite'
 
 def fetch_shabad_text(shabad_id: int):
     """Fetch Gurmukhi, Romanization, and English translation for a specific Shabad."""

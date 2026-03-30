@@ -3,6 +3,13 @@ import sys
 import logging
 import inspect
 from typing import List, Dict, Any, Optional
+
+
+def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
+    if not shabad_id or not isinstance(shabad_id, str):
+        return ""
+    numeric_id = shabad_id[5:] if shabad_id.startswith("sggs_") else shabad_id
+    return f"https://www.sikhitothemax.org/shabad?id={numeric_id}"
 import google.generativeai as genai
 
 # Configure logging
@@ -86,7 +93,7 @@ For full guidance responses, make suggestions that deepen their spiritual journe
 Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately and beautifully."""
 
 model = genai.GenerativeModel(
-    'models/gemini-2.0-flash-lite',
+    'models/gemini-2.5-flash-lite',
     system_instruction=SYSTEM_PROMPT
 )
 
@@ -246,7 +253,13 @@ def format_shabad_context(shabads: Any) -> str:
             "explanation": getattr(shabad, 'explanation', None),
             "source": getattr(shabad, 'source', None),
             "section": getattr(shabad, 'section', None),
+            "shabad_id": getattr(shabad, 'shabad_id', None),
+            "sttm_link": getattr(shabad, 'sttm_link', None),
         }
+
+        sid = shabad_dict.get("shabad_id")
+        if sid and not (shabad_dict.get("sttm_link") or "").strip():
+            shabad_dict["sttm_link"] = _sttm_link_from_shabad_id(sid)
 
         if shabad_dict.get('gurmukhi'):
             lines.append(f"Gurmukhi: {shabad_dict.get('gurmukhi')}")
@@ -266,7 +279,12 @@ def format_shabad_context(shabads: Any) -> str:
             lines.append(f"Source: {shabad_dict.get('source')}")
         if shabad_dict.get('section'):
             lines.append(f"Section: {shabad_dict.get('section')}")
-        
+        if sid:
+            lines.append(f"Shabad ID: {sid}")
+        sttm = (shabad_dict.get("sttm_link") or "").strip()
+        if sttm:
+            lines.append(f"SikhiToTheMax link (use this exact URL in your reply): {sttm}")
+
         formatted.append("\n".join(lines))
 
     return "\n\n---\n\n".join(formatted)
@@ -334,7 +352,7 @@ def generate_chat_title(first_user_message: str) -> str:
     if not GEMINI_API_KEY or not first_user_message.strip():
         return "New chat"
     try:
-        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        lite = genai.GenerativeModel("models/gemini-2.5-flash-lite")
         prompt = (
             "Generate a very short chat title (3 to 6 words, no quotes, no emoji) "
             "summarizing this user's first message. Spiritual/wellness context.\n\n"
@@ -358,7 +376,7 @@ def generate_opposite_theme_query(shabad_summary: str) -> str:
     if not GEMINI_API_KEY:
         return "ego attachment pride versus humility surrender"
     try:
-        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        lite = genai.GenerativeModel("models/gemini-2.5-flash-lite")
         prompt = (
             "Given this Gurbani summary, output ONE short English search phrase (max 20 words) "
             "to find verses with contrasting or complementary spiritual emphasis (e.g. humility vs pride). "
@@ -389,8 +407,7 @@ def get_best_generation_model():
             if 'generateContent' in m.supported_generation_methods
         ]
         if available_models:
-            # Prefer modern gemini-1.5 models, fallback to gemini-pro
-            best_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']
+            best_models = ['models/gemini-2.5-flash-lite', 'models/gemini-2.5-flash', 'models/gemini-2.5-pro']
             for best in best_models:
                 if best in available_models:
                     GENERATION_MODEL = best
@@ -403,8 +420,7 @@ def get_best_generation_model():
     except Exception as e:
         logger.error(f"Failed to list Gemini generation models: {e}")
         
-    # Fallback to a known default if listing fails
-    GENERATION_MODEL = 'gemini-1.5-flash'
+    GENERATION_MODEL = 'models/gemini-2.5-flash-lite'
     return GENERATION_MODEL
 
 def synthesize_gemini_response(
@@ -414,6 +430,7 @@ def synthesize_gemini_response(
     language: str = "en",
     message_history: Any = None,
     guidance_mode: str = "guidance",
+    parmaan_discovery_type: str = "similar",
 ) -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
@@ -441,6 +458,7 @@ def synthesize_gemini_response(
                 language=language,
                 message_history=message_history,
                 guidance_mode=guidance_mode,
+                parmaan_discovery_type=parmaan_discovery_type,
             )
 
         response = model.generate_content(prompt, safety_settings=_RELAXED_SAFETY)
@@ -468,10 +486,12 @@ def build_gemini_response_prompt(
     language: str = "en",
     message_history: Any = None,
     guidance_mode: str = "guidance",
+    parmaan_discovery_type: str = "similar",
 ) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
     guidance_mode: 'guidance' (life situation → shabad + summary) or 'parmaan' (search shabads by topic).
+    parmaan_discovery_type: 'similar' | 'topic' | 'dissimilar' (only used when guidance_mode is parmaan).
     """
     # Smart swap for tests that call (query, persona, shabads)
     if isinstance(shabads, str) and shabads in PERSONA_CONTEXTS:
@@ -488,10 +508,41 @@ def build_gemini_response_prompt(
     history_block = format_conversation_history(message_history)
 
     gm = (guidance_mode or "guidance").strip().lower()
-    
+    pdt = (parmaan_discovery_type or "similar").strip().lower()
+    if pdt in ("dissimilar", "opposite", "contrasts", "contrast"):
+        pdt = "dissimilar"
+    elif pdt != "topic":
+        pdt = "similar"
+
     if gm == "parmaan":
-        # Parmaan mode: User is searching for shabads on a topic or similar/dissimilar to a shabad
+        # Parmaan mode: retrieval type is chosen in the UI (similar / topic / dissimilar)
         shabad_context = format_shabad_context(shabads)
+        if pdt == "topic":
+            discovery_line = (
+                "DISCOVERY TYPE: **By topic** — the user named a theme or subject; treat the verses as "
+                "breadth around that theme, not personal life coaching."
+            )
+            task_extra = (
+                "Frame the intro around the topic they named. Show how the retrieved shabads illuminate "
+                "different facets of that theme."
+            )
+        elif pdt == "dissimilar":
+            discovery_line = (
+                "DISCOVERY TYPE: **Contrasts** — verses were retrieved to emphasize themes that contrast or "
+                "complement the spiritual tone of what matched the user's words (e.g. humility vs pride). "
+                "Explain those contrasts clearly."
+            )
+            task_extra = (
+                "Lead with why these shabads offer a contrasting or complementary angle, then present each verse. "
+                "Do not imply the user asked for life advice; stay on discovery and theme."
+            )
+        else:
+            discovery_line = (
+                "DISCOVERY TYPE: **Similar** — verses are semantically close to the user's text (a line, idea, or theme). "
+                "Highlight shared imagery, virtues, or doctrinal threads."
+            )
+            task_extra = "Explain what makes these shabads resonate with the user's wording or intent."
+
         prompt = f"""{SYSTEM_PROMPT}
 
 OUTPUT LANGUAGE: {lang_line}
@@ -500,22 +551,21 @@ PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
-MODE: The user is in **Parmaan Search Mode** - they are looking for shabads on a specific topic, 
-or asking for shabads similar/dissimilar to a given shabad.
+MODE: The user is in **Parmaan Search Mode** — they want Gurbani discovery only (NOT life coaching, NOT therapy-style empathy, NOT asking them to share more about their feelings or situation).
+{discovery_line}
 
-RETRIEVED SHABADS: {shabad_context}
+RETRIEVED SHABADS (listed in relevance order; #1 is usually closest to their text for similar/topic search): {shabad_context}
 
 {history_block}USER'S REQUEST: {user_query}
 
 Your task:
-1. Briefly introduce the shabads found that match their request
-2. Present each shabad clearly with its Gurmukhi, translation, and source
-3. Explain the themes or connections between the shabads
-4. If they asked for similar shabads, highlight what makes them similar
-5. If they asked for dissimilar/contrasting shabads, highlight the contrasts
-6. End with the [SUGGESTIONS] block with 3 follow-up options (e.g., "Find more shabads on this theme", "Explain this shabad deeper", "Find contrasting perspectives")
+1. Open with one short sentence: if their message looks like a Gurbani line or phrase, say you matched it to the closest verse in the database (verse #1) and are showing related results; otherwise say you found shabads for their theme.
+2. For EACH retrieved shabad: Gurmukhi, English translation, source — and a **Markdown link** using the exact SikhiToTheMax URL given in that shabad's block (e.g. [Open on SikhiToTheMax](URL)). Every shabad must include its link.
+3. {task_extra}
+4. Do NOT ask clarifying questions about their personal life. Do NOT mirror guidance-mode structure (no "Timeless Shabad" life-advice sections).
+5. End with the [SUGGESTIONS] block: 3 short discovery follow-ups only (e.g. "Show more like #1", "Try contrasting shabads", "Another angle on this theme").
 
-Keep the focus on presenting the shabads rather than providing life guidance."""
+Keep the focus on presenting the shabads and links, not counselling."""
         return prompt
 
     shabad_context = format_shabad_context(shabads)
