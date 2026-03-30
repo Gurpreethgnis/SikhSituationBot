@@ -63,6 +63,8 @@ const translations = {
     parmaanDiscoveryContrasts: 'Contrasts',
     parmaanShabadCountLabel: 'Shabads',
     parmaanMessagePlaceholder: 'Paste a line, name a theme, or describe what to contrast…',
+    parmaanDisambiguationContextNote:
+      'Each row is a button—tap one to continue. Your Parmaan bar below still applies: {discovery} · {count} shabads in the full answer.',
     deleteChat: 'Delete chat',
     deleteChatConfirm: 'Delete this conversation? This cannot be undone.',
     copyMessage: 'Copy message',
@@ -153,6 +155,8 @@ const translations = {
     parmaanDiscoveryContrasts: 'ਵਿਰੋਧ',
     parmaanShabadCountLabel: 'ਸ਼ਬਦ',
     parmaanMessagePlaceholder: 'ਪੰਕਤੀ ਪੇਸਟ ਕਰੋ, ਵਿਸ਼ਾ ਦੱਸੋ, ਜਾਂ ਵਿਰੋਧ ਵਰਣਨ ਕਰੋ…',
+    parmaanDisambiguationContextNote:
+      'ਹਰ ਕਤਾਰ ਬਟਨ ਹੈ—ਅੱਗੇ ਵਧਣ ਲਈ ਇੱਕ ਛੋਹੋ। ਹੇਠਾਂ ਪ੍ਰਮਾਣ ਬਾਰ ਅਜੇ ਵੀ ਲਾਗੂ: {discovery} · ਜਵਾਬ ਵਿੱਚ {count} ਸ਼ਬਦ।',
     deleteChat: 'ਚੈਟ ਮਿਟਾਓ',
     deleteChatConfirm: 'ਇਹ ਗੱਲਬਾਤ ਮਿਟਾਓ? ਇਸ ਨੂੰ ਵਾਪਸ ਨਹੀਂ ਲਿਆ ਜਾ ਸਕਦਾ।',
     copyMessage: 'ਸੁਨੇਹਾ ਕਾਪੀ ਕਰੋ',
@@ -243,6 +247,8 @@ const translations = {
     parmaanDiscoveryContrasts: 'विपरीत',
     parmaanShabadCountLabel: 'शबद',
     parmaanMessagePlaceholder: 'पंक्ति चिपकाएं, विषय बताएं, या विपरीत का वर्णन करें…',
+    parmaanDisambiguationContextNote:
+      'हर पंक्ति बटन है—जारी रखने के लिए एक पर टैप करें। नीचे का प्रमाण बार लागू रहता है: {discovery} · पूर्ण उत्तर में {count} शबद।',
     deleteChat: 'चैट हटाएं',
     deleteChatConfirm: 'यह बातचीत हटाएं? इसे पूर्ववत नहीं किया जा सकता।',
     copyMessage: 'संदेश कॉपी करें',
@@ -333,6 +339,8 @@ const translations = {
     parmaanDiscoveryContrasts: '对比',
     parmaanShabadCountLabel: '数量',
     parmaanMessagePlaceholder: '粘贴一行经文、写出主题，或描述要对比的内容…',
+    parmaanDisambiguationContextNote:
+      '每一行都是可点击的按钮。下方经典选项仍然生效：{discovery} · 完整回答含 {count} 首。',
     deleteChat: '删除聊天',
     deleteChatConfirm: '删除此对话？此操作无法撤销。',
     copyMessage: '复制消息',
@@ -422,6 +430,8 @@ const translations = {
     parmaanDiscoveryContrasts: 'Contrastes',
     parmaanShabadCountLabel: 'Shabads',
     parmaanMessagePlaceholder: 'Pega una línea, nombra un tema o pide contrastes…',
+    parmaanDisambiguationContextNote:
+      'Cada fila es un botón: toca uno para continuar. La barra Parmaan de abajo sigue activa: {discovery} · {count} shabads en la respuesta completa.',
     deleteChat: 'Eliminar conversación',
     deleteChatConfirm: '¿Eliminar esta conversación? No se puede deshacer.',
     copyMessage: 'Copiar mensaje',

@@ -255,7 +255,7 @@ export default function ChatPage() {
   }
 
   const handleSend = async (query, options = {}) => {
-    const { anchorShabadId } = options
+    const { anchorShabadId, parmaanOriginalQuery } = options
     if (!token) {
       const msg =
         sessionStatus === 'unauthenticated'
@@ -306,6 +306,9 @@ export default function ChatPage() {
         body.parmaan_shabad_count = parmaanShabadCount
       }
       if (anchorShabadId) body.anchor_shabad_id = anchorShabadId
+      if (parmaanOriginalQuery && guidanceMode === 'parmaan') {
+        body.parmaan_original_query = parmaanOriginalQuery
+      }
       if (chatId) body.chat_id = chatId
 
       const askController = new AbortController()
@@ -399,14 +402,24 @@ export default function ChatPage() {
     handleSend(suggestion)
   }
 
-  const handleDisambiguationSelect = (candidate) => {
+  const handleDisambiguationSelect = (candidate, originalSearchQuery) => {
     if (!candidate?.shabad_id || loading) return
     const gm = candidate.gurmukhi || ''
     const en = candidate.english_translation || ''
     const preview = gm ? truncateText(gm, 100) : truncateText(en, 80)
     const userLabel = preview ? `Selected: ${preview}` : `Selected shabad: ${candidate.shabad_id}`
-    handleSend(userLabel, { anchorShabadId: candidate.shabad_id })
+    handleSend(userLabel, {
+      anchorShabadId: candidate.shabad_id,
+      parmaanOriginalQuery: (originalSearchQuery || '').trim() || undefined,
+    })
   }
+
+  const parmaanDiscoveryLabelKey =
+    parmaanDiscoveryType === 'topic'
+      ? 'parmaanDiscoveryTopic'
+      : parmaanDiscoveryType === 'dissimilar'
+        ? 'parmaanDiscoveryContrasts'
+        : 'parmaanDiscoverySimilar'
 
   const chatGroups = groupChatsByDate(chats)
 
@@ -539,13 +552,20 @@ export default function ChatPage() {
                     <MarkdownRenderer content={msg.content} />
                     {msg.isDisambiguation && msg.disambiguationCandidates?.length > 0 && (
                       <div className="disambiguation-options" aria-label="Choose matching shabad">
-                        {msg.disambiguationCandidates.map((c) => (
+                        {guidanceMode === 'parmaan' ? (
+                          <p className="disambiguation-parmaan-context" role="note">
+                            {t('parmaanDisambiguationContextNote')
+                              .replace('{discovery}', t(parmaanDiscoveryLabelKey))
+                              .replace('{count}', String(parmaanShabadCount))}
+                          </p>
+                        ) : null}
+                        {msg.disambiguationCandidates.map((c, cidx) => (
                           <button
-                            key={c.shabad_id}
+                            key={`${c.shabad_id}-${cidx}`}
                             type="button"
                             className="disambiguation-btn"
                             disabled={loading}
-                            onClick={() => handleDisambiguationSelect(c)}
+                            onClick={() => handleDisambiguationSelect(c, msg.originalQuery)}
                           >
                             {c.source ? (
                               <span className="disambiguation-meta">{c.source}</span>
