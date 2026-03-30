@@ -152,6 +152,11 @@ class Shabad(db.Model):
 
     context_tags = Column(ARRAY(String))
 
+    # Content quality (Raag/Mehla header stubs vs full shabads) — see gurbani_content_quality.py
+    is_header_only = Column(Boolean, nullable=True)
+    verse_count = Column(Integer, nullable=True)
+    content_length = Column(Integer, nullable=True)
+
     embedding = Column(Vector())
 
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -183,6 +188,9 @@ class Shabad(db.Model):
             "source": self.source,
             "recommended_persona": self.recommended_persona,
             "context_tags": self.context_tags,
+            "is_header_only": self.is_header_only,
+            "verse_count": self.verse_count,
+            "content_length": self.content_length,
             "embedding": self.embedding if include_embedding else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "sttm_link": self.sttm_url_for(self.shabad_id),
@@ -199,6 +207,9 @@ class Shabad(db.Model):
             "source": self.source,
             "recommended_persona": self.recommended_persona,
             "context_tags": self.context_tags,
+            "is_header_only": self.is_header_only,
+            "verse_count": self.verse_count,
+            "content_length": self.content_length,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "sttm_link": self.sttm_url_for(self.shabad_id),
         }

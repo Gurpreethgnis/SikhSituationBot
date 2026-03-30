@@ -27,6 +27,7 @@ from llm_synthesis import (
     llm_options_for_admin,
     synthesize_chat_response,
 )
+from gurbani_content_quality import recompute_quality_for_stored_row
 from models import Chat, LLMSettings, Message, Shabad, User, db
 from prompts import (
     FALLBACK_RESPONSE,
@@ -209,6 +210,21 @@ if not is_testing:
                 db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN parmaan_shabad_count INTEGER DEFAULT 5"))
                 db.session.commit()
                 logger.info("Added parmaan_shabad_count column to llm_settings")
+            # Shabad content quality (Parmaan search / Raag header stubs)
+            if "shabads" in inspector.get_table_names():
+                sh_cols = [c["name"] for c in inspector.get_columns("shabads")]
+                if "is_header_only" not in sh_cols:
+                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN is_header_only BOOLEAN"))
+                    db.session.commit()
+                    logger.info("Added is_header_only column to shabads")
+                if "verse_count" not in sh_cols:
+                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN verse_count INTEGER"))
+                    db.session.commit()
+                    logger.info("Added verse_count column to shabads")
+                if "content_length" not in sh_cols:
+                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN content_length INTEGER"))
+                    db.session.commit()
+                    logger.info("Added content_length column to shabads")
             ensure_llm_settings_row()
         except Exception as e:
             logger.warning("create_all warning: %s", e)
@@ -544,9 +560,11 @@ def parmaans_search():
     vec = get_embedding(q)
     if not vec:
         return jsonify({"error": "embedding failed"}), 500
-    rows = search_similar_shabads(vec, limit=limit, persona=persona)
+    rows = search_similar_shabads(
+        vec, limit=limit, persona=persona, exclude_parmaan_low_quality=True
+    )
     if not rows:
-        rows = search_similar_shabads(vec, limit=limit)
+        rows = search_similar_shabads(vec, limit=limit, exclude_parmaan_low_quality=True)
     return jsonify({"shabads": [r.to_api_dict() for r in rows]}), 200
 
 
@@ -582,7 +600,7 @@ def parmaans_similar(pk: int):
     if not s:
         return jsonify({"error": "Not found"}), 404
     limit = min(request.args.get("limit", 8, type=int), 20)
-    rows = find_similar_to_shabad(s, limit=limit)
+    rows = find_similar_to_shabad(s, limit=limit, exclude_parmaan_low_quality=True)
     return jsonify({"shabads": [r.to_api_dict() for r in rows]}), 200
 
 
@@ -597,7 +615,7 @@ def parmaans_opposite(pk: int):
     if not vec:
         return jsonify({"error": "embedding failed"}), 500
     limit = min(request.args.get("limit", 8, type=int), 20)
-    rows = search_similar_shabads(vec, limit=limit + 2)
+    rows = search_similar_shabads(vec, limit=limit + 2, exclude_parmaan_low_quality=True)
     rows = [r for r in rows if r.id != s.id][:limit]
     return jsonify({"query": phrase, "shabads": [r.to_api_dict() for r in rows]}), 200
 
@@ -679,6 +697,11 @@ def admin_create_shabad():
         return jsonify({"error": "shabad_id exists"}), 409
     text_for_emb = f"{gurmukhi}\n{eng}\n{(data.get('romanization') or '')}"
     emb = get_embedding(text_for_emb)
+    quality = recompute_quality_for_stored_row(
+        gurmukhi,
+        eng,
+        data.get("verse_count") if isinstance(data.get("verse_count"), int) else None,
+    )
     s = Shabad(
         shabad_id=sid,
         gurmukhi=gurmukhi,
@@ -687,6 +710,9 @@ def admin_create_shabad():
         source=(data.get("source") or "").strip() or None,
         recommended_persona=(data.get("recommended_persona") or "any")[:20],
         context_tags=data.get("context_tags") if isinstance(data.get("context_tags"), list) else None,
+        is_header_only=quality["is_header_only"],
+        verse_count=quality["verse_count"],
+        content_length=quality["content_length"],
         embedding=emb,
     )
     db.session.add(s)
@@ -715,6 +741,10 @@ def admin_put_shabad(pk: int):
         s.context_tags = data["context_tags"]
     text_for_emb = f"{s.gurmukhi}\n{s.english_translation}\n{s.romanization or ''}"
     s.embedding = get_embedding(text_for_emb)
+    quality = recompute_quality_for_stored_row(s.gurmukhi, s.english_translation, s.verse_count)
+    s.is_header_only = quality["is_header_only"]
+    s.verse_count = quality["verse_count"]
+    s.content_length = quality["content_length"]
     db.session.commit()
     return jsonify({"shabad": s.to_api_dict()}), 200
 
@@ -905,9 +935,16 @@ def _retrieve_parmaan_shabads_for_chat(
     """
     limit = max(1, min(int(limit), 15))
     if discovery_type == "dissimilar":
-        anchors = search_similar_shabads(query_embedding=query_vector, limit=1, persona=persona)
+        anchors = search_similar_shabads(
+            query_embedding=query_vector,
+            limit=1,
+            persona=persona,
+            exclude_parmaan_low_quality=True,
+        )
         if not anchors:
-            anchors = search_similar_shabads(query_embedding=query_vector, limit=1)
+            anchors = search_similar_shabads(
+                query_embedding=query_vector, limit=1, exclude_parmaan_low_quality=True
+            )
         if not anchors:
             return []
         anchor = anchors[0]
@@ -916,14 +953,28 @@ def _retrieve_parmaan_shabads_for_chat(
         opp_vec = get_embedding(phrase)
         if not opp_vec:
             return []
-        rows = search_similar_shabads(query_embedding=opp_vec, limit=limit + 2, persona=persona)
+        rows = search_similar_shabads(
+            query_embedding=opp_vec,
+            limit=limit + 2,
+            persona=persona,
+            exclude_parmaan_low_quality=True,
+        )
         if not rows:
-            rows = search_similar_shabads(query_embedding=opp_vec, limit=limit + 2)
+            rows = search_similar_shabads(
+                query_embedding=opp_vec, limit=limit + 2, exclude_parmaan_low_quality=True
+            )
         return [r for r in rows if r.id != anchor.id][:limit]
 
-    rows = search_similar_shabads(query_embedding=query_vector, limit=limit, persona=persona)
+    rows = search_similar_shabads(
+        query_embedding=query_vector,
+        limit=limit,
+        persona=persona,
+        exclude_parmaan_low_quality=True,
+    )
     if not rows:
-        rows = search_similar_shabads(query_embedding=query_vector, limit=limit)
+        rows = search_similar_shabads(
+            query_embedding=query_vector, limit=limit, exclude_parmaan_low_quality=True
+        )
     return rows
 
 
