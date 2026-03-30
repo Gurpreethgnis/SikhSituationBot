@@ -271,6 +271,13 @@ if not is_testing:
                     db.session.execute(text("ALTER TABLE shabads ADD COLUMN content_length INTEGER"))
                     db.session.commit()
                     logger.info("Added content_length column to shabads")
+            if "messages" in inspector.get_table_names():
+                msg_cols = [c["name"] for c in inspector.get_columns("messages")]
+                if "was_fallback" not in msg_cols:
+                    db.session.execute(text("ALTER TABLE messages ADD COLUMN was_fallback BOOLEAN DEFAULT FALSE NOT NULL"))
+                    db.session.commit()
+                    logger.info("Added was_fallback column to messages")
+
             ensure_llm_settings_row()
         except Exception as e:
             logger.warning("create_all warning: %s", e)

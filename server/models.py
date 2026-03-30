@@ -109,6 +109,7 @@ class Message(db.Model):
     language = Column(String(10), default="en")
     llm_provider = Column(String(32), nullable=True)
     llm_model = Column(String(128), nullable=True)
+    was_fallback = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     chat = relationship("Chat", back_populates="messages")
@@ -124,6 +125,7 @@ class Message(db.Model):
             "language": self.language,
             "llm_provider": self.llm_provider,
             "llm_model": self.llm_model,
+            "was_fallback": self.was_fallback,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
         if self.shabad:

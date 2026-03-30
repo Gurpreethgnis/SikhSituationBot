@@ -116,7 +116,14 @@ def _generate_gemini(model_id: str, prompt: str) -> Optional[str]:
         genai.configure(api_key=GEMINI_API_KEY)
         mid = resolve_gemini_model_id(model_id)
         m = genai.GenerativeModel(mid, system_instruction=SYSTEM_PROMPT)
-        response = m.generate_content(prompt, safety_settings=_RELAXED_SAFETY)
+        config = genai.GenerationConfig(
+            temperature=0.1,
+            top_p=0.8,
+            top_k=80,
+            presence_penalty=0.0,
+            frequency_penalty=0.0
+        )
+        response = m.generate_content(prompt, safety_settings=_RELAXED_SAFETY, generation_config=config)
         text = _safe_response_text(response)
         if not text.strip():
             return None
@@ -137,6 +144,10 @@ def _generate_openai(model_id: str, prompt: str) -> Optional[str]:
             model=model_id,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=8192,
+            temperature=0.1,
+            top_p=0.8,
+            presence_penalty=0.0,
+            frequency_penalty=0.0,
         )
         choice = r.choices[0].message.content if r.choices else None
         if not choice or not str(choice).strip():
@@ -162,6 +173,8 @@ def _generate_anthropic(model_id: str, prompt: str) -> Optional[str]:
             max_tokens=8192,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            top_p=0.8,
         )
         parts = []
         for b in msg.content:
@@ -264,6 +277,10 @@ def synthesize_chat_response(
 
     if text and shabad_dicts and gm == "parmaan":
         text = parmaan_canonical_section(shabad_dicts) + "\n\n---\n\n" + str(text).strip()
+
+    if text and "[INSUFFICIENT_EVIDENCE]" in text:
+        logger.warning(f"METRIC: fallback_triggered | reason: model_refusal | [INSUFFICIENT_EVIDENCE] detected")
+        text = None
 
     if text is None or not str(text).strip():
         fb = synthesize_gemini_response(

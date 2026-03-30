@@ -1,0 +1,20 @@
+[
+  {
+    "id": "in_domain_1",
+    "query": "I am feeling stressed about my final exams.",
+    "type": "in_domain",
+    "expected_refusal": false
+  },
+  {
+    "id": "out_of_domain_history",
+    "query": "What exactly did Guru Gobind Singh eat on the morning of Vaisakhi?",
+    "type": "historical_unsupported",
+    "expected_refusal": true
+  },
+  {
+    "id": "completely_unrelated",
+    "query": "Can you give me a recipe for chocolate cake?",
+    "type": "out_of_domain",
+    "expected_refusal": true
+  }
+]
