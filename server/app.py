@@ -54,6 +54,16 @@ from user_memory import (
     maybe_extract_and_save_after_guidance_turn,
 )
 from vector_utils import get_embedding
+from feedback_github import (
+    MAX_DESCRIPTION_LEN,
+    MAX_RESPONSE_SNIPPET_LEN,
+    create_feedback_issue,
+    feedback_rate_limit_allows,
+    parse_screenshot_base64,
+    record_feedback_submission,
+    sanitize_text,
+    upload_feedback_screenshot,
+)
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -665,6 +675,81 @@ def get_shared(share_id: str):
             }
         }
     ), 200
+
+
+@app.route("/api/feedback", methods=["POST"])
+@require_auth
+def submit_feedback():
+    """
+    Create a GitHub issue from authenticated user feedback (requires GITHUB_TOKEN on server).
+    """
+    gh_token = (os.environ.get("GITHUB_TOKEN") or "").strip()
+    if not gh_token:
+        return jsonify({"error": "Feedback is not configured on this server."}), 503
+
+    repo_full = (os.environ.get("GITHUB_FEEDBACK_REPO") or "Gurpreethgnis/SikhSituationBot").strip()
+    if "/" not in repo_full:
+        logger.error("GITHUB_FEEDBACK_REPO must be owner/repo")
+        return jsonify({"error": "Server feedback configuration error."}), 500
+    owner, repo = repo_full.split("/", 1)
+    branch = (os.environ.get("GITHUB_FEEDBACK_BRANCH") or "main").strip() or "main"
+
+    allowed, rate_err = feedback_rate_limit_allows(request.user_id)
+    if not allowed:
+        return jsonify({"error": rate_err}), 429
+
+    data = request.get_json(silent=True) or {}
+    fb_type = (data.get("type") or "other").strip().lower()
+    description = sanitize_text(data.get("description") or "", MAX_DESCRIPTION_LEN)
+    response_content = sanitize_text(data.get("response_content") or "", MAX_RESPONSE_SNIPPET_LEN)
+    if not description:
+        return jsonify({"error": "Description is required."}), 400
+
+    chat_id_raw = data.get("chat_id")
+    chat_id: Optional[int] = None
+    if chat_id_raw is not None and chat_id_raw != "":
+        try:
+            chat_id = int(chat_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid chat_id."}), 400
+        chat = Chat.query.filter_by(id=chat_id, user_id=request.user_id).first()
+        if not chat:
+            return jsonify({"error": "Chat not found."}), 404
+
+    screenshot_url: Optional[str] = None
+    screenshot_b64 = data.get("screenshot_base64")
+    if screenshot_b64:
+        try:
+            parsed = parse_screenshot_base64(screenshot_b64)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        if parsed:
+            raw_bytes, ext = parsed
+            screenshot_url = upload_feedback_screenshot(gh_token, owner, repo, branch, raw_bytes, ext)
+            if not screenshot_url:
+                return jsonify(
+                    {"error": "Could not upload screenshot. Try again without an image or later."}
+                ), 502
+
+    user = request.user
+    issue_url, gh_err = create_feedback_issue(
+        token=gh_token,
+        owner=owner,
+        repo=repo,
+        branch=branch,
+        feedback_type=fb_type,
+        description=description,
+        response_snippet=response_content,
+        reporter_user_id=user.id,
+        reporter_email=user.email or "",
+        screenshot_url=screenshot_url,
+        chat_id=chat_id,
+    )
+    if not issue_url:
+        return jsonify({"error": gh_err or "Failed to create GitHub issue"}), 502
+
+    record_feedback_submission(request.user_id)
+    return jsonify({"ok": True, "issue_url": issue_url}), 201
 
 
 # --- Parmaans / discovery ---

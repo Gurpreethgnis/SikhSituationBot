@@ -10,6 +10,8 @@ import ParmaanDiscoveryBar from '../components/ParmaanDiscoveryBar.jsx'
 import Logo from '../components/Logo'
 import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
+import FeedbackButton from '../components/FeedbackButton.jsx'
+import FeedbackModal from '../components/FeedbackModal.jsx'
 import { apiBase, authHeaders } from '../../lib/api'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { useTranslation, SUPPORTED_UI_LANGUAGES } from '../contexts/TranslationContext.jsx'
@@ -67,6 +69,8 @@ export default function ChatPage() {
   const [shareStatus, setShareStatus] = useState('')
   const [copiedIndex, setCopiedIndex] = useState(null)
   const [shabadCount, setShabadCount] = useState(null)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackResponseContent, setFeedbackResponseContent] = useState('')
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -507,14 +511,29 @@ export default function ChatPage() {
                 <div key={index} className={`message message--${msg.role}`}>
                   <div className="message-toolbar">
                     <div className="message-label">{msg.role === 'user' ? t('you') : t('guru')}</div>
-                    <button
-                      type="button"
-                      className="message-copy-btn"
-                      onClick={() => copyMessageText(msg.content, index)}
-                      aria-label={t('copyMessage')}
-                    >
-                      {copiedIndex === index ? t('copyMessageDone') : t('copyMessage')}
-                    </button>
+                    <div className="message-toolbar-actions">
+                      <button
+                        type="button"
+                        className="message-copy-btn"
+                        onClick={() => copyMessageText(msg.content, index)}
+                        aria-label={t('copyMessage')}
+                      >
+                        {copiedIndex === index ? t('copyMessageDone') : t('copyMessage')}
+                      </button>
+                      {msg.role === 'assistant' &&
+                        !msg.isDisambiguation &&
+                        typeof msg.content === 'string' &&
+                        msg.content.trim() !== '' && (
+                          <FeedbackButton
+                            label={t('feedbackButton')}
+                            disabled={loading}
+                            onClick={() => {
+                              setFeedbackResponseContent(msg.content)
+                              setFeedbackOpen(true)
+                            }}
+                          />
+                        )}
+                    </div>
                   </div>
                   <div className="message-content">
                     <MarkdownRenderer content={msg.content} />
@@ -662,6 +681,16 @@ export default function ChatPage() {
             </p>
           </div>
         </footer>
+
+        <FeedbackModal
+          open={feedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+          responseContent={feedbackResponseContent}
+          chatId={activeChatId}
+          token={token}
+          baseUrl={baseUrl}
+          t={t}
+        />
       </main>
     </div>
   )
