@@ -128,7 +128,7 @@ class LLMSettings(db.Model):
 
     id = Column(Integer, primary_key=True)
     provider = Column(String(32), nullable=False, default="gemini")
-    model_id = Column(String(128), nullable=False, default="models/gemini-flash-latest")
+    model_id = Column(String(128), nullable=False, default="models/gemini-2.0-flash-lite")
     guidance_shabad_count = Column(Integer, nullable=False, default=3)
     parmaan_shabad_count = Column(Integer, nullable=False, default=5)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

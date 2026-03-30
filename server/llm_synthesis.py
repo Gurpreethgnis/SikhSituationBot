@@ -13,6 +13,8 @@ from models import LLMSettings, db
 from prompts import (
     FALLBACK_RESPONSE,
     SYSTEM_PROMPT,
+    _RELAXED_SAFETY,
+    _safe_response_text,
     build_gemini_response_prompt,
     synthesize_gemini_response,
 )
@@ -26,7 +28,7 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 # Curated options for admin UI (model IDs are provider-native strings)
 LLM_PROVIDER_MODELS: Dict[str, List[str]] = {
     "gemini": [
-        "models/gemini-flash-latest",
+        "models/gemini-2.0-flash-lite",
         "models/gemini-2.5-flash",
         "models/gemini-1.5-flash",
         "models/gemini-1.5-pro",
@@ -47,7 +49,7 @@ LLM_PROVIDER_MODELS: Dict[str, List[str]] = {
 }
 
 DEFAULT_PROVIDER = os.environ.get("DEFAULT_LLM_PROVIDER", "gemini").strip().lower()
-DEFAULT_MODEL = os.environ.get("DEFAULT_LLM_MODEL", "models/gemini-flash-latest").strip()
+DEFAULT_MODEL = os.environ.get("DEFAULT_LLM_MODEL", "models/gemini-2.0-flash-lite").strip()
 
 
 def ensure_llm_settings_row() -> None:
@@ -84,16 +86,14 @@ def llm_options_for_admin() -> Dict[str, Any]:
 
 def _normalize_gemini_model_id(model_id: str) -> str:
     if not model_id:
-        return "models/gemini-flash-latest"
+        return "models/gemini-2.0-flash-lite"
     if model_id.startswith("models/"):
         return model_id
     return f"models/{model_id}"
 
 
-# Google returns 404 for these on newer API keys; map to a supported model.
 _GEMINI_DEPRECATED_MODEL_REMAP: Dict[str, str] = {
-    "models/gemini-2.0-flash": "models/gemini-flash-latest",
-    "models/gemini-2.0-flash-lite": "models/gemini-flash-latest",
+    "models/gemini-flash-latest": "models/gemini-2.0-flash-lite",
 }
 
 
@@ -114,10 +114,11 @@ def _generate_gemini(model_id: str, prompt: str) -> Optional[str]:
         genai.configure(api_key=GEMINI_API_KEY)
         mid = resolve_gemini_model_id(model_id)
         m = genai.GenerativeModel(mid, system_instruction=SYSTEM_PROMPT)
-        response = m.generate_content(prompt)
-        if not response.text or not str(response.text).strip():
+        response = m.generate_content(prompt, safety_settings=_RELAXED_SAFETY)
+        text = _safe_response_text(response)
+        if not text.strip():
             return None
-        return response.text
+        return text
     except Exception as e:
         logger.error("Gemini generation failed: %s", e)
         return None
