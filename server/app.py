@@ -1229,7 +1229,15 @@ def ask():
             "is_clarification": True,
         }
         msg_ids = _persist_messages(
-            active_chat, query_text, ai_response, None, persona, language, llm_provider, llm_model
+            active_chat,
+            query_text,
+            ai_response,
+            None,
+            persona,
+            language,
+            llm_provider,
+            llm_model,
+            was_fallback=(llm_provider == "gemini-fallback"),
         )
         if msg_ids and getattr(user, "memory_enabled", True):
             umid, amid = msg_ids
@@ -1293,7 +1301,15 @@ def ask():
                 "parmaan_shabad_count": effective_parmaan_count,
             }
             _persist_messages(
-                active_chat, query_text, dis_msg, None, persona, language, None, None
+                active_chat,
+                query_text,
+                dis_msg,
+                None,
+                persona,
+                language,
+                None,
+                None,
+                was_fallback=False,
             )
             if active_chat:
                 active_chat.updated_at = datetime.utcnow()
@@ -1353,8 +1369,15 @@ def ask():
                 "parmaan_shabad_count": effective_parmaan_count,
             }
             _persist_messages(
-                active_chat, query_text, ai_response, similar_shabads[0].id if similar_shabads else None,
-                persona, language, llm_provider, llm_model
+                active_chat,
+                query_text,
+                ai_response,
+                similar_shabads[0].id if similar_shabads else None,
+                persona,
+                language,
+                llm_provider,
+                llm_model,
+                was_fallback=(llm_provider == "gemini-fallback"),
             )
             if active_chat:
                 active_chat.updated_at = datetime.utcnow()
@@ -1406,6 +1429,7 @@ def ask():
             language,
             llm_provider,
             llm_model,
+            was_fallback=(llm_provider == "gemini-fallback"),
         )
         if msg_ids and getattr(user, "memory_enabled", True):
             umid, amid = msg_ids
@@ -1440,6 +1464,8 @@ def _persist_messages(
     language: str,
     llm_provider: Optional[str] = None,
     llm_model: Optional[str] = None,
+    *,
+    was_fallback: bool = False,
 ) -> Optional[Tuple[int, int]]:
     """Persist user + assistant turns; returns (user_message_id, assistant_message_id) when chat exists."""
     if not chat:
@@ -1461,6 +1487,7 @@ def _persist_messages(
             language=language,
             llm_provider=llm_provider,
             llm_model=llm_model,
+            was_fallback=bool(was_fallback),
         )
         db.session.add(user_msg)
         db.session.add(asst_msg)
