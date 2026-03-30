@@ -4,7 +4,12 @@ import logging
 import inspect
 from typing import List, Dict, Any, Optional
 
+import google.generativeai as genai
+
 from gurbani_display import format_parmaan_commentary_context
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
@@ -12,10 +17,6 @@ def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
         return ""
     numeric_id = shabad_id[5:] if shabad_id.startswith("sggs_") else shabad_id
     return f"https://www.sikhitothemax.org/shabad?id={numeric_id}"
-import google.generativeai as genai
-
-# Configure logging
-logger = logging.getLogger(__name__)
 
 # Configure Gemini
 genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
