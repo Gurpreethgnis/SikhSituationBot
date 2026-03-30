@@ -37,6 +37,10 @@ class TestLlmSynthesisGrounding(unittest.TestCase):
         self.assertIn("shabad?id=470", text)
         self.assertIn("Matched verse #1", text)
         mock_gen.assert_called()
+        prompt_arg = mock_gen.call_args[0][1]
+        self.assertIn("RETRIEVAL SUMMARY", prompt_arg)
+        self.assertNotIn("ਸਤਿਗੁਰ ਤੇਰੀ", prompt_arg)
+        self.assertNotIn("English line", prompt_arg)
 
     @patch.object(llm_synthesis, "_generate_gemini")
     @patch.object(llm_synthesis, "get_llm_settings")

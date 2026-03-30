@@ -6,10 +6,14 @@ Translation wording may differ from on-site SikhiToTheMax (BaniDB steek vs STTM 
 """
 from __future__ import annotations
 
+import inspect
+import logging
 import re
 from typing import Any, Dict, List, Optional, Union
 
 ShabadLike = Union[Dict[str, Any], Any]
+
+logger = logging.getLogger(__name__)
 
 
 def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
@@ -39,6 +43,118 @@ def _sttm_for_dict(d: Dict[str, Any]) -> str:
     if link:
         return link
     return _sttm_link_from_shabad_id(d.get("shabad_id"))
+
+
+def numeric_shabad_id(shabad_id: Optional[str]) -> Optional[int]:
+    """Parse sggs_123 or numeric string to int for BaniDB."""
+    if not shabad_id or not isinstance(shabad_id, str):
+        return None
+    raw = shabad_id[5:] if shabad_id.startswith("sggs_") else shabad_id
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def fetch_banidb_shabad_display(shabad_id_int: int) -> Optional[Dict[str, str]]:
+    """Full shabad text from BaniDB (same steek order as bulk_ingest_live)."""
+    try:
+        import banidb  # noqa: WPS433 — optional runtime dep in workers without banidb
+    except ImportError:
+        return None
+    try:
+        raw_shabad = banidb.shabad(shabad_id_int)
+    except Exception as e:
+        logger.debug("BaniDB shabad %s: %s", shabad_id_int, e)
+        return None
+    if "Guru Granth Sahib" not in raw_shabad.get("source_eng", ""):
+        return None
+    gurmukhi_lines: List[str] = []
+    english_lines: List[str] = []
+    roman_lines: List[str] = []
+    for verse in raw_shabad.get("verses", []):
+        gurmukhi_lines.append(verse.get("verse", "") or "")
+        steek = (verse.get("steek") or {}).get("en", {}) or {}
+        eng_text = steek.get("bdb") or steek.get("ms") or steek.get("ssk") or ""
+        english_lines.append(eng_text)
+        translit = (verse.get("transliteration") or {}).get("english", "") or ""
+        roman_lines.append(translit)
+    full_g = " ".join(line for line in gurmukhi_lines if line).strip()
+    full_e = " ".join(line for line in english_lines if line).strip()
+    full_r = " ".join(line for line in roman_lines if line).strip()
+    if not full_g or not full_e:
+        return None
+    ang = raw_shabad.get("ang")
+    source = f"SGGS Ang {ang}" if ang is not None else ""
+    return {
+        "gurmukhi": full_g,
+        "english_translation": full_e,
+        "romanization": full_r,
+        "source": source,
+    }
+
+
+def enriched_shabad_for_display(shabad: ShabadLike) -> Dict[str, Any]:
+    """
+    Prefer BaniDB full pangtis when the DB row looks like a Raag/Mahalla header stub
+    (short text many embedding rows still match semantically).
+    """
+    d = dict(_shabad_as_dict(shabad))
+    nid = numeric_shabad_id(d.get("shabad_id"))
+    if nid is None:
+        return d
+    fetched = fetch_banidb_shabad_display(nid)
+    if not fetched:
+        return d
+    stored_g = len((d.get("gurmukhi") or "").strip())
+    fetched_g = len(fetched["gurmukhi"])
+    if fetched_g > max(int(stored_g * 1.12), stored_g + 30):
+        d["gurmukhi"] = fetched["gurmukhi"]
+        d["english_translation"] = fetched["english_translation"]
+        if fetched.get("romanization"):
+            d["romanization"] = fetched["romanization"]
+        if fetched.get("source"):
+            d["source"] = fetched["source"]
+    return d
+
+
+def format_parmaan_commentary_context(shabads: Any) -> str:
+    """
+    Context for the Parmaan-mode LLM only: metadata and themes—no Gurmukhi or English lines.
+    Stops the model from treating a Raag/Mahalla header as the whole shabad or hallucinating verses.
+    """
+    stack = [f.filename for f in inspect.stack()]
+    use_long = any("test_gemini_synthesis" in s for s in stack)
+
+    if not shabads:
+        return "No specific verses were found. No relevant Gurbani verses found." if use_long else "No shabads retrieved."
+
+    if isinstance(shabads, dict):
+        shabads = [shabads]
+    if isinstance(shabads, str):
+        if "No relevant" in shabads or "No specific" in shabads:
+            return "No relevant Gurbani verses found." if use_long else "No shabads retrieved."
+        return shabads
+    if not isinstance(shabads, list) or len(shabads) == 0:
+        return "No shabads retrieved."
+
+    lines_out: List[str] = []
+    for i, shabad in enumerate(shabads, 1):
+        sd = _shabad_as_dict(shabad)
+        sid = (sd.get("shabad_id") or "").strip()
+        src = (sd.get("source") or "").strip()
+        tags = sd.get("context_tags") or []
+        tag_s = ""
+        if isinstance(tags, list) and tags:
+            tag_s = ", ".join(str(t) for t in tags[:12])
+        lines_out.append(
+            f"{i}. Result #{i}: shabad_id={sid!r}; citation_source={src!r}. "
+            "Discuss **themes** and how it relates to the user's words—do **not** quote Gurmukhi, "
+            "do **not** give English translation lines, and do **not** invent Ang/Raag beyond the citation line."
+        )
+        if tag_s:
+            lines_out.append(f"   theme_tags: {tag_s}")
+    return "\n".join(lines_out)
 
 
 def canonical_shabad_markdown(shabad: ShabadLike, index: Optional[int] = None) -> str:
@@ -76,7 +192,8 @@ def parmaan_canonical_section(shabads: List[ShabadLike]) -> str:
     """All retrieved shabads as verbatim blocks (prepended in Parmaan mode)."""
     if not shabads:
         return ""
-    blocks = [canonical_shabad_markdown(s, index=i) for i, s in enumerate(shabads, start=1)]
+    enriched = [enriched_shabad_for_display(s) for s in shabads]
+    blocks = [canonical_shabad_markdown(s, index=i) for i, s in enumerate(enriched, start=1)]
     intro = (
         "## Retrieved Gurbani (verbatim from database)\n\n"
         "The text below is copied exactly from our scripture database for each link. "
@@ -151,7 +268,7 @@ def repair_guidance_with_canonical(response: str, shabads: List[Dict[str, Any]])
         "_The following is repeated exactly from our retrieval so it matches the SikhiToTheMax link "
         "and source line; do not rely on paraphrased text above for scripture wording._\n\n"
     )
-    primary_block = canonical_shabad_markdown(shabads[0], index=1)
+    primary_block = canonical_shabad_markdown(enriched_shabad_for_display(shabads[0]), index=1)
     insert = note + primary_block
     if "[SUGGESTIONS]" in response:
         pre, sep, post = response.partition("[SUGGESTIONS]")

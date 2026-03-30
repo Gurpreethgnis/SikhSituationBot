@@ -2,12 +2,14 @@
 import os
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server"))
 
 from gurbani_display import (
     canonical_shabad_markdown,
     ensure_guidance_grounded,
+    format_parmaan_commentary_context,
     guidance_grounding_ok,
     parmaan_canonical_section,
     repair_guidance_with_canonical,
@@ -32,7 +34,27 @@ class TestGurbaniDisplay(unittest.TestCase):
         self.assertIn("The True Guru is Your Hope", md)
         self.assertIn("SGGS Ang 470", md)
 
-    def test_parmaan_canonical_section_multiple(self):
+    def test_format_parmaan_commentary_context_no_gurbani(self):
+        """LLM context must not include verse text (avoids echoing Raag/Mahalla as the shabad)."""
+        rows = [
+            {
+                "shabad_id": "sggs_456",
+                "gurmukhi": "ਆਸਾ ਮਹਲਾ ੫ ॥",
+                "english_translation": "Aasaa, Fifth Mehla (header line only)",
+                "source": "SGGS Ang 456",
+                "context_tags": ["hope", "refuge"],
+            }
+        ]
+        ctx = format_parmaan_commentary_context(rows)
+        self.assertIn("sggs_456", ctx)
+        self.assertIn("SGGS Ang 456", ctx)
+        self.assertIn("theme_tags", ctx)
+        self.assertNotIn("ਆਸਾ", ctx)
+        self.assertNotIn("Gurmukhi:", ctx)
+        self.assertNotIn("Fifth Mehla", ctx)
+
+    @patch("gurbani_display.fetch_banidb_shabad_display", return_value=None)
+    def test_parmaan_canonical_section_multiple(self, _mock_fetch):
         rows = [
             {
                 "shabad_id": "sggs_1",
@@ -88,7 +110,8 @@ class TestGurbaniDisplay(unittest.TestCase):
         self.assertIn("ਸਤਿਗੁਰ ਤੇਰੀ", fixed)
         self.assertIn("SUGGESTIONS", fixed)
 
-    def test_repair_inserts_before_suggestions(self):
+    @patch("gurbani_display.fetch_banidb_shabad_display", return_value=None)
+    def test_repair_inserts_before_suggestions(self, _mock_fetch):
         shabads = [
             {
                 "shabad_id": "sggs_1",
