@@ -33,8 +33,10 @@ function groupChatsByDate(chats) {
   return groups
 }
 
+const ASK_TIMEOUT_MS = 120_000
+
 export default function ChatPage() {
-  const { data: session } = useSession()
+  const { data: session, status: sessionStatus } = useSession()
   const token = session?.accessToken
   const { setTheme, themes } = useTheme()
   const { t, uiLanguage, changeUiLanguage } = useTranslation()
@@ -51,9 +53,40 @@ export default function ChatPage() {
   const [guidanceMode, setGuidanceMode] = useState('guidance')
   const [personaSource, setPersonaSource] = useState('default')
   const [shareStatus, setShareStatus] = useState('')
+  const [shabadCount, setShabadCount] = useState(null)
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
+
+  const fetchShabadCount = useCallback(async () => {
+    try {
+      const r = await fetch(`${baseUrl}/api/stats/knowledge`, { cache: 'no-store' })
+      if (!r.ok) return
+      const d = await r.json()
+      if (typeof d.shabad_count === 'number') setShabadCount(d.shabad_count)
+    } catch {
+      /* ignore */
+    }
+  }, [baseUrl])
+
+  useEffect(() => {
+    fetchShabadCount()
+    const id = setInterval(fetchShabadCount, 45_000)
+    return () => clearInterval(id)
+  }, [fetchShabadCount])
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'visible') fetchShabadCount()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [fetchShabadCount])
+
+  const shabadCountLabel =
+    shabadCount != null
+      ? t('knowledgeShabadCount').replace('{count}', shabadCount.toLocaleString())
+      : t('knowledgeShabadCount').replace('{count}', '—')
 
   const handleShare = async () => {
     if (!activeChatId || !token) {
@@ -186,7 +219,11 @@ export default function ChatPage() {
 
   const handleSend = async (query) => {
     if (!token) {
-      setError('Session expired. Please sign in again.')
+      const msg =
+        sessionStatus === 'unauthenticated'
+          ? 'Sign in to send messages and receive answers.'
+          : 'Your session is not connected to the server (missing API token). Open Settings for help, or sign out and sign in again.'
+      setError(msg)
       return
     }
     setError('')
@@ -228,11 +265,19 @@ export default function ChatPage() {
       }
       if (chatId) body.chat_id = chatId
 
-      const response = await fetch(`${baseUrl}/ask`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      })
+      const askController = new AbortController()
+      const askTimeout = setTimeout(() => askController.abort(), ASK_TIMEOUT_MS)
+      let response
+      try {
+        response = await fetch(`${baseUrl}/ask`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body),
+          signal: askController.signal,
+        })
+      } finally {
+        clearTimeout(askTimeout)
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -278,7 +323,12 @@ export default function ChatPage() {
       }
     } catch (err) {
       console.error('Chat error:', err)
-      setError(err.message || 'Something went wrong. Please try again.')
+      const aborted = err?.name === 'AbortError'
+      setError(
+        aborted
+          ? 'The request took too long. Check your connection and API URL, then try again.'
+          : err.message || 'Something went wrong. Please try again.'
+      )
     } finally {
       setLoading(false)
     }
@@ -319,6 +369,9 @@ export default function ChatPage() {
             )}
           </div>
           <div className="chat-header-right">
+            <span className="knowledge-count" title={t('knowledgeShabadCountTitle')}>
+              {shabadCountLabel}
+            </span>
             <span className="active-mode-indicator" title={guidanceMode === 'guidance' ? t('guidanceModeHint') : t('parmaanModeHint')}>
               {guidanceMode === 'guidance' ? `📖 ${t('guidanceMode')}` : `🔍 ${t('parmaanMode')}`}
             </span>
@@ -352,17 +405,27 @@ export default function ChatPage() {
         </header>
 
         <header className="mobile-header">
-          <button type="button" className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            ☰
-          </button>
-          <div className="mobile-header-logo">
-            <Logo variant="compact" />
+          <div className="mobile-header-top">
+            <button type="button" className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              ☰
+            </button>
+            <div className="mobile-header-logo">
+              <Logo variant="compact" />
+            </div>
           </div>
+          <p className="mobile-knowledge-count" title={t('knowledgeShabadCountTitle')}>
+            {shabadCountLabel}
+          </p>
         </header>
 
         <section className="chat-messages">
           {messages.length === 0 ? (
             <div className="empty-state">
+              {error && (
+                <div className="error-message error-message--prominent" role="alert">
+                  {error}
+                </div>
+              )}
               <Logo />
               <h1>{t('appName')}</h1>
               <p>{t('tagline')}</p>
@@ -444,6 +507,26 @@ export default function ChatPage() {
 
         <footer className="chat-footer">
           <div className="chat-input-wrapper">
+            {!token && sessionStatus !== 'loading' && (
+              <p className="chat-auth-hint" role="status">
+                {sessionStatus === 'unauthenticated' ? (
+                  <>
+                    {t('signInToSave')}{' '}
+                    <Link href="/login?callbackUrl=/chat" className="chat-auth-hint-link">
+                      {t('signIn')}
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    Account not fully linked to the server — open{' '}
+                    <Link href="/settings" className="chat-auth-hint-link">
+                      Settings
+                    </Link>{' '}
+                    or sign out and sign in again.
+                  </>
+                )}
+              </p>
+            )}
             {suggestions.length > 0 && !loading && messages.length > 0 && (
               <div className="suggestions-bar">
                 {suggestions.slice(0, 3).map((suggestion, i) => (

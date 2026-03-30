@@ -77,6 +77,8 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (account?.provider === 'google' && user?.email) {
+        token.authProvider = 'google'
+        if (user.email) token.email = user.email
         const key = process.env.FLASK_INTERNAL_API_KEY
         if (!key) {
           console.warn(
@@ -112,9 +114,46 @@ export const authOptions = {
         }
       }
       if (account?.provider === 'credentials' && user) {
+        token.authProvider = 'credentials'
         token.accessToken = user.accessToken
         token.isAdmin = Boolean(user.isAdmin)
         token.flaskUserId = user.id
+      }
+
+      // Retry Flask sync for Google sessions still missing an API token (transient errors or key fixed later).
+      const OAUTH_RETRY_MS = 60_000
+      const internalKey = process.env.FLASK_INTERNAL_API_KEY
+      const email = token.email || user?.email
+      if (
+        internalKey &&
+        !token.accessToken &&
+        token.authProvider === 'google' &&
+        typeof email === 'string' &&
+        email.length > 0
+      ) {
+        const now = Date.now()
+        const last = typeof token.lastOauthRetry === 'number' ? token.lastOauthRetry : 0
+        if (now - last >= OAUTH_RETRY_MS) {
+          token.lastOauthRetry = now
+          const res = await fetch(`${flaskBase()}/api/auth/oauth-sync`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Internal-Key': internalKey,
+            },
+            body: JSON.stringify({
+              email,
+              name: token.name,
+              avatar_url: token.picture,
+            }),
+          })
+          const data = await res.json().catch(() => ({}))
+          if (res.ok && data.token) {
+            token.accessToken = data.token
+            token.isAdmin = Boolean(data.user?.is_admin)
+            if (data.user?.id != null) token.flaskUserId = String(data.user.id)
+          }
+        }
       }
       await refreshAdminFromFlask(token)
       return token

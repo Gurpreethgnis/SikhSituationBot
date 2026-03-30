@@ -106,6 +106,26 @@
     pointer-events: auto;
 }
 
+.chat-auth-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 0 0 0.65rem;
+    line-height: 1.45;
+    pointer-events: auto;
+}
+
+.chat-auth-hint-link {
+    color: var(--gold);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.chat-auth-hint-link:hover {
+    color: var(--gold-light);
+}
+
 .suggestions-bar {
     display: flex;
     flex-wrap: wrap;
@@ -387,8 +407,9 @@
 
 .mobile-header {
     display: none;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
     padding: 0.75rem 1rem;
     background: var(--mobile-header-bg, rgba(15, 23, 41, 0.9));
     backdrop-filter: blur(12px);
@@ -396,6 +417,21 @@
     position: sticky;
     top: 0;
     z-index: 50;
+}
+
+.mobile-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.mobile-knowledge-count {
+    margin: 0;
+    font-size: 0.72rem;
+    text-align: center;
+    color: var(--text-muted, rgba(148, 163, 184, 0.95));
+    line-height: 1.35;
 }
 
 .menu-toggle {
@@ -473,6 +509,15 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+.knowledge-count {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chat-nav-link {

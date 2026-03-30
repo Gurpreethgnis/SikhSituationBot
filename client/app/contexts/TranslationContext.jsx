@@ -55,6 +55,8 @@ const translations = {
     message: 'Message',
     messagePlaceholder: 'Message SikhSituationBot…',
     sendMessage: 'Send message',
+    knowledgeShabadCount: 'Knowledge base: {count} shabads',
+    knowledgeShabadCountTitle: 'Shabads in the knowledge base (updates automatically)',
   },
   pa: {
     appName: 'ਸਿੱਖ ਸਿਚੁਏਸ਼ਨ ਬੋਟ',
@@ -108,6 +110,8 @@ const translations = {
     message: 'ਸੁਨੇਹਾ',
     messagePlaceholder: 'ਸਿੱਖ ਸਿਚੁਏਸ਼ਨ ਬੋਟ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ…',
     sendMessage: 'ਸੁਨੇਹਾ ਭੇਜੋ',
+    knowledgeShabadCount: 'ਗਿਆਨ ਅਧਾਰ: {count} ਸ਼ਬਦ',
+    knowledgeShabadCountTitle: 'ਗਿਆਨ ਅਧਾਰ ਵਿੱਚ ਸ਼ਬਦਾਂ ਦੀ ਗਿਣਤੀ (ਆਪਣੇ ਆਪ ਤਾਜ਼ਾ ਹੁੰਦੀ ਹੈ)',
   },
   hi: {
     appName: 'सिख सिचुएशन बॉट',
@@ -161,6 +165,8 @@ const translations = {
     message: 'संदेश',
     messagePlaceholder: 'सिख सिचुएशन बॉट को संदेश भेजें…',
     sendMessage: 'संदेश भेजें',
+    knowledgeShabadCount: 'ज्ञान आधार: {count} शबद',
+    knowledgeShabadCountTitle: 'ज्ञान आधार में शबदों की संख्या (स्वतः अपडेट)',
   },
   zh: {
     appName: '锡克情境机器人',
@@ -214,6 +220,8 @@ const translations = {
     message: '消息',
     messagePlaceholder: '向锡克情境机器人发送消息…',
     sendMessage: '发送消息',
+    knowledgeShabadCount: '知识库：{count} 首 Shabads',
+    knowledgeShabadCountTitle: '知识库中的 Shabads 数量（自动刷新）',
   },
   es: {
     appName: 'SikhSituationBot',
@@ -267,6 +275,8 @@ const translations = {
     message: 'Mensaje',
     messagePlaceholder: 'Enviar mensaje a SikhSituationBot…',
     sendMessage: 'Enviar mensaje',
+    knowledgeShabadCount: 'Base de conocimiento: {count} shabads',
+    knowledgeShabadCountTitle: 'Shabads en la base de conocimiento (se actualiza solo)',
   },
 }
 

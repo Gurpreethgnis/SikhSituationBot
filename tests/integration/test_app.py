@@ -90,6 +90,15 @@ class TestAppIntegration(unittest.TestCase):
         response = self.client.get("/health")
         self.assertIn("Access-Control-Allow-Origin", response.headers)
 
+    @patch("app.Shabad")
+    def test_knowledge_stats_endpoint(self, mock_shabad):
+        mock_shabad.query.count.return_value = 42
+        response = self.client.get("/api/stats/knowledge")
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn("shabad_count", data)
+        self.assertEqual(data["shabad_count"], 42)
+
     @patch("app.assess_query_clarity")
     @patch("app.get_embedding")
     @patch("app.search_similar_shabads")

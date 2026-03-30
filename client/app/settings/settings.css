@@ -95,3 +95,23 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.settings-sync-hint {
+  margin: 1rem 0;
+  padding-left: 1.25rem;
+  color: var(--color-text-muted, #666);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.settings-sync-hint code {
+  font-size: 0.85em;
+}
+
+.settings-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}

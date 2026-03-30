@@ -59,8 +59,11 @@ export default function RegisterPage() {
       router.push('/chat')
       router.refresh()
     } catch {
+      const base = apiBase()
       setError(
-        `Cannot reach the API at ${apiBase()}. Set NEXT_PUBLIC_API_URL to your Flask server URL (and ensure CORS allows this origin).`
+        base
+          ? `Cannot reach the API at ${base}. Check NEXT_PUBLIC_API_URL and CORS.`
+          : 'Cannot reach the API (same-origin proxy). Set FLASK_API_URL on the Next.js host at build time, or set NEXT_PUBLIC_API_URL to your Flask URL.',
       )
       setLoading(false)
     }

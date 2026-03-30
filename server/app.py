@@ -285,6 +285,17 @@ def health_check():
     ), 200
 
 
+@app.route("/api/stats/knowledge", methods=["GET"])
+def knowledge_stats():
+    """Public count of shabads in the knowledge base (for UI / monitoring ingestion)."""
+    try:
+        n = Shabad.query.count()
+        return jsonify({"shabad_count": n}), 200
+    except Exception as e:
+        logger.exception("knowledge_stats failed: %s", e)
+        return jsonify({"error": "unavailable"}), 503
+
+
 # --- Auth ---
 @app.route("/api/auth/register", methods=["POST"])
 def register():

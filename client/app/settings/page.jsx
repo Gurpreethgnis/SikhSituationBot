@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import ThemeSwitcher from '../components/ThemeSwitcher.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
@@ -97,14 +97,46 @@ export default function SettingsPage() {
     )
   }
 
-  if (status === 'unauthenticated' || !token) {
+  if (status === 'unauthenticated') {
+    const loginHref = `/login?callbackUrl=${encodeURIComponent('/settings')}`
     return (
       <div className="settings-page">
         <h1 className="settings-title">Settings</h1>
         <p className="settings-muted">Sign in to manage your preferences.</p>
-        <Link href="/login" className="settings-link">
+        <Link href={loginHref} className="settings-link">
           Sign in
         </Link>
+      </div>
+    )
+  }
+
+  if (!token) {
+    return (
+      <div className="settings-page">
+        <h1 className="settings-title">Settings</h1>
+        <p className="settings-muted">
+          You are signed in, but your session is not linked to the app backend yet. Signing in again will not fix this if
+          the server cannot complete Google account sync.
+        </p>
+        <ul className="settings-sync-hint">
+          <li>
+            Ensure <code>FLASK_INTERNAL_API_KEY</code> is set on both the Next.js host and the Flask API, with the same
+            value.
+          </li>
+          <li>
+            Ensure <code>FLASK_API_URL</code> / <code>NEXT_PUBLIC_API_URL</code> points at your live API (not localhost
+            in production).
+          </li>
+        </ul>
+        <p className="settings-muted">Sign out, then sign in with Google again—or use email and password if you have an account.</p>
+        <div className="settings-sync-actions">
+          <button type="button" className="settings-save" onClick={() => signOut({ callbackUrl: '/login?callbackUrl=/settings' })}>
+            Sign out
+          </button>
+          <Link href="/login?callbackUrl=/settings" className="settings-link">
+            Go to sign in
+          </Link>
+        </div>
       </div>
     )
   }

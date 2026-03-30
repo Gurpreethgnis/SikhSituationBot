@@ -210,14 +210,14 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--gold-light);
 }
 
-/* Chat Input Component */
+/* Legacy single-field chat input (not the ChatGPT-style composer) */
 .chat-input-container {
   width: 100%;
   max-width: 800px;
   position: relative;
 }
 
-.chat-input {
+.chat-input:not(.chat-input--gpt) {
   width: 100%;
   background: hsla(230, 50%, 12%, 0.7);
   border: 1px solid hsla(48, 100%, 55%, 0.25);
@@ -236,12 +236,12 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.01em;
 }
 
-.chat-input::placeholder {
+.chat-input:not(.chat-input--gpt)::placeholder {
   color: hsla(230, 20%, 75%, 0.6);
   font-weight: 400;
 }
 
-.chat-input:focus {
+.chat-input:not(.chat-input--gpt):focus {
   background: hsla(230, 50%, 20%, 0.8);
   border-color: var(--gold);
   box-shadow: 0 0 25px hsla(48, 100%, 55%, 0.3);
@@ -431,6 +431,19 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 720px;
 }
 .error-message { color: var(--text-secondary); margin: 0 0 12px 0 }
+
+.error-message--prominent {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  border: 1px solid hsla(0, 70%, 50%, 0.35);
+  background: hsla(0, 60%, 40%, 0.15);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
 .error-actions { display:flex; gap:8px }
 .error-retry {
   background: var(--gold-gradient);
