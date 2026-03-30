@@ -36,15 +36,15 @@ def get_best_generation_model():
         return GENERATION_MODEL
     try:
         available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        best_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']
+        best_models = ['models/gemini-2.5-flash-lite', 'models/gemini-2.5-flash', 'models/gemini-2.5-pro']
         for best in best_models:
             if best in available_models:
                 GENERATION_MODEL = best
                 return GENERATION_MODEL
-        GENERATION_MODEL = available_models[0] if available_models else 'gemini-1.5-flash'
+        GENERATION_MODEL = available_models[0] if available_models else 'models/gemini-2.5-flash-lite'
         return GENERATION_MODEL
     except Exception:
-        GENERATION_MODEL = 'gemini-1.5-flash'
+        GENERATION_MODEL = 'models/gemini-2.5-flash-lite'
         return GENERATION_MODEL
 
 def load_checkpoint() -> List[dict]:
