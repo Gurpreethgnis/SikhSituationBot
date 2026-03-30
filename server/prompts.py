@@ -3,6 +3,13 @@ import sys
 import logging
 import inspect
 from typing import List, Dict, Any, Optional
+
+
+def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
+    if not shabad_id or not isinstance(shabad_id, str):
+        return ""
+    numeric_id = shabad_id[5:] if shabad_id.startswith("sggs_") else shabad_id
+    return f"https://www.sikhitothemax.org/shabad?id={numeric_id}"
 import google.generativeai as genai
 
 # Configure logging
@@ -246,7 +253,13 @@ def format_shabad_context(shabads: Any) -> str:
             "explanation": getattr(shabad, 'explanation', None),
             "source": getattr(shabad, 'source', None),
             "section": getattr(shabad, 'section', None),
+            "shabad_id": getattr(shabad, 'shabad_id', None),
+            "sttm_link": getattr(shabad, 'sttm_link', None),
         }
+
+        sid = shabad_dict.get("shabad_id")
+        if sid and not (shabad_dict.get("sttm_link") or "").strip():
+            shabad_dict["sttm_link"] = _sttm_link_from_shabad_id(sid)
 
         if shabad_dict.get('gurmukhi'):
             lines.append(f"Gurmukhi: {shabad_dict.get('gurmukhi')}")
@@ -266,7 +279,12 @@ def format_shabad_context(shabads: Any) -> str:
             lines.append(f"Source: {shabad_dict.get('source')}")
         if shabad_dict.get('section'):
             lines.append(f"Section: {shabad_dict.get('section')}")
-        
+        if sid:
+            lines.append(f"Shabad ID: {sid}")
+        sttm = (shabad_dict.get("sttm_link") or "").strip()
+        if sttm:
+            lines.append(f"SikhiToTheMax link (use this exact URL in your reply): {sttm}")
+
         formatted.append("\n".join(lines))
 
     return "\n\n---\n\n".join(formatted)
@@ -533,20 +551,21 @@ PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
-MODE: The user is in **Parmaan Search Mode** — they want Gurbani discovery (not situational counselling).
+MODE: The user is in **Parmaan Search Mode** — they want Gurbani discovery only (NOT life coaching, NOT therapy-style empathy, NOT asking them to share more about their feelings or situation).
 {discovery_line}
 
-RETRIEVED SHABADS: {shabad_context}
+RETRIEVED SHABADS (listed in relevance order; #1 is usually closest to their text for similar/topic search): {shabad_context}
 
 {history_block}USER'S REQUEST: {user_query}
 
 Your task:
-1. Briefly introduce the shabads in light of the discovery type above
-2. Present each shabad clearly with its Gurmukhi, translation, and source
+1. Open with one short sentence: if their message looks like a Gurbani line or phrase, say you matched it to the closest verse in the database (verse #1) and are showing related results; otherwise say you found shabads for their theme.
+2. For EACH retrieved shabad: Gurmukhi, English translation, source — and a **Markdown link** using the exact SikhiToTheMax URL given in that shabad's block (e.g. [Open on SikhiToTheMax](URL)). Every shabad must include its link.
 3. {task_extra}
-4. End with the [SUGGESTIONS] block with 3 short follow-up options suited to discovery (e.g. more on this theme, deeper on one shabad, try contrasting shabads)
+4. Do NOT ask clarifying questions about their personal life. Do NOT mirror guidance-mode structure (no "Timeless Shabad" life-advice sections).
+5. End with the [SUGGESTIONS] block: 3 short discovery follow-ups only (e.g. "Show more like #1", "Try contrasting shabads", "Another angle on this theme").
 
-Keep the focus on presenting the shabads rather than providing life guidance."""
+Keep the focus on presenting the shabads and links, not counselling."""
         return prompt
 
     shabad_context = format_shabad_context(shabads)

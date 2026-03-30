@@ -982,7 +982,8 @@ def ask():
 
     logger.info("Processing query: '%s' persona=%s lang=%s chat=%s", query_text, persona, language, chat_id)
 
-    if needs_clarification:
+    # Parmaan search: short lines and themes are expected; do not run guidance-style clarification.
+    if needs_clarification and guidance_mode != "parmaan":
         raw = synthesize_chat_response(
             query_text,
             None,

@@ -131,6 +131,45 @@ class TestAppIntegration(unittest.TestCase):
     @patch("app.assess_query_clarity")
     @patch("app.get_embedding")
     @patch("app.search_similar_shabads")
+    @patch("app.synthesize_chat_response")
+    def test_ask_parmaan_skips_clarification_when_query_seems_vague(
+        self, mock_synth, mock_search, mock_emb, mock_assess
+    ):
+        """Short Gurbani-style lines must not trigger guidance clarification in Parmaan mode."""
+        mock_assess.return_value = (True, "vague")
+        mock_emb.return_value = [0.1] * 8
+        mock_search.return_value = [_mock_shabad_row()]
+        mock_synth.return_value = (
+            "Here is verse #1… [Open on SikhiToTheMax](https://example)\n\n[SUGGESTIONS]\n- a\n- b\n- c",
+            "gemini",
+            "models/gemini-2.5-flash-lite",
+        )
+
+        response = self.client.post(
+            "/ask",
+            data=json.dumps(
+                {
+                    "query": "sukh tera ditta lahiye",
+                    "persona": "adult",
+                    "guidance_mode": "parmaan",
+                    "parmaan_discovery_type": "similar",
+                    "parmaan_shabad_count": 3,
+                }
+            ),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertFalse(data.get("is_clarification"))
+        self.assertEqual(data.get("guidance_mode"), "parmaan")
+        mock_synth.assert_called_once()
+        kwargs = mock_synth.call_args.kwargs
+        self.assertEqual(kwargs.get("guidance_mode"), "parmaan")
+        self.assertEqual(kwargs.get("parmaan_discovery_type"), "similar")
+
+    @patch("app.assess_query_clarity")
+    @patch("app.get_embedding")
+    @patch("app.search_similar_shabads")
     def test_ask_endpoint_no_shabads_found(self, mock_search, mock_emb, mock_assess):
         mock_assess.return_value = (False, "")
         mock_emb.return_value = [0.1] * 8
