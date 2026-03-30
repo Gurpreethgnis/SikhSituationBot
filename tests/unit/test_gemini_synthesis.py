@@ -120,6 +120,22 @@ class TestGeminiSynthesis(unittest.TestCase):
         self.assertNotIn("vague or incomplete", prompt)
         self.assertNotIn("GURBANI CONTEXT:", prompt)
 
+    def test_build_gemini_response_prompt_parmaan_metadata_only(self):
+        """Parmaan mode: prompt must not inject full Gurmukhi/English into the LLM context."""
+        prompt = build_gemini_response_prompt(
+            self.user_query,
+            self.sample_shabads,
+            self.persona,
+            guidance_mode="parmaan",
+            parmaan_discovery_type="similar",
+        )
+        self.assertIn("Parmaan Search Mode", prompt)
+        self.assertIn("RETRIEVAL SUMMARY", prompt)
+        self.assertIn("test-1", prompt)
+        self.assertNotIn("ਤਪਤਿ ਮਾਹਿ", prompt)
+        self.assertNotIn("burning heat", prompt)
+        self.assertNotIn("Fearless Lord", prompt)
+
     def test_build_gemini_response_prompt_invalid_persona(self):
         """Test building Gemini prompt with invalid persona."""
         prompt = build_gemini_response_prompt(self.user_query, self.sample_shabads, "invalid")

@@ -4,6 +4,8 @@ import logging
 import inspect
 from typing import List, Dict, Any, Optional
 
+from gurbani_display import format_parmaan_commentary_context
+
 
 def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
     if not shabad_id or not isinstance(shabad_id, str):
@@ -539,7 +541,8 @@ Provide clear situational guidance and end with the [SUGGESTIONS] block (3 items
 
     if gm == "parmaan":
         # Parmaan mode: retrieval type is chosen in the UI (similar / topic / dissimilar)
-        shabad_context = format_shabad_context(shabads)
+        # No Gurmukhi/English in LLM context — avoids echoing Raag/Mahalla as if it were the full shabad
+        shabad_context = format_parmaan_commentary_context(shabads)
         if pdt == "topic":
             discovery_line = (
                 "DISCOVERY TYPE: **By topic** — the user named a theme or subject; treat the verses as "
@@ -556,7 +559,7 @@ Provide clear situational guidance and end with the [SUGGESTIONS] block (3 items
                 "Explain those contrasts clearly."
             )
             task_extra = (
-                "Lead with why these shabads offer a contrasting or complementary angle, then present each verse. "
+                "Lead with why these shabads offer a contrasting or complementary angle, then comment on each hit by number (themes only). "
                 "Do not imply the user asked for life advice; stay on discovery and theme."
             )
         else:
@@ -577,8 +580,8 @@ Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 MODE: The user is in **Parmaan Search Mode** — they want Gurbani discovery only (NOT life coaching, NOT therapy-style empathy, NOT asking them to share more about their feelings or situation).
 {discovery_line}
 
-CONTEXT (read for themes only; scripture is shown separately to the user verbatim—do not output Gurmukhi/English/Roman lines or STTM links yourself):
-RETRIEVED SHABADS (relevance order; #1 is usually closest to their text for similar/topic search): {shabad_context}
+RETRIEVAL SUMMARY — metadata and theme tags only (no verse text here; full Gurmukhi/English for each hit is rendered in fixed blocks shown to the user **before** your reply):
+{shabad_context}
 
 {history_block}USER'S REQUEST: {user_query}
 
