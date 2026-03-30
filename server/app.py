@@ -58,6 +58,17 @@ query_assessment_model = None
 ADMIN_EMAIL = (os.environ.get("ADMIN_EMAIL") or "").strip().lower()
 INTERNAL_API_KEY = os.environ.get("FLASK_INTERNAL_API_KEY", "")
 
+if not ADMIN_EMAIL:
+    logger.warning(
+        "ADMIN_EMAIL is not set; bootstrap admin (OAuth + register) will not grant is_admin. "
+        "Set ADMIN_EMAIL on the Flask host (e.g. Railway) to your admin Gmail."
+    )
+if not INTERNAL_API_KEY:
+    logger.warning(
+        "FLASK_INTERNAL_API_KEY is not set; Next.js cannot call /api/auth/oauth-sync. "
+        "Google sign-in will not receive a Flask JWT or admin flags from the API."
+    )
+
 
 def _persona_from_birth_year(birth_year: int) -> str:
     """Map age (from birth year) to child / teen / adult personas."""
@@ -381,7 +392,8 @@ def oauth_sync():
             user.name = name
         if avatar_url:
             user.avatar_url = avatar_url
-        if is_admin:
+        # Always upgrade bootstrap admin email (fixes users created before ADMIN_EMAIL was set).
+        if ADMIN_EMAIL and email == ADMIN_EMAIL:
             user.is_admin = True
     if iby is not None and 1900 <= iby <= now_y:
         user.birth_year = iby

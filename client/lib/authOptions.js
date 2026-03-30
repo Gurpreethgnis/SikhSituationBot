@@ -4,6 +4,30 @@ import GoogleProvider from 'next-auth/providers/google'
 const flaskBase = () =>
   process.env.FLASK_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
+/** Re-sync is_admin from Flask so JWT matches DB after ADMIN_EMAIL / manual admin changes. */
+const CLAIMS_REFRESH_MS = 60_000
+
+async function refreshAdminFromFlask(token) {
+  if (!token?.accessToken) return
+  const now = Date.now()
+  const last = typeof token.claimsRefreshedAt === 'number' ? token.claimsRefreshedAt : 0
+  if (last && now - last < CLAIMS_REFRESH_MS) return
+  try {
+    const res = await fetch(`${flaskBase()}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token.accessToken}` },
+      cache: 'no-store',
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok && data.user) {
+      token.isAdmin = Boolean(data.user.is_admin)
+      if (data.user.id != null) token.flaskUserId = String(data.user.id)
+    }
+  } catch {
+    /* ignore */
+  }
+  token.claimsRefreshedAt = now
+}
+
 /** Omit Google provider when id/secret missing so email/password auth still works in dev/partial deploys. */
 const googleId = (process.env.GOOGLE_CLIENT_ID || '').trim()
 const googleSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim()
@@ -54,7 +78,12 @@ export const authOptions = {
     async jwt({ token, user, account }) {
       if (account?.provider === 'google' && user?.email) {
         const key = process.env.FLASK_INTERNAL_API_KEY
-        if (key) {
+        if (!key) {
+          console.warn(
+            '[next-auth] FLASK_INTERNAL_API_KEY is not set. Google sign-in cannot sync with Flask; ' +
+              'set the same secret on Vercel and Railway and redeploy.',
+          )
+        } else {
           const res = await fetch(`${flaskBase()}/api/auth/oauth-sync`, {
             method: 'POST',
             headers: {
@@ -72,6 +101,13 @@ export const authOptions = {
             token.accessToken = data.token
             token.isAdmin = Boolean(data.user?.is_admin)
             token.flaskUserId = String(data.user?.id ?? user.id)
+          } else if (!res.ok) {
+            console.warn(
+              '[next-auth] Flask oauth-sync failed:',
+              res.status,
+              data?.error || '',
+              '— check FLASK_INTERNAL_API_KEY matches Railway and FLASK_API_URL points to your API.',
+            )
           }
         }
       }
@@ -80,6 +116,7 @@ export const authOptions = {
         token.isAdmin = Boolean(user.isAdmin)
         token.flaskUserId = user.id
       }
+      await refreshAdminFromFlask(token)
       return token
     },
     async session({ session, token }) {
