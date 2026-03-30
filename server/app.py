@@ -92,8 +92,7 @@ def _persona_from_birth_year(birth_year: int) -> str:
 def get_assessment_model():
     global query_assessment_model
     if query_assessment_model is None and GEMINI_API_KEY:
-        # gemini-2.0-flash returns 404 for many new API keys; use rolling latest.
-        query_assessment_model = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        query_assessment_model = genai.GenerativeModel("models/gemini-2.5-flash-lite")
     return query_assessment_model
 
 

@@ -94,7 +94,7 @@ class TestEndToEnd(unittest.TestCase):
             "Based on Gurbani, unity among Sikhs brings peace. "
             "When we unite as one, there are no enemies.",
             "gemini",
-            "models/gemini-flash-latest",
+            "models/gemini-2.5-flash-lite",
         )
 
         request_data = {"query": "How can I find peace when people around me are fighting?", "persona": "adult"}
@@ -122,7 +122,7 @@ class TestEndToEnd(unittest.TestCase):
         mock_search.return_value = [_mock_shabad_row()]
 
         for persona, expected in [("child", "simple"), ("teen", "teen"), ("adult", "adult")]:
-            mock_synthesize.return_value = (expected, "gemini", "models/gemini-flash-latest")
+            mock_synthesize.return_value = (expected, "gemini", "models/gemini-2.5-flash-lite")
             response = self.client.post(
                 "/ask",
                 data=json.dumps({"query": "What is Sikhism?", "persona": persona}),
@@ -181,7 +181,7 @@ class TestEndToEnd(unittest.TestCase):
         mock_assess.return_value = (False, "")
         mock_emb.return_value = [0.1] * 8
         mock_search.return_value = [_mock_shabad_row()]
-        mock_synthesize.return_value = (None, "gemini", "models/gemini-flash-latest")
+        mock_synthesize.return_value = (None, "gemini", "models/gemini-2.5-flash-lite")
         response = self.client.post(
             "/ask",
             data=json.dumps({"query": "Test query", "persona": "adult"}),
@@ -204,7 +204,7 @@ class TestEndToEnd(unittest.TestCase):
         mock_assess.return_value = (False, "")
         mock_emb.return_value = [0.1] * 8
         mock_search.return_value = [_mock_shabad_row()]
-        mock_synthesize.return_value = ("Test response", "gemini", "models/gemini-flash-latest")
+        mock_synthesize.return_value = ("Test response", "gemini", "models/gemini-2.5-flash-lite")
         request_data = {"query": "ਦੁੱਖ ਦਾ ਕਾਰਨ ਕੀ ਹੈ?", "persona": "adult"}
         response = self.client.post(
             "/ask", data=json.dumps(request_data), headers=ask_auth_headers(self.app, email=_E2E_ASK_EMAIL)

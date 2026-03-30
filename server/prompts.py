@@ -86,7 +86,7 @@ For full guidance responses, make suggestions that deepen their spiritual journe
 Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately and beautifully."""
 
 model = genai.GenerativeModel(
-    'models/gemini-2.0-flash-lite',
+    'models/gemini-2.5-flash-lite',
     system_instruction=SYSTEM_PROMPT
 )
 
@@ -334,7 +334,7 @@ def generate_chat_title(first_user_message: str) -> str:
     if not GEMINI_API_KEY or not first_user_message.strip():
         return "New chat"
     try:
-        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        lite = genai.GenerativeModel("models/gemini-2.5-flash-lite")
         prompt = (
             "Generate a very short chat title (3 to 6 words, no quotes, no emoji) "
             "summarizing this user's first message. Spiritual/wellness context.\n\n"
@@ -358,7 +358,7 @@ def generate_opposite_theme_query(shabad_summary: str) -> str:
     if not GEMINI_API_KEY:
         return "ego attachment pride versus humility surrender"
     try:
-        lite = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        lite = genai.GenerativeModel("models/gemini-2.5-flash-lite")
         prompt = (
             "Given this Gurbani summary, output ONE short English search phrase (max 20 words) "
             "to find verses with contrasting or complementary spiritual emphasis (e.g. humility vs pride). "
@@ -389,8 +389,7 @@ def get_best_generation_model():
             if 'generateContent' in m.supported_generation_methods
         ]
         if available_models:
-            # Prefer modern gemini-1.5 models, fallback to gemini-pro
-            best_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']
+            best_models = ['models/gemini-2.5-flash-lite', 'models/gemini-2.5-flash', 'models/gemini-2.5-pro']
             for best in best_models:
                 if best in available_models:
                     GENERATION_MODEL = best
@@ -403,8 +402,7 @@ def get_best_generation_model():
     except Exception as e:
         logger.error(f"Failed to list Gemini generation models: {e}")
         
-    # Fallback to a known default if listing fails
-    GENERATION_MODEL = 'gemini-1.5-flash'
+    GENERATION_MODEL = 'models/gemini-2.5-flash-lite'
     return GENERATION_MODEL
 
 def synthesize_gemini_response(

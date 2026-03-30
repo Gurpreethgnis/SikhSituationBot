@@ -110,7 +110,7 @@ class TestAppIntegration(unittest.TestCase):
         mock_synth.return_value = (
             "Synthesized guidance.\n\n[SUGGESTIONS]\n- a\n- b\n- c",
             "gemini",
-            "models/gemini-flash-latest",
+            "models/gemini-2.5-flash-lite",
         )
 
         response = self.client.post(
@@ -175,7 +175,7 @@ class TestAppIntegration(unittest.TestCase):
         mock_assess.return_value = (False, "")
         mock_emb.return_value = [0.1] * 8
         mock_search.return_value = [_mock_shabad_row()]
-        mock_synth.return_value = ("ok", "gemini", "models/gemini-flash-latest")
+        mock_synth.return_value = ("ok", "gemini", "models/gemini-2.5-flash-lite")
 
         response = self.client.post(
             "/ask",
