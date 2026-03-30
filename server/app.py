@@ -41,7 +41,6 @@ from prompts import (
 )
 from retrieval import (
     browse_shabads,
-    find_shabads_by_text_match,
     find_similar_to_shabad,
     get_random_shabads,
     get_shabad_by_id,
@@ -88,6 +87,10 @@ if not INTERNAL_API_KEY:
         "FLASK_INTERNAL_API_KEY is not set; Next.js cannot call /api/auth/oauth-sync. "
         "Google sign-in will not receive a Flask JWT or admin flags from the API."
     )
+
+# Parmaan: nearest-neighbor candidates shown before full retrieval (user must pick one).
+PARMAAN_DISAMBIGUATION_TOP_N = 5
+PARMAAN_ORIGINAL_QUERY_MAX_LEN = 4000
 
 # Throttle global purge of stale chats (10-day retention) when listing chats.
 _last_stale_chat_purge_utc: Optional[datetime] = None
@@ -1225,6 +1228,9 @@ def ask():
         return jsonify({"error": "Invalid JSON"}), 400
 
     query_text = (data.get("query") or "").strip()
+    parmaan_original_query = (data.get("parmaan_original_query") or "").strip()
+    if len(parmaan_original_query) > PARMAAN_ORIGINAL_QUERY_MAX_LEN:
+        parmaan_original_query = parmaan_original_query[:PARMAAN_ORIGINAL_QUERY_MAX_LEN]
     language = resolve_language(data.get("language"))
     chat_id = data.get("chat_id")
     client_history = data.get("message_history") or []
@@ -1346,44 +1352,66 @@ def ask():
     if anchor_raw and anchor_row is None:
         return jsonify({"error": "Unknown shabad id for anchor selection"}), 400
 
-    # Parmaan: multiple literal text hits -> ask user to pick before similar-shabad retrieval
-    # Single text hit -> auto-select as anchor (skip embedding search, use matched shabad)
-    if guidance_mode == "parmaan" and anchor_row is None:
-        text_hits = find_shabads_by_text_match(query_text, limit=12)
-        if len(text_hits) > 1:
-            dis_msg = (
-                "I found several shabads that may match your search. "
-                "Which one did you mean? Choose an option below to see similar shabads."
-            )
-            candidates = [_disambiguation_candidate_dict(r) for r in text_hits]
-            payload = {
-                "response": dis_msg,
-                "is_disambiguation": True,
-                "is_clarification": False,
-                "disambiguation_candidates": candidates,
-                "original_query": query_text,
-                "shabad": None,
-                "shabads": [],
-                "persona": persona,
-                "language": language,
-                "guidance_mode": guidance_mode,
-                "parmaan_discovery_type": parmaan_discovery,
-                "parmaan_shabad_count": effective_parmaan_count,
-            }
-            _persist_messages(
-                active_chat, query_text, dis_msg, None, persona, language, None, None
-            )
-            if active_chat:
-                active_chat.updated_at = datetime.utcnow()
-                if not active_chat.title or active_chat.title == "New chat":
-                    active_chat.title = generate_chat_title(query_text)
-                db.session.commit()
-                payload["chat_title"] = active_chat.title
-            return jsonify(_finalize_ask_response_payload(payload)), 200
-        elif len(text_hits) == 1:
-            anchor_row = text_hits[0]
+    query_vector: Optional[List[float]] = None
 
-    query_vector = get_embedding(query_text)
+    # Parmaan without anchor: always confirm intent — show top-N nearest shabads to the question embedding.
+    if guidance_mode == "parmaan" and anchor_row is None:
+        query_vector = get_embedding(query_text)
+        if not query_vector:
+            logger.error("Embedding generation failed")
+            return jsonify({"error": "Failed to process query embedding"}), 500
+        candidate_rows = search_similar_shabads(
+            query_embedding=query_vector,
+            limit=PARMAAN_DISAMBIGUATION_TOP_N,
+            persona=persona,
+            exclude_parmaan_low_quality=True,
+        )
+        if not candidate_rows:
+            candidate_rows = search_similar_shabads(
+                query_embedding=query_vector,
+                limit=PARMAAN_DISAMBIGUATION_TOP_N,
+                exclude_parmaan_low_quality=True,
+            )
+        if not candidate_rows:
+            return jsonify({"error": "No matching shabads found for this topic"}), 404
+
+        n = len(candidate_rows)
+        if n >= PARMAAN_DISAMBIGUATION_TOP_N:
+            dis_msg = (
+                f"Here are the {PARMAAN_DISAMBIGUATION_TOP_N} shabads in our database closest to your search. "
+                "Which one did you mean? Tap a choice below to see related verses and commentary."
+            )
+        else:
+            dis_msg = (
+                f"Here are the {n} closest shabads we found. "
+                "Which one did you mean? Tap below to see related verses and commentary."
+            )
+        candidates = [_disambiguation_candidate_dict(r) for r in candidate_rows]
+        payload = {
+            "response": dis_msg,
+            "is_disambiguation": True,
+            "is_clarification": False,
+            "disambiguation_candidates": candidates,
+            "original_query": query_text,
+            "shabad": None,
+            "shabads": [],
+            "persona": persona,
+            "language": language,
+            "guidance_mode": guidance_mode,
+            "parmaan_discovery_type": parmaan_discovery,
+            "parmaan_shabad_count": effective_parmaan_count,
+        }
+        _persist_messages(active_chat, query_text, dis_msg, None, persona, language, None, None)
+        if active_chat:
+            active_chat.updated_at = datetime.utcnow()
+            if not active_chat.title or active_chat.title == "New chat":
+                active_chat.title = generate_chat_title(query_text)
+            db.session.commit()
+            payload["chat_title"] = active_chat.title
+        return jsonify(_finalize_ask_response_payload(payload)), 200
+
+    if query_vector is None:
+        query_vector = get_embedding(query_text)
     if not query_vector:
         logger.error("Embedding generation failed")
         return jsonify({"error": "Failed to process query embedding"}), 500
@@ -1406,9 +1434,14 @@ def ask():
             for shabad in similar_shabads:
                 shabads_list.append(_shabad_response_payload(shabad))
 
+            # After disambiguation, client may send "Selected: …" as query_text; use original search for LLM context.
+            synthesis_user_query = query_text
+            if anchor_row is not None and parmaan_original_query:
+                synthesis_user_query = parmaan_original_query
+
             # Generate a brief intro about the shabads found
             raw = synthesize_chat_response(
-                query_text,
+                synthesis_user_query,
                 [s.to_dict(include_embedding=True) for s in similar_shabads],
                 persona,
                 language=language,
