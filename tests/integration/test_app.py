@@ -251,6 +251,28 @@ class TestAppIntegration(unittest.TestCase):
         data = json.loads(response.data)
         self.assertIn("error", data)
 
+    def test_ask_requires_birth_year(self):
+        from models import User, db
+
+        email = "itest-no-birthyear@example.com"
+        with self.app.app_context():
+            u = User.query.filter_by(email=email).first()
+            if u:
+                db.session.delete(u)
+                db.session.commit()
+            u = User(email=email, is_active=True, birth_year=None, preferred_persona="adult")
+            db.session.add(u)
+            db.session.commit()
+            uid = u.id
+        from auth_utils import encode_token
+
+        token = encode_token(uid, email, False)
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        response = self.client.post("/ask", data=json.dumps(self.valid_ask_request), headers=headers)
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.data)
+        self.assertEqual(data.get("code"), "birth_year_required")
+
     @patch("app.assess_query_clarity")
     @patch("app.get_embedding")
     @patch("app.search_similar_shabads")

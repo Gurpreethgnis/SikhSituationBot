@@ -3,14 +3,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import ChatInput from '../components/ChatInput.jsx'
-import Perspectives from '../components/Perspectives.jsx'
 import GuidanceMenu from '../components/GuidanceMenu.jsx'
 import ParmaanDiscoveryBar from '../components/ParmaanDiscoveryBar.jsx'
 import Logo from '../components/Logo'
 import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
-import { apiBase, authHeaders, LANGUAGE_OPTIONS } from '../../lib/api'
+import { apiBase, authHeaders } from '../../lib/api'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { useTranslation, SUPPORTED_UI_LANGUAGES } from '../contexts/TranslationContext.jsx'
 import '../App.css'
@@ -36,13 +36,23 @@ function groupChatsByDate(chats) {
 
 const ASK_TIMEOUT_MS = 120_000
 
+/** Parmaan responses embed per-shabad STTM links in markdown; skip redundant footer link. */
+function contentHasParmaanVerbatimBlocks(content) {
+  return typeof content === 'string' && content.includes('## Retrieved Gurbani')
+}
+
+function truncateText(s, n) {
+  if (!s || s.length <= n) return s || ''
+  return `${s.slice(0, n).trim()}…`
+}
+
 export default function ChatPage() {
   const { data: session, status: sessionStatus } = useSession()
   const token = session?.accessToken
+  const router = useRouter()
   const { setTheme, themes } = useTheme()
   const { t, uiLanguage, changeUiLanguage } = useTranslation()
 
-  const [persona, setPersona] = useState('adult')
   const [language, setLanguage] = useState('en')
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState([])
@@ -54,8 +64,8 @@ export default function ChatPage() {
   const [guidanceMode, setGuidanceMode] = useState('guidance')
   const [parmaanDiscoveryType, setParmaanDiscoveryType] = useState('similar')
   const [parmaanShabadCount, setParmaanShabadCount] = useState(5)
-  const [personaSource, setPersonaSource] = useState('default')
   const [shareStatus, setShareStatus] = useState('')
+  const [copiedIndex, setCopiedIndex] = useState(null)
   const [shabadCount, setShabadCount] = useState(null)
 
   const messagesEndRef = useRef(null)
@@ -141,6 +151,28 @@ export default function ChatPage() {
     if (token) refreshChats()
   }, [token, refreshChats])
 
+  const handleChatDeleted = useCallback(
+    (deletedId) => {
+      setChats((prev) => prev.filter((c) => c.id !== deletedId))
+      if (activeChatId === deletedId) {
+        setActiveChatId(null)
+        setMessages([])
+        setSuggestions([])
+      }
+    },
+    [activeChatId]
+  )
+
+  const copyMessageText = async (text, index) => {
+    try {
+      await navigator.clipboard.writeText(text || '')
+      setCopiedIndex(index)
+      setTimeout(() => setCopiedIndex((i) => (i === index ? null : i)), 2000)
+    } catch {
+      /* ignore */
+    }
+  }
+
   useEffect(() => {
     if (!token) return
     let cancelled = false
@@ -152,8 +184,6 @@ export default function ChatPage() {
         const u = d.user
         if (cancelled) return
         if (u?.preferred_language) setLanguage(u.preferred_language)
-        if (u?.preferred_persona) setPersona(u.preferred_persona)
-        if (u?.persona_source) setPersonaSource(u.persona_source)
         if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
           setTheme(u.preferred_theme)
         }
@@ -220,7 +250,8 @@ export default function ChatPage() {
     setSidebarOpen(false)
   }
 
-  const handleSend = async (query) => {
+  const handleSend = async (query, options = {}) => {
+    const { anchorShabadId } = options
     if (!token) {
       const msg =
         sessionStatus === 'unauthenticated'
@@ -231,6 +262,7 @@ export default function ChatPage() {
     }
     setError('')
     setLoading(true)
+    setSuggestions([])
 
     const userMessage = { role: 'user', content: query }
     setMessages((prev) => [...prev, userMessage])
@@ -261,7 +293,6 @@ export default function ChatPage() {
 
       const body = {
         query,
-        persona,
         language,
         message_history: messageHistory.slice(-20),
         guidance_mode: guidanceMode,
@@ -270,6 +301,7 @@ export default function ChatPage() {
         body.parmaan_discovery_type = parmaanDiscoveryType
         body.parmaan_shabad_count = parmaanShabadCount
       }
+      if (anchorShabadId) body.anchor_shabad_id = anchorShabadId
       if (chatId) body.chat_id = chatId
 
       const askController = new AbortController()
@@ -288,6 +320,20 @@ export default function ChatPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        setMessages((prev) => {
+          if (
+            prev.length > 0 &&
+            prev[prev.length - 1]?.role === 'user' &&
+            prev[prev.length - 1]?.content === query
+          ) {
+            return prev.slice(0, -1)
+          }
+          return prev
+        })
+        if (errorData.code === 'birth_year_required') {
+          router.push('/onboarding?callbackUrl=/chat')
+          return
+        }
         throw new Error(errorData.error || `Failed: ${response.status}`)
       }
 
@@ -319,6 +365,10 @@ export default function ChatPage() {
           shabad: data.shabad,
           persona: data.persona,
           isQuestion: data.is_clarification === true,
+          guidanceMode: data.guidance_mode,
+          isDisambiguation: data.is_disambiguation === true,
+          disambiguationCandidates: data.disambiguation_candidates || [],
+          originalQuery: data.original_query || '',
         }
         setMessages((prev) => [...prev, aiMessage])
         setSuggestions(extractedSuggestions)
@@ -345,6 +395,15 @@ export default function ChatPage() {
     handleSend(suggestion)
   }
 
+  const handleDisambiguationSelect = (candidate) => {
+    if (!candidate?.shabad_id || loading) return
+    const gm = candidate.gurmukhi || ''
+    const en = candidate.english_translation || ''
+    const preview = gm ? truncateText(gm, 100) : truncateText(en, 80)
+    const userLabel = preview ? `Selected: ${preview}` : `Selected shabad: ${candidate.shabad_id}`
+    handleSend(userLabel, { anchorShabadId: candidate.shabad_id })
+  }
+
   const chatGroups = groupChatsByDate(chats)
 
   return (
@@ -358,6 +417,8 @@ export default function ChatPage() {
         session={session}
         activeChatId={activeChatId}
         onSignOut={() => signOut({ callbackUrl: '/' })}
+        token={token}
+        onChatDeleted={handleChatDeleted}
       />
 
       <main className="chat-main">
@@ -436,30 +497,55 @@ export default function ChatPage() {
               <Logo />
               <h1>{t('appName')}</h1>
               <p>{t('tagline')}</p>
-              {personaSource === 'default' && (
-                <Perspectives activePersona={persona} onPersonaChange={setPersona} />
-              )}
-              {personaSource === 'google' && (
-                <p className="persona-from-profile-hint">
-                  Response style (child / teen / adult) is set from your Google account birthday. You can change it in{' '}
-                  <Link href="/settings">Settings</Link>.
-                </p>
-              )}
-              {personaSource === 'manual' && (
-                <p className="persona-from-profile-hint">
-                  Response style is saved in <Link href="/settings">Settings</Link>. The bar above is hidden while you use
-                  your saved choice.
-                </p>
-              )}
+              <p className="persona-from-profile-hint">
+                Response style follows your year of birth. Update it anytime in <Link href="/settings">Settings</Link>.
+              </p>
             </div>
           ) : (
             <div className="messages-thread">
               {messages.map((msg, index) => (
                 <div key={index} className={`message message--${msg.role}`}>
-                  <div className="message-label">{msg.role === 'user' ? t('you') : t('guru')}</div>
+                  <div className="message-toolbar">
+                    <div className="message-label">{msg.role === 'user' ? t('you') : t('guru')}</div>
+                    <button
+                      type="button"
+                      className="message-copy-btn"
+                      onClick={() => copyMessageText(msg.content, index)}
+                      aria-label={t('copyMessage')}
+                    >
+                      {copiedIndex === index ? t('copyMessageDone') : t('copyMessage')}
+                    </button>
+                  </div>
                   <div className="message-content">
                     <MarkdownRenderer content={msg.content} />
-                    {msg.shabad?.sttm_link && (
+                    {msg.isDisambiguation && msg.disambiguationCandidates?.length > 0 && (
+                      <div className="disambiguation-options" aria-label="Choose matching shabad">
+                        {msg.disambiguationCandidates.map((c) => (
+                          <button
+                            key={c.shabad_id}
+                            type="button"
+                            className="disambiguation-btn"
+                            disabled={loading}
+                            onClick={() => handleDisambiguationSelect(c)}
+                          >
+                            {c.source ? (
+                              <span className="disambiguation-meta">{c.source}</span>
+                            ) : null}
+                            <span className="disambiguation-gurmukhi gurmukhi-text">
+                              {truncateText(c.gurmukhi || '', 160)}
+                            </span>
+                            {c.romanization ? (
+                              <span className="disambiguation-roman">
+                                {truncateText(c.romanization, 100)}
+                              </span>
+                            ) : null}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {msg.shabad?.sttm_link &&
+                    !contentHasParmaanVerbatimBlocks(msg.content) &&
+                    msg.guidanceMode !== 'parmaan' ? (
                       <a
                         href={msg.shabad.sttm_link}
                         target="_blank"
@@ -468,7 +554,7 @@ export default function ChatPage() {
                       >
                         View on SikhiToTheMax ↗
                       </a>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ))}

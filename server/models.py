@@ -24,14 +24,23 @@ class User(db.Model):
     preferred_persona = Column(String(20), default="adult")
     # default = show persona picker; google = inferred from Google birthday; manual = user set in settings
     persona_source = Column(String(20), default="default", nullable=False)
-    birth_year = Column(Integer, nullable=True)  # from Google when consented; not exposed in public API
+    birth_year = Column(Integer, nullable=True)  # year of birth; included only in self-facing user JSON
     preferred_theme = Column(String(20), default="saffron")
     is_admin = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
+    # Cross-session memory (issue #42): optional facts extracted from chats
+    memory_enabled = Column(Boolean, default=True, nullable=False)
+    memory_retention_days = Column(Integer, default=90, nullable=False)
 
     chats = relationship("Chat", back_populates="user", lazy="dynamic", cascade="all, delete-orphan")
+    memories = relationship(
+        "UserMemory",
+        back_populates="user",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
 
     def to_dict(self, include_sensitive=False):
         d = {
@@ -42,10 +51,13 @@ class User(db.Model):
             "preferred_language": self.preferred_language,
             "preferred_persona": self.preferred_persona,
             "persona_source": self.persona_source or "default",
+            "birth_year": self.birth_year,
             "preferred_theme": self.preferred_theme,
             "is_admin": self.is_admin,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_login": self.last_login.isoformat() if self.last_login else None,
+            "memory_enabled": bool(self.memory_enabled),
+            "memory_retention_days": int(self.memory_retention_days or 90),
         }
         if include_sensitive:
             d["is_active"] = self.is_active
@@ -119,6 +131,37 @@ class Message(db.Model):
         else:
             out["shabad"] = None
         return out
+
+
+class UserMemory(db.Model):
+    """Short facts extracted from conversations for cross-session continuity (issue #42)."""
+
+    __tablename__ = "user_memories"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    fact_type = Column(String(50), nullable=False)
+    content = Column(Text, nullable=False)
+    source_chat_id = Column(Integer, ForeignKey("chats.id", ondelete="SET NULL"), nullable=True)
+    source_user_message_id = Column(Integer, ForeignKey("messages.id", ondelete="SET NULL"), nullable=True)
+    source_assistant_message_id = Column(Integer, ForeignKey("messages.id", ondelete="SET NULL"), nullable=True)
+    importance = Column(Integer, default=5, nullable=False)
+    is_pinned = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="memories")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "fact_type": self.fact_type,
+            "content": self.content,
+            "importance": self.importance,
+            "is_pinned": bool(self.is_pinned),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
 
 class LLMSettings(db.Model):

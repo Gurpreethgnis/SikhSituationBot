@@ -6,7 +6,7 @@ import os
 # Add server directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'server'))
 
-from retrieval import find_similar_shabads
+from retrieval import find_similar_shabads, find_shabads_by_text_match
 
 
 class TestRetrieval(unittest.TestCase):
@@ -96,6 +96,22 @@ class TestRetrieval(unittest.TestCase):
         self.assertEqual(len(result), 2)
         # min(max(2*8, 24), 120) == 24
         mock_query.limit.assert_called_once_with(24)
+
+    def test_find_shabads_by_text_match_short_query(self):
+        """Text match returns empty for very short queries."""
+        self.assertEqual(find_shabads_by_text_match("ab"), [])
+
+    @patch("retrieval.Shabad")
+    def test_find_shabads_by_text_match_db_error(self, mock_shabad_class):
+        from sqlalchemy.exc import SQLAlchemyError
+
+        mock_query = MagicMock()
+        mock_shabad_class.query = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.order_by.side_effect = SQLAlchemyError("fail")
+
+        result = find_shabads_by_text_match("waheguru ji")
+        self.assertEqual(result, [])
 
 
 if __name__ == '__main__':

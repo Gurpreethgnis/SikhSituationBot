@@ -81,6 +81,17 @@ class TestPrompts(unittest.TestCase):
         self.assertIn('GURBANI CONTEXT', result)
         self.assertIn('QUESTION:', result)
 
+    def test_build_gemini_response_prompt_includes_user_memory(self):
+        mem = "STORED CONTEXT from earlier signed-in conversations"
+        result = build_gemini_response_prompt(
+            self.test_query,
+            self.test_shabads,
+            self.test_persona,
+            user_memory_context=mem,
+        )
+        self.assertIn(mem, result)
+        self.assertIn(self.test_query, result)
+
     def test_build_gemini_response_prompt_with_persona_context(self):
         """Test prompt building includes persona-specific context."""
         result = build_gemini_response_prompt(

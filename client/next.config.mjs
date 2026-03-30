@@ -33,6 +33,8 @@ function flaskRewrites() {
     { source: '/api/auth/register', destination: `${b}/api/auth/register` },
     { source: '/api/auth/oauth-sync', destination: `${b}/api/auth/oauth-sync` },
     { source: '/api/auth/me', destination: `${b}/api/auth/me` },
+    { source: '/api/memory', destination: `${b}/api/memory` },
+    { source: '/api/memory/:path*', destination: `${b}/api/memory/:path*` },
   ]
 }
 

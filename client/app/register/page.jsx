@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [birthYear, setBirthYear] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showGoogle, setShowGoogle] = useState(false)
@@ -27,11 +28,18 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    const nowY = new Date().getFullYear()
+    const y = parseInt(birthYear, 10)
+    if (!Number.isFinite(y) || y < 1900 || y > nowY) {
+      setError(`Enter a valid year of birth (1900–${nowY}).`)
+      setLoading(false)
+      return
+    }
     try {
       const res = await fetch(`${apiBase()}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name: name || undefined }),
+        body: JSON.stringify({ email, password, name: name || undefined, birth_year: y }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -94,6 +102,20 @@ export default function RegisterPage() {
           <label>
             Name (optional)
             <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+          </label>
+          <label>
+            Year of birth
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1900}
+              max={new Date().getFullYear()}
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
+              required
+              autoComplete="bday-year"
+              placeholder="e.g. 1995"
+            />
           </label>
           <label>
             Email

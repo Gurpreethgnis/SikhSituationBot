@@ -221,6 +221,7 @@ def synthesize_chat_response(
     message_history: Any = None,
     guidance_mode: str = "guidance",
     parmaan_discovery_type: str = "similar",
+    user_memory_context: Any = None,
 ) -> Tuple[str, str, str]:
     """
     Build the RAG prompt and call the configured provider.
@@ -238,6 +239,7 @@ def synthesize_chat_response(
         guidance_mode=guidance_mode,
         parmaan_discovery_type=parmaan_discovery_type,
         grounding_retry=False,
+        user_memory_context=user_memory_context,
     )
     text, provider, model_id = _generate_with_provider(prompt)
 
@@ -251,6 +253,7 @@ def synthesize_chat_response(
             guidance_mode=guidance_mode,
             parmaan_discovery_type=parmaan_discovery_type,
             grounding_retry=True,
+            user_memory_context=user_memory_context,
         )
         text2, provider2, model_id2 = _generate_with_provider(retry_prompt)
         if text2 and guidance_grounding_ok(text2, shabad_dicts):
@@ -271,6 +274,7 @@ def synthesize_chat_response(
             message_history=message_history,
             guidance_mode=guidance_mode,
             parmaan_discovery_type=parmaan_discovery_type,
+            user_memory_context=user_memory_context,
         )
         if fb is None or (isinstance(fb, str) and not fb.strip()):
             fb = FALLBACK_RESPONSE

@@ -63,6 +63,10 @@ const translations = {
     parmaanDiscoveryContrasts: 'Contrasts',
     parmaanShabadCountLabel: 'Shabads',
     parmaanMessagePlaceholder: 'Paste a line, name a theme, or describe what to contrast…',
+    deleteChat: 'Delete chat',
+    deleteChatConfirm: 'Delete this conversation? This cannot be undone.',
+    copyMessage: 'Copy message',
+    copyMessageDone: 'Copied',
   },
   pa: {
     appName: 'ਸਿੱਖ ਸਿਚੁਏਸ਼ਨ ਬੋਟ',
@@ -124,6 +128,10 @@ const translations = {
     parmaanDiscoveryContrasts: 'ਵਿਰੋਧ',
     parmaanShabadCountLabel: 'ਸ਼ਬਦ',
     parmaanMessagePlaceholder: 'ਪੰਕਤੀ ਪੇਸਟ ਕਰੋ, ਵਿਸ਼ਾ ਦੱਸੋ, ਜਾਂ ਵਿਰੋਧ ਵਰਣਨ ਕਰੋ…',
+    deleteChat: 'ਚੈਟ ਮਿਟਾਓ',
+    deleteChatConfirm: 'ਇਹ ਗੱਲਬਾਤ ਮਿਟਾਓ? ਇਸ ਨੂੰ ਵਾਪਸ ਨਹੀਂ ਲਿਆ ਜਾ ਸਕਦਾ।',
+    copyMessage: 'ਸੁਨੇਹਾ ਕਾਪੀ ਕਰੋ',
+    copyMessageDone: 'ਕਾਪੀ ਹੋ ਗਿਆ',
   },
   hi: {
     appName: 'सिख सिचुएशन बॉट',
@@ -185,6 +193,10 @@ const translations = {
     parmaanDiscoveryContrasts: 'विपरीत',
     parmaanShabadCountLabel: 'शबद',
     parmaanMessagePlaceholder: 'पंक्ति चिपकाएं, विषय बताएं, या विपरीत का वर्णन करें…',
+    deleteChat: 'चैट हटाएं',
+    deleteChatConfirm: 'यह बातचीत हटाएं? इसे पूर्ववत नहीं किया जा सकता।',
+    copyMessage: 'संदेश कॉपी करें',
+    copyMessageDone: 'कॉपी हो गया',
   },
   zh: {
     appName: '锡克情境机器人',
@@ -246,6 +258,10 @@ const translations = {
     parmaanDiscoveryContrasts: '对比',
     parmaanShabadCountLabel: '数量',
     parmaanMessagePlaceholder: '粘贴一行经文、写出主题，或描述要对比的内容…',
+    deleteChat: '删除聊天',
+    deleteChatConfirm: '删除此对话？此操作无法撤销。',
+    copyMessage: '复制消息',
+    copyMessageDone: '已复制',
   },
   es: {
     appName: 'SikhSituationBot',
@@ -307,6 +323,10 @@ const translations = {
     parmaanDiscoveryContrasts: 'Contrastes',
     parmaanShabadCountLabel: 'Shabads',
     parmaanMessagePlaceholder: 'Pega una línea, nombra un tema o pide contrastes…',
+    deleteChat: 'Eliminar conversación',
+    deleteChatConfirm: '¿Eliminar esta conversación? No se puede deshacer.',
+    copyMessage: 'Copiar mensaje',
+    copyMessageDone: 'Copiado',
   },
 }
 

@@ -1,30 +1,28 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession, signOut, update as updateSession } from 'next-auth/react'
 import Link from 'next/link'
 import ThemeSwitcher from '../components/ThemeSwitcher.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { apiBase, authHeaders, LANGUAGE_OPTIONS } from '../../lib/api'
 import './settings.css'
 
-const PERSONA_OPTIONS = [
-  { value: 'child', label: 'Child' },
-  { value: 'teen', label: 'Teen' },
-  { value: 'adult', label: 'Adult' },
-]
-
 export default function SettingsPage() {
   const { data: session, status } = useSession()
   const { theme, setTheme, themes } = useTheme()
   const token = session?.accessToken
   const [language, setLanguage] = useState('en')
-  const [persona, setPersona] = useState('adult')
+  const [birthYear, setBirthYear] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [personaSource, setPersonaSource] = useState('default')
+  const [memoryEnabled, setMemoryEnabled] = useState(true)
+  const [memoryRetentionDays, setMemoryRetentionDays] = useState(90)
+  const [memories, setMemories] = useState([])
+  const [memoriesOpen, setMemoriesOpen] = useState(false)
+  const [memoriesLoading, setMemoriesLoading] = useState(false)
 
   const base = apiBase()
 
@@ -46,8 +44,9 @@ export default function SettingsPage() {
         if (cancelled) return
         const u = d.user
         if (u?.preferred_language) setLanguage(u.preferred_language)
-        if (u?.preferred_persona) setPersona(u.preferred_persona)
-        if (u?.persona_source) setPersonaSource(u.persona_source)
+        if (u?.birth_year != null) setBirthYear(String(u.birth_year))
+        if (typeof u?.memory_enabled === 'boolean') setMemoryEnabled(u.memory_enabled)
+        if (u?.memory_retention_days != null) setMemoryRetentionDays(Number(u.memory_retention_days) || 90)
         if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
           setTheme(u.preferred_theme)
         }
@@ -70,22 +69,82 @@ export default function SettingsPage() {
     setMessage('')
     setError('')
     try {
+      const nowY = new Date().getFullYear()
+      const y = parseInt(birthYear, 10)
+      if (!Number.isFinite(y) || y < 1900 || y > nowY) {
+        throw new Error(`Enter a valid birth year (1900–${nowY}).`)
+      }
       const r = await fetch(`${base}/api/auth/me`, {
         method: 'PATCH',
-        headers: authHeaders(token),
+        headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           preferred_language: language,
-          preferred_persona: persona,
+          birth_year: y,
           preferred_theme: theme,
+          memory_enabled: memoryEnabled,
+          memory_retention_days: memoryRetentionDays,
         }),
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error || r.statusText)
+      await updateSession({ birthYearComplete: true })
       setMessage('Saved.')
     } catch (err) {
       setError(err.message || 'Save failed')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const loadMemories = async () => {
+    if (!token) return
+    setMemoriesLoading(true)
+    setError('')
+    try {
+      const r = await fetch(`${base}/api/memory`, { headers: authHeaders(token) })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || r.statusText)
+      setMemories(d.memories || [])
+    } catch (e) {
+      setError(e.message || 'Could not load memories')
+    } finally {
+      setMemoriesLoading(false)
+    }
+  }
+
+  const toggleMemoriesPanel = async () => {
+    const next = !memoriesOpen
+    setMemoriesOpen(next)
+    if (next && memories.length === 0) await loadMemories()
+  }
+
+  const deleteMemory = async (id) => {
+    if (!token) return
+    try {
+      const r = await fetch(`${base}/api/memory/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders(token),
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || r.statusText)
+      setMemories((prev) => prev.filter((m) => m.id !== id))
+    } catch (e) {
+      setError(e.message || 'Delete failed')
+    }
+  }
+
+  const clearAllMemories = async () => {
+    if (!token || !window.confirm('Remove all saved conversation memories? This cannot be undone.')) return
+    try {
+      const r = await fetch(`${base}/api/memory/clear`, {
+        method: 'POST',
+        headers: authHeaders(token),
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || r.statusText)
+      setMemories([])
+    } catch (e) {
+      setError(e.message || 'Clear failed')
     }
   }
 
@@ -168,33 +227,90 @@ export default function SettingsPage() {
           ))}
         </select>
 
-        <label className="settings-label" htmlFor="pref-persona">
-          Default persona
+        <label className="settings-label" htmlFor="pref-birth-year">
+          Year of birth
         </label>
-        {personaSource === 'google' && (
-          <p className="settings-hint">
-            This was inferred from your Google account birthday. Choosing a different option below switches you to manual
-            control (and hides the persona bar in chat).
-          </p>
-        )}
-        <select
-          id="pref-persona"
+        <p className="settings-hint">
+          Response style (child, teen, or adult) is chosen automatically from your age. You can change this anytime.
+        </p>
+        <input
+          id="pref-birth-year"
+          type="number"
           className="settings-select"
-          value={persona}
-          onChange={(e) => setPersona(e.target.value)}
-        >
-          {PERSONA_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          inputMode="numeric"
+          min={1900}
+          max={new Date().getFullYear()}
+          value={birthYear}
+          onChange={(e) => setBirthYear(e.target.value)}
+          required
+          autoComplete="bday-year"
+        />
 
         <div className="settings-theme-block">
           <span className="settings-label">Theme</span>
           <p className="settings-hint">Applies across the app. Saved on this device; use Save below to sync theme to your account.</p>
           <ThemeSwitcher />
         </div>
+
+        <span className="settings-label">Conversation memory</span>
+        <p className="settings-hint">
+          When enabled, short facts you share in Guidance mode may be saved to your account so new chats can stay in context.
+          Parmaan search does not use this. You can review or delete saved items anytime.
+        </p>
+        <label className="settings-checkbox-row">
+          <input
+            type="checkbox"
+            checked={memoryEnabled}
+            onChange={(e) => setMemoryEnabled(e.target.checked)}
+          />
+          <span>Remember context across new conversations</span>
+        </label>
+        <label className="settings-label" htmlFor="memory-retention">
+          Keep memories for (days)
+        </label>
+        <select
+          id="memory-retention"
+          className="settings-select"
+          value={memoryRetentionDays}
+          onChange={(e) => setMemoryRetentionDays(Number(e.target.value))}
+        >
+          <option value={30}>30</option>
+          <option value={90}>90</option>
+          <option value={180}>180</option>
+          <option value={365}>365</option>
+        </select>
+
+        <div className="settings-memory-actions">
+          <button type="button" className="settings-secondary" onClick={toggleMemoriesPanel}>
+            {memoriesOpen ? 'Hide saved memories' : 'View saved memories'}
+          </button>
+          {memoriesOpen && (
+            <button type="button" className="settings-secondary settings-danger" onClick={clearAllMemories}>
+              Clear all memories
+            </button>
+          )}
+        </div>
+        {memoriesOpen && (
+          <div className="settings-memory-list" aria-live="polite">
+            {memoriesLoading ? (
+              <p className="settings-muted">Loading…</p>
+            ) : memories.length === 0 ? (
+              <p className="settings-muted">No saved memories yet.</p>
+            ) : (
+              <ul className="settings-memory-ul">
+                {memories.map((m) => (
+                  <li key={m.id} className="settings-memory-item">
+                    <span className="settings-memory-type">{m.fact_type}</span>
+                    <span className="settings-memory-text">{m.content}</span>
+                    <button type="button" className="settings-memory-delete" onClick={() => deleteMemory(m.id)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {error && <p className="settings-error">{error}</p>}
         {message && <p className="settings-success">{message}</p>}
