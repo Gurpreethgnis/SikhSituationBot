@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ChatInput from '../components/ChatInput.jsx'
 import Perspectives from '../components/Perspectives.jsx'
 import GuidanceMenu from '../components/GuidanceMenu.jsx'
+import ParmaanDiscoveryBar from '../components/ParmaanDiscoveryBar.jsx'
 import Logo from '../components/Logo'
 import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
@@ -49,6 +50,8 @@ export default function ChatPage() {
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [guidanceMode, setGuidanceMode] = useState('guidance')
+  const [parmaanDiscoveryType, setParmaanDiscoveryType] = useState('similar')
+  const [parmaanShabadCount, setParmaanShabadCount] = useState(5)
   const [personaSource, setPersonaSource] = useState('default')
 
   const messagesEndRef = useRef(null)
@@ -215,6 +218,10 @@ export default function ChatPage() {
         language,
         message_history: messageHistory.slice(-20),
         guidance_mode: guidanceMode,
+      }
+      if (guidanceMode === 'parmaan') {
+        body.parmaan_discovery_type = parmaanDiscoveryType
+        body.parmaan_shabad_count = parmaanShabadCount
       }
       if (chatId) body.chat_id = chatId
 
@@ -427,10 +434,20 @@ export default function ChatPage() {
                 ))}
               </div>
             )}
+            {guidanceMode === 'parmaan' && (
+              <ParmaanDiscoveryBar
+                discoveryType={parmaanDiscoveryType}
+                onDiscoveryTypeChange={setParmaanDiscoveryType}
+                shabadCount={parmaanShabadCount}
+                onShabadCountChange={setParmaanShabadCount}
+                disabled={loading}
+              />
+            )}
             <ChatInput
               onSend={handleSend}
               disabled={loading}
               loading={loading}
+              placeholder={guidanceMode === 'parmaan' ? t('parmaanMessagePlaceholder') : undefined}
               startAdornment={
                 <GuidanceMenu
                   mode={guidanceMode}
