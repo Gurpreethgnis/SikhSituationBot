@@ -284,6 +284,13 @@ if not is_testing:
                     db.session.execute(text("ALTER TABLE shabads ADD COLUMN content_length INTEGER"))
                     db.session.commit()
                     logger.info("Added content_length column to shabads")
+            if "messages" in inspector.get_table_names():
+                msg_cols = [c["name"] for c in inspector.get_columns("messages")]
+                if "was_fallback" not in msg_cols:
+                    db.session.execute(text("ALTER TABLE messages ADD COLUMN was_fallback BOOLEAN DEFAULT FALSE NOT NULL"))
+                    db.session.commit()
+                    logger.info("Added was_fallback column to messages")
+
             ensure_llm_settings_row()
         except Exception as e:
             logger.warning("create_all warning: %s", e)
@@ -1313,7 +1320,15 @@ def ask():
             "is_clarification": True,
         }
         msg_ids = _persist_messages(
-            active_chat, query_text, ai_response, None, persona, language, llm_provider, llm_model
+            active_chat,
+            query_text,
+            ai_response,
+            None,
+            persona,
+            language,
+            llm_provider,
+            llm_model,
+            was_fallback=(llm_provider == "gemini-fallback"),
         )
         if msg_ids and getattr(user, "memory_enabled", True):
             umid, amid = msg_ids
@@ -1353,6 +1368,51 @@ def ask():
         return jsonify({"error": "Unknown shabad id for anchor selection"}), 400
 
     query_vector: Optional[List[float]] = None
+
+    # Parmaan: multiple literal text hits -> ask user to pick before similar-shabad retrieval
+    # Single text hit -> auto-select as anchor (skip embedding search, use matched shabad)
+    if guidance_mode == "parmaan" and anchor_row is None:
+        text_hits = find_shabads_by_text_match(query_text, limit=12)
+        if len(text_hits) > 1:
+            dis_msg = (
+                "I found several shabads that may match your search. "
+                "Which one did you mean? Choose an option below to see similar shabads."
+            )
+            candidates = [_disambiguation_candidate_dict(r) for r in text_hits]
+            payload = {
+                "response": dis_msg,
+                "is_disambiguation": True,
+                "is_clarification": False,
+                "disambiguation_candidates": candidates,
+                "original_query": query_text,
+                "shabad": None,
+                "shabads": [],
+                "persona": persona,
+                "language": language,
+                "guidance_mode": guidance_mode,
+                "parmaan_discovery_type": parmaan_discovery,
+                "parmaan_shabad_count": effective_parmaan_count,
+            }
+            _persist_messages(
+                active_chat,
+                query_text,
+                dis_msg,
+                None,
+                persona,
+                language,
+                None,
+                None,
+                was_fallback=False,
+            )
+            if active_chat:
+                active_chat.updated_at = datetime.utcnow()
+                if not active_chat.title or active_chat.title == "New chat":
+                    active_chat.title = generate_chat_title(query_text)
+                db.session.commit()
+                payload["chat_title"] = active_chat.title
+            return jsonify(_finalize_ask_response_payload(payload)), 200
+        if len(text_hits) == 1:
+            anchor_row = text_hits[0]
 
     # Parmaan without anchor: always confirm intent — show top-N nearest shabads to the question embedding.
     if guidance_mode == "parmaan" and anchor_row is None:
@@ -1401,7 +1461,17 @@ def ask():
             "parmaan_discovery_type": parmaan_discovery,
             "parmaan_shabad_count": effective_parmaan_count,
         }
-        _persist_messages(active_chat, query_text, dis_msg, None, persona, language, None, None)
+        _persist_messages(
+            active_chat,
+            query_text,
+            dis_msg,
+            None,
+            persona,
+            language,
+            None,
+            None,
+            was_fallback=False,
+        )
         if active_chat:
             active_chat.updated_at = datetime.utcnow()
             if not active_chat.title or active_chat.title == "New chat":
@@ -1464,8 +1534,15 @@ def ask():
                 "parmaan_shabad_count": effective_parmaan_count,
             }
             _persist_messages(
-                active_chat, query_text, ai_response, similar_shabads[0].id if similar_shabads else None,
-                persona, language, llm_provider, llm_model
+                active_chat,
+                query_text,
+                ai_response,
+                similar_shabads[0].id if similar_shabads else None,
+                persona,
+                language,
+                llm_provider,
+                llm_model,
+                was_fallback=(llm_provider == "gemini-fallback"),
             )
             if active_chat:
                 active_chat.updated_at = datetime.utcnow()
@@ -1517,6 +1594,7 @@ def ask():
             language,
             llm_provider,
             llm_model,
+            was_fallback=(llm_provider == "gemini-fallback"),
         )
         if msg_ids and getattr(user, "memory_enabled", True):
             umid, amid = msg_ids
@@ -1551,6 +1629,8 @@ def _persist_messages(
     language: str,
     llm_provider: Optional[str] = None,
     llm_model: Optional[str] = None,
+    *,
+    was_fallback: bool = False,
 ) -> Optional[Tuple[int, int]]:
     """Persist user + assistant turns; returns (user_message_id, assistant_message_id) when chat exists."""
     if not chat:
@@ -1572,6 +1652,7 @@ def _persist_messages(
             language=language,
             llm_provider=llm_provider,
             llm_model=llm_model,
+            was_fallback=bool(was_fallback),
         )
         db.session.add(user_msg)
         db.session.add(asst_msg)
