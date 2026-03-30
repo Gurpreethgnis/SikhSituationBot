@@ -180,6 +180,41 @@ class TestAppIntegration(unittest.TestCase):
     @patch("app.assess_query_clarity")
     @patch("app.get_embedding")
     @patch("app.search_similar_shabads")
+    @patch("llm_synthesis._generate_gemini")
+    def test_ask_parmaan_prepends_canonical_database_text(
+        self, mock_gen, mock_search, mock_emb, mock_assess
+    ):
+        """Issue #49: Parmaan replies must include server-built verbatim blocks before LLM prose."""
+        mock_assess.return_value = (False, "")
+        mock_emb.return_value = [0.1] * 8
+        mock_search.return_value = [_mock_shabad_row()]
+        mock_gen.return_value = "Theme commentary only.\n\n[SUGGESTIONS]\n- a\n- b\n- c"
+
+        response = self.client.post(
+            "/ask",
+            data=json.dumps(
+                {
+                    "query": "Satgur teri aasa",
+                    "persona": "adult",
+                    "guidance_mode": "parmaan",
+                    "parmaan_discovery_type": "similar",
+                    "parmaan_shabad_count": 2,
+                }
+            ),
+            headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn("response", data)
+        self.assertIn("Retrieved Gurbani (verbatim from database)", data["response"])
+        self.assertIn("test gurmukhi", data["response"])
+        self.assertIn("test english translation", data["response"])
+        self.assertIn("Theme commentary only.", data["response"])
+        mock_gen.assert_called()
+
+    @patch("app.assess_query_clarity")
+    @patch("app.get_embedding")
+    @patch("app.search_similar_shabads")
     def test_ask_endpoint_no_shabads_found(self, mock_search, mock_emb, mock_assess):
         mock_assess.return_value = (False, "")
         mock_emb.return_value = [0.1] * 8

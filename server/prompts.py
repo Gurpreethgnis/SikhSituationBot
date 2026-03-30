@@ -90,7 +90,15 @@ At the very end of EVERY response (including clarification questions), you MUST 
 For clarification responses, make suggestions that help the user share more details.
 For full guidance responses, make suggestions that deepen their spiritual journey.
 
-Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately and beautifully."""
+### GURBANI ACCURACY (NON-NEGOTIABLE):
+
+- When **GURBANI CONTEXT** or **RETRIEVED SHABADS** includes verse text, reproduce **Gurmukhi** and **English** verbatim (exact characters from that block). You may insert line breaks only; do not paraphrase or polish scripture.
+- Never invent pangtis, extra verses, or English translations that do not appear in the provided context.
+- **Ang**, Raag, Mehla, or SGGS citations in your prose must come **only** from the provided **Source:** line, **Shabad ID:**, and SikhiToTheMax URL—never from memory. If you are unsure, cite only the Source line verbatim.
+- **SikhiToTheMax** may show different on-page English than our database (we use BaniDB steek strings). The text in **GURBANI CONTEXT** / **RETRIEVED SHABADS** is the app's source of truth; the link ties to that **shabad id**.
+- If the context is only a short line, say that explicitly and encourage opening the STTM link—do not fabricate a full shabad.
+
+Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately—not imaginatively."""
 
 model = genai.GenerativeModel(
     'models/gemini-2.5-flash-lite',
@@ -487,6 +495,7 @@ def build_gemini_response_prompt(
     message_history: Any = None,
     guidance_mode: str = "guidance",
     parmaan_discovery_type: str = "similar",
+    grounding_retry: bool = False,
 ) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
@@ -513,6 +522,20 @@ def build_gemini_response_prompt(
         pdt = "dissimilar"
     elif pdt != "topic":
         pdt = "similar"
+
+    if gm == "situational":
+        return f"""{SYSTEM_PROMPT}
+
+OUTPUT LANGUAGE: {lang_line}
+
+PERSONA: {p_ctx['context']} {p_ctx['response_style']}
+You are helping someone as {persona}. {p_ctx['key_guidance']}
+
+MODE: **Situational guidance** — practical, compassionate framing from Sikh values for the situation described. No retrieved-verse block is attached; do not invent specific Gurbani lines, Ang numbers, or SikhiToTheMax links.
+
+{history_block}USER'S MESSAGE: {user_query}
+
+Provide clear situational guidance and end with the [SUGGESTIONS] block (3 items)."""
 
     if gm == "parmaan":
         # Parmaan mode: retrieval type is chosen in the UI (similar / topic / dissimilar)
@@ -554,18 +577,21 @@ Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 MODE: The user is in **Parmaan Search Mode** — they want Gurbani discovery only (NOT life coaching, NOT therapy-style empathy, NOT asking them to share more about their feelings or situation).
 {discovery_line}
 
-RETRIEVED SHABADS (listed in relevance order; #1 is usually closest to their text for similar/topic search): {shabad_context}
+CONTEXT (read for themes only; scripture is shown separately to the user verbatim—do not output Gurmukhi/English/Roman lines or STTM links yourself):
+RETRIEVED SHABADS (relevance order; #1 is usually closest to their text for similar/topic search): {shabad_context}
 
 {history_block}USER'S REQUEST: {user_query}
 
+CRITICAL: Your reply is appended **below** pre-rendered Gurmukhi/English blocks and SikhiToTheMax links from the database. Do **NOT** include Gurmukhi, English translations of verses, Roman transliteration of verses, Source lines, Shabad IDs, or markdown links to SikhiToTheMax—those are already shown above.
+
 Your task:
-1. Open with one short sentence: if their message looks like a Gurbani line or phrase, say you matched it to the closest verse in the database (verse #1) and are showing related results; otherwise say you found shabads for their theme.
-2. For EACH retrieved shabad: Gurmukhi, English translation, source — and a **Markdown link** using the exact SikhiToTheMax URL given in that shabad's block (e.g. [Open on SikhiToTheMax](URL)). Every shabad must include its link.
+1. Open with one short sentence: if their message looks like a Gurbani line or phrase, say you matched it to the closest verse in the database (verse #1) and related results are listed above; otherwise say you found shabads for their theme (listed above).
+2. For each shabad #1, #2, … in order, write **one or two sentences of theme/commentary only**—no quoting scripture.
 3. {task_extra}
-4. Do NOT ask clarifying questions about their personal life. Do NOT mirror guidance-mode structure (no "Timeless Shabad" life-advice sections).
+4. Do NOT ask clarifying questions about their personal life. Do NOT mirror guidance-mode scripture sections.
 5. End with the [SUGGESTIONS] block: 3 short discovery follow-ups only (e.g. "Show more like #1", "Try contrasting shabads", "Another angle on this theme").
 
-Keep the focus on presenting the shabads and links, not counselling."""
+Keep the focus on commentary; scripture lives in the fixed blocks above your text."""
         return prompt
 
     shabad_context = format_shabad_context(shabads)
@@ -605,9 +631,15 @@ GURBANI CONTEXT (one or more relevant shabads to draw wisdom from):
 
 {history_block}USER'S QUESTION: {user_query}
 
-Please provide a compassionate response based on the Gurbani context above. 
+Please provide a compassionate response based on the Gurbani context above.
 - If multiple shabads are provided, weave insights from all of them to give a richer perspective.
-- The primary shabad should be quoted in the "Timeless Shabad" section, but insights from secondary shabads can be incorporated throughout.
+- In "### ☬ Timeless Shabad (Reference)" (or your persona's equivalent reference heading), paste **Gurmukhi** and **English** **exactly** as given for the **first** shabad in GURBANI CONTEXT (verbatim). You may add line breaks; do not paraphrase or substitute translations. For secondary shabads, discuss themes in your own words without fabricating additional quoted lines.
 - Follow the 5-part Markdown structure and end with the [SUGGESTIONS] block."""
+        if grounding_retry:
+            prompt += (
+                "\n\nSTRICT REMINDER: In the reference section, copy Gurmukhi and English "
+                "character-for-character from GURBANI CONTEXT (first shabad). Do not cite any "
+                "**Ang** number unless it appears in that context's **Source:** lines."
+            )
 
     return prompt
