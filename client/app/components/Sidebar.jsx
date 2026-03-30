@@ -87,7 +87,10 @@ function Sidebar({ chatGroups, onSelectChat, onNewChat, isOpen, session, activeC
       </div>
 
       <div className="sidebar__settings">
-        <ThemeSwitcher compact />
+        <div className="sidebar__settings-row">
+          <span className="sidebar__settings-label">{t('theme')}</span>
+          <ThemeSwitcher compact />
+        </div>
       </div>
 
       <div className="sidebar__footer">
