@@ -5,10 +5,15 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import google.generativeai as genai
 
+from gurbani_display import (
+    ensure_guidance_grounded,
+    guidance_grounding_ok,
+    parmaan_canonical_section,
+)
 from models import LLMSettings, db
 from prompts import (
     FALLBACK_RESPONSE,
@@ -172,30 +177,25 @@ def _generate_anthropic(model_id: str, prompt: str) -> Optional[str]:
         return None
 
 
-def synthesize_chat_response(
-    user_query: str,
-    shabads: Optional[list] = None,
-    persona: str = "adult",
-    language: str = "en",
-    message_history: Any = None,
-    guidance_mode: str = "guidance",
-    parmaan_discovery_type: str = "similar",
-) -> Tuple[str, str, str]:
-    """
-    Build the RAG prompt and call the configured provider.
-    Returns (response_text, provider_used, model_id_used).
-    """
-    prompt = build_gemini_response_prompt(
-        user_query,
-        shabads,
-        persona,
-        language=language,
-        message_history=message_history,
-        guidance_mode=guidance_mode,
-        parmaan_discovery_type=parmaan_discovery_type,
-    )
-    provider, model_id = get_llm_settings()
+def _shabads_as_dicts(shabads: Optional[list]) -> Optional[List[Dict[str, Any]]]:
+    if not shabads:
+        return None
+    out: List[Dict[str, Any]] = []
+    for s in shabads:
+        if isinstance(s, dict):
+            d = dict(cast(Dict[str, Any], s))
+            d.pop("embedding", None)
+            out.append(d)
+        elif hasattr(s, "to_dict"):
+            out.append(cast(Any, s).to_dict(include_embedding=False))
+        else:
+            out.append({})
+    return out or None
 
+
+def _generate_with_provider(prompt: str) -> Tuple[Optional[str], str, str]:
+    """Run configured LLM on a single prompt. Returns (text, provider, model_id)."""
+    provider, model_id = get_llm_settings()
     text: Optional[str] = None
     if provider == "gemini":
         text = _generate_gemini(model_id, prompt)
@@ -210,6 +210,57 @@ def synthesize_chat_response(
         provider = "gemini"
         model_id = LLM_PROVIDER_MODELS["gemini"][0]
         text = _generate_gemini(model_id, prompt)
+    return text, provider, model_id
+
+
+def synthesize_chat_response(
+    user_query: str,
+    shabads: Optional[list] = None,
+    persona: str = "adult",
+    language: str = "en",
+    message_history: Any = None,
+    guidance_mode: str = "guidance",
+    parmaan_discovery_type: str = "similar",
+) -> Tuple[str, str, str]:
+    """
+    Build the RAG prompt and call the configured provider.
+    Returns (response_text, provider_used, model_id_used).
+    """
+    gm = (guidance_mode or "guidance").strip().lower()
+    shabad_dicts = _shabads_as_dicts(shabads)
+
+    prompt = build_gemini_response_prompt(
+        user_query,
+        shabads,
+        persona,
+        language=language,
+        message_history=message_history,
+        guidance_mode=guidance_mode,
+        parmaan_discovery_type=parmaan_discovery_type,
+        grounding_retry=False,
+    )
+    text, provider, model_id = _generate_with_provider(prompt)
+
+    if text and shabad_dicts and gm == "guidance" and not guidance_grounding_ok(text, shabad_dicts):
+        retry_prompt = build_gemini_response_prompt(
+            user_query,
+            shabads,
+            persona,
+            language=language,
+            message_history=message_history,
+            guidance_mode=guidance_mode,
+            parmaan_discovery_type=parmaan_discovery_type,
+            grounding_retry=True,
+        )
+        text2, provider2, model_id2 = _generate_with_provider(retry_prompt)
+        if text2 and guidance_grounding_ok(text2, shabad_dicts):
+            text, provider, model_id = text2, provider2, model_id2
+
+    if text and shabad_dicts and gm == "guidance":
+        text = ensure_guidance_grounded(text, shabad_dicts)
+
+    if text and shabad_dicts and gm == "parmaan":
+        text = parmaan_canonical_section(shabad_dicts) + "\n\n---\n\n" + str(text).strip()
 
     if text is None or not str(text).strip():
         fb = synthesize_gemini_response(
@@ -223,6 +274,8 @@ def synthesize_chat_response(
         )
         if fb is None or (isinstance(fb, str) and not fb.strip()):
             fb = FALLBACK_RESPONSE
+        if shabad_dicts and gm == "parmaan" and isinstance(fb, str):
+            fb = parmaan_canonical_section(shabad_dicts) + "\n\n---\n\n" + fb.strip()
         return (fb, "gemini-fallback", "synthesize_gemini_response")
 
     return (text, provider, model_id)

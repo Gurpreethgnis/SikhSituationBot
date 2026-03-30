@@ -224,8 +224,9 @@ class TestPrompts(unittest.TestCase):
         )
 
         persona_pos = result.find('PERSONA:')
-        context_pos = result.find('GURBANI CONTEXT')
-        question_pos = result.find('QUESTION:')
+        # SYSTEM_PROMPT also contains "GURBANI"; match the guidance-mode block only
+        context_pos = result.find('GURBANI CONTEXT (one or more')
+        question_pos = result.find('USER\'S QUESTION:')
 
         self.assertLess(persona_pos, context_pos)
         self.assertLess(context_pos, question_pos)
