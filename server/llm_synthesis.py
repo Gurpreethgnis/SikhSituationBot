@@ -27,7 +27,6 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 LLM_PROVIDER_MODELS: Dict[str, List[str]] = {
     "gemini": [
         "models/gemini-flash-latest",
-        "models/gemini-2.0-flash",
         "models/gemini-2.5-flash",
         "models/gemini-1.5-flash",
         "models/gemini-1.5-pro",
@@ -91,12 +90,29 @@ def _normalize_gemini_model_id(model_id: str) -> str:
     return f"models/{model_id}"
 
 
+# Google returns 404 for these on newer API keys; map to a supported model.
+_GEMINI_DEPRECATED_MODEL_REMAP: Dict[str, str] = {
+    "models/gemini-2.0-flash": "models/gemini-flash-latest",
+    "models/gemini-2.0-flash-lite": "models/gemini-flash-latest",
+}
+
+
+def resolve_gemini_model_id(model_id: str) -> str:
+    """Normalize and remap deprecated Gemini model IDs."""
+    mid = _normalize_gemini_model_id(model_id)
+    mapped = _GEMINI_DEPRECATED_MODEL_REMAP.get(mid)
+    if mapped:
+        logger.warning("Remapping deprecated Gemini model %s -> %s", mid, mapped)
+        return mapped
+    return mid
+
+
 def _generate_gemini(model_id: str, prompt: str) -> Optional[str]:
     if not GEMINI_API_KEY:
         return None
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        mid = _normalize_gemini_model_id(model_id)
+        mid = resolve_gemini_model_id(model_id)
         m = genai.GenerativeModel(mid, system_instruction=SYSTEM_PROMPT)
         response = m.generate_content(prompt)
         if not response.text or not str(response.text).strip():

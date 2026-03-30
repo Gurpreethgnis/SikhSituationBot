@@ -300,7 +300,7 @@ def generate_chat_title(first_user_message: str) -> str:
     if not GEMINI_API_KEY or not first_user_message.strip():
         return "New chat"
     try:
-        lite = genai.GenerativeModel("models/gemini-2.0-flash")
+        lite = genai.GenerativeModel("models/gemini-flash-latest")
         prompt = (
             "Generate a very short chat title (3 to 6 words, no quotes, no emoji) "
             "summarizing this user's first message. Spiritual/wellness context.\n\n"
@@ -323,7 +323,7 @@ def generate_opposite_theme_query(shabad_summary: str) -> str:
     if not GEMINI_API_KEY:
         return "ego attachment pride versus humility surrender"
     try:
-        lite = genai.GenerativeModel("models/gemini-2.0-flash")
+        lite = genai.GenerativeModel("models/gemini-flash-latest")
         prompt = (
             "Given this Gurbani summary, output ONE short English search phrase (max 20 words) "
             "to find verses with contrasting or complementary spiritual emphasis (e.g. humility vs pride). "
