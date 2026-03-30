@@ -55,12 +55,34 @@
 .khanda-svg {
   width: 65%;
   height: 65%;
-  color: hsl(48, 100%, 55%); /* Gold */
-  filter: drop-shadow(0 0 8px hsla(48, 100%, 55%, 0.5));
+  color: var(--gold, hsl(48, 100%, 55%));
+  filter: drop-shadow(0 0 8px hsla(25, 95%, 48%, 0.4));
   transition: all 0.3s ease;
 }
 
 .premium-logo-wrapper:hover .khanda-svg {
   color: hsl(48, 100%, 65%);
   filter: drop-shadow(0 0 12px hsla(48, 100%, 65%, 0.7));
+}
+
+/* Compact: mobile header, tight toolbars — same Khanda treatment as chat */
+.premium-logo-wrapper--compact {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+}
+
+.premium-logo-wrapper--compact .premium-logo-bubble {
+  border-radius: 12px;
+  box-shadow:
+    0 4px 14px hsla(230, 60%, 8%, 0.35),
+    inset 0 0 12px hsla(48, 100%, 55%, 0.08);
+}
+
+.premium-logo-wrapper--compact .premium-logo-bubble::after {
+  display: none;
+}
+
+.premium-logo-wrapper--compact:hover .premium-logo-bubble {
+  transform: translateY(-1px) scale(1.02);
 }

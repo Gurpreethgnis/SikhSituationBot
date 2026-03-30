@@ -52,8 +52,9 @@ class TestModels(unittest.TestCase):
         result = shabad.to_dict()
 
         # Check that all expected keys are present
-        expected_keys = ['id', 'shabad_id', 'gurmukhi', 'romanization', 'english_translation', 
-                        'source', 'recommended_persona', 'context_tags', 'embedding', 'created_at']
+        expected_keys = ['id', 'shabad_id', 'gurmukhi', 'romanization', 'english_translation',
+                        'source', 'recommended_persona', 'context_tags', 'is_header_only',
+                        'verse_count', 'content_length', 'embedding', 'created_at', 'sttm_link']
         
         for key in expected_keys:
             self.assertIn(key, result)
@@ -95,7 +96,8 @@ class TestModels(unittest.TestCase):
 
         expected_columns = [
             'id', 'shabad_id', 'gurmukhi', 'romanization', 'english_translation',
-            'source', 'recommended_persona', 'context_tags', 'embedding', 'created_at'
+            'source', 'recommended_persona', 'context_tags', 'is_header_only',
+            'verse_count', 'content_length', 'embedding', 'created_at',
         ]
 
         for col in expected_columns:
@@ -121,7 +123,15 @@ class TestModels(unittest.TestCase):
 
     def test_shabad_optional_columns(self):
         """Test Shabad optional column properties."""
-        optional_columns = ['romanization', 'source', 'context_tags', 'embedding']
+        optional_columns = [
+            'romanization',
+            'source',
+            'context_tags',
+            'is_header_only',
+            'verse_count',
+            'content_length',
+            'embedding',
+        ]
 
         for col_name in optional_columns:
             col = Shabad.__table__.columns[col_name]

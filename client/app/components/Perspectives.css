@@ -8,12 +8,12 @@
 .perspectives__container {
   display: flex;
   gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--perspectives-track-bg, rgba(255, 255, 255, 0.05));
   padding: 0.5rem;
   border-radius: var(--radius-lg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--perspectives-track-border, rgba(255, 255, 255, 0.1));
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
 .perspectives__btn {
@@ -38,9 +38,9 @@
 }
 
 .perspectives__btn--active {
-  color: var(--color-bg);
+  color: var(--on-accent-text, var(--color-bg));
   background: var(--color-accent) !important;
-  box-shadow: 0 0 15px var(--color-accent-soft);
+  box-shadow: 0 0 0 1px var(--border-gold), 0 4px 14px var(--color-accent-soft, hsla(25, 100%, 50%, 0.25));
 }
 
 .perspectives__icon {

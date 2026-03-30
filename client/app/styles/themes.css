@@ -1,0 +1,243 @@
+/* Theme tokens override semantic vars used across App.css / Sidebar / ChatInput */
+
+/* Default/fallback composer styles (dark theme base) */
+:root {
+  --composer-gpt-bg: hsl(0, 0%, 18%);
+  --composer-gpt-border: hsla(0, 0%, 100%, 0.12);
+  --composer-gpt-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+  --composer-gpt-shadow-focus: 0 4px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px hsla(0, 0%, 100%, 0.18);
+  --composer-gpt-focus-ring: hsla(0, 0%, 100%, 0.22);
+  --composer-gpt-inner-focus: hsla(0, 0%, 100%, 0.08);
+  --composer-send-active-bg: #ececec;
+  --composer-send-active-fg: #1a1a1a;
+  --composer-send-disabled-bg: hsla(0, 0%, 100%, 0.1);
+  --composer-send-disabled-fg: hsla(0, 0%, 100%, 0.35);
+}
+
+[data-theme='basanti'] {
+  --midnight: hsl(45, 30%, 8%);
+  --navy-deep: hsl(45, 25%, 12%);
+  --navy: hsl(45, 20%, 18%);
+  --royal: hsl(48, 80%, 45%);
+  --gold: hsl(48, 100%, 50%);
+  --gold-light: hsl(50, 100%, 60%);
+  --gold-muted: hsl(45, 60%, 40%);
+  --color-bg: #1a1708;
+  --color-bg-elevated: #2a2510;
+  --color-surface: #332d18;
+  --color-border: #4a4220;
+  --text-primary: #fff8dc;
+  --text-secondary: #d4c896;
+  --text-muted: hsl(48, 30%, 50%);
+  --surface-glass: hsla(48, 50%, 90%, 0.04);
+  --surface-glass-hover: hsla(48, 50%, 90%, 0.08);
+  --border-glass: hsla(48, 40%, 70%, 0.1);
+  --border-gold: hsla(48, 100%, 50%, 0.3);
+  --color-accent: #ffd700;
+  --color-accent-soft: hsla(48, 100%, 50%, 0.25);
+  --color-text: #fff8dc;
+  --color-text-muted: #d4c896;
+  --header-bar-bg: hsla(45, 30%, 10%, 0.9);
+  --mobile-header-bg: hsla(45, 30%, 10%, 0.95);
+  --chat-input-surface: hsla(48, 30%, 20%, 0.5);
+  --chat-input-surface-focus: hsla(48, 30%, 25%, 0.6);
+  --perspectives-track-bg: hsla(48, 30%, 18%, 0.7);
+  --perspectives-track-border: hsla(48, 50%, 50%, 0.3);
+  --user-message-text: hsl(45, 30%, 8%);
+  --on-accent-text: hsl(45, 30%, 8%);
+}
+
+[data-theme='neela'] {
+  --midnight: #0f172a;
+  --navy-deep: #1e293b;
+  --navy: #1e3a8a;
+  --royal: #2563eb;
+  --gold: #fbbf24;
+  --gold-light: #fcd34d;
+  --gold-muted: #b45309;
+  --color-bg: #0f172a;
+  --color-bg-elevated: #1e293b;
+  --color-surface: #1e293b;
+  --color-border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --surface-glass: hsla(0, 0%, 100%, 0.04);
+  --surface-glass-hover: hsla(0, 0%, 100%, 0.08);
+  --border-glass: hsla(0, 0%, 100%, 0.1);
+  --border-gold: hsla(43, 96%, 56%, 0.3);
+  --color-accent: #fbbf24;
+  --color-accent-soft: hsla(43, 96%, 56%, 0.25);
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --header-bar-bg: hsla(222, 47%, 16%, 0.9);
+  --mobile-header-bg: hsla(222, 47%, 16%, 0.95);
+  --chat-input-surface: hsla(0, 0%, 100%, 0.05);
+  --chat-input-surface-focus: hsla(0, 0%, 100%, 0.09);
+  --perspectives-track-bg: hsla(0, 0%, 100%, 0.06);
+  --perspectives-track-border: hsla(0, 0%, 100%, 0.12);
+  --user-message-text: #0f172a;
+  --on-accent-text: #0f172a;
+}
+
+[data-theme='light'] {
+  --midnight: #f8fafc;
+  --navy-deep: #f1f5f9;
+  --navy: #e2e8f0;
+  --royal: #1e293b;
+  --gold: #c2410c;
+  --gold-light: #ea580c;
+  --gold-muted: #9a3412;
+  --color-bg: #f1f5f9;
+  --color-bg-elevated: #ffffff;
+  --color-surface: #ffffff;
+  --color-border: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #475569;
+  --surface-glass: hsla(0, 0%, 100%, 0.85);
+  --surface-glass-hover: hsla(0, 0%, 100%, 1);
+  --border-glass: hsla(215, 25%, 27%, 0.18);
+  --border-gold: hsla(25, 95%, 40%, 0.45);
+  --color-accent: #c2410c;
+  --color-accent-soft: hsla(25, 95%, 42%, 0.2);
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --header-bar-bg: hsla(0, 0%, 100%, 0.92);
+  --mobile-header-bg: hsla(0, 0%, 100%, 0.97);
+  --chat-input-surface: hsla(210, 40%, 98%, 0.95);
+  --chat-input-surface-focus: #ffffff;
+  --perspectives-track-bg: hsla(210, 40%, 96%, 1);
+  --perspectives-track-border: hsla(215, 20%, 65%, 0.45);
+  --user-message-text: #1c1917;
+  --on-accent-text: #1c1917;
+  --composer-gpt-bg: #ffffff;
+  --composer-gpt-border: rgba(0, 0, 0, 0.12);
+  --composer-gpt-shadow: 0 2px 14px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --composer-gpt-shadow-focus: 0 2px 18px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.14);
+  --composer-gpt-focus-ring: rgba(0, 0, 0, 0.2);
+  --composer-gpt-inner-focus: rgba(0, 0, 0, 0.06);
+  --composer-send-active-bg: #0d0d0d;
+  --composer-send-active-fg: #ffffff;
+  --composer-send-disabled-bg: #ececec;
+  --composer-send-disabled-fg: #b4b4b4;
+}
+
+[data-theme='khalsa-gold'] {
+  --midnight: #1c1410;
+  --navy-deep: #2d241e;
+  --navy: #3d322a;
+  --royal: #5c4d3d;
+  --gold: #d4af37;
+  --gold-light: #f0c850;
+  --gold-muted: #8b7355;
+  --color-bg: #1c1410;
+  --color-bg-elevated: #2d241e;
+  --color-surface: #2d241e;
+  --color-border: #4d4038;
+  --text-primary: #fff8e7;
+  --text-secondary: #c9b896;
+  --text-muted: #8a7a60;
+  --surface-glass: hsla(40, 40%, 90%, 0.05);
+  --surface-glass-hover: hsla(40, 40%, 90%, 0.09);
+  --border-glass: hsla(40, 30%, 70%, 0.12);
+  --border-gold: hsla(43, 65%, 52%, 0.35);
+  --color-accent: #d4af37;
+  --color-accent-soft: hsla(43, 65%, 52%, 0.25);
+  --color-text: #fff8e7;
+  --color-text-muted: #c9b896;
+  --header-bar-bg: hsla(28, 28%, 10%, 0.9);
+  --mobile-header-bg: hsla(28, 28%, 10%, 0.95);
+  --chat-input-surface: hsla(40, 25%, 18%, 0.6);
+  --chat-input-surface-focus: hsla(40, 25%, 22%, 0.75);
+  --perspectives-track-bg: hsla(40, 30%, 20%, 0.85);
+  --perspectives-track-border: hsla(43, 40%, 45%, 0.35);
+  --user-message-text: #1c1410;
+  --on-accent-text: #1c1410;
+}
+
+[data-theme='nihangs-navy'] {
+  --midnight: #0a0a1a;
+  --navy-deep: #141428;
+  --navy: #1e1e3c;
+  --royal: #312e81;
+  --gold: #fde047;
+  --gold-light: #fef08a;
+  --gold-muted: #a16207;
+  --color-bg: #0a0a1a;
+  --color-bg-elevated: #141428;
+  --color-surface: #141428;
+  --color-border: #2e2e5c;
+  --text-primary: #e0e0ff;
+  --text-secondary: #9090c0;
+  --text-muted: #6366a0;
+  --surface-glass: hsla(240, 40%, 80%, 0.04);
+  --surface-glass-hover: hsla(240, 40%, 80%, 0.08);
+  --border-glass: hsla(240, 30%, 60%, 0.15);
+  --border-gold: hsla(48, 96%, 63%, 0.3);
+  --color-accent: #fde047;
+  --color-accent-soft: hsla(48, 96%, 63%, 0.22);
+  --color-text: #e0e0ff;
+  --color-text-muted: #9090c0;
+  --header-bar-bg: hsla(240, 45%, 8%, 0.92);
+  --mobile-header-bg: hsla(240, 45%, 8%, 0.96);
+  --chat-input-surface: hsla(240, 35%, 18%, 0.45);
+  --chat-input-surface-focus: hsla(240, 35%, 22%, 0.55);
+  --perspectives-track-bg: hsla(240, 35%, 16%, 0.75);
+  --perspectives-track-border: hsla(240, 30%, 50%, 0.25);
+  --user-message-text: #0a0a1a;
+  --on-accent-text: #0a0a1a;
+}
+
+/* ChatGPT-style bottom composer - theme-specific */
+[data-theme='basanti'] {
+  --composer-gpt-bg: hsl(45, 25%, 15%);
+  --composer-gpt-border: hsla(48, 50%, 50%, 0.2);
+  --composer-gpt-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+  --composer-gpt-shadow-focus: 0 4px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px hsla(48, 100%, 50%, 0.3);
+  --composer-gpt-focus-ring: hsla(48, 100%, 50%, 0.35);
+  --composer-gpt-inner-focus: hsla(48, 50%, 50%, 0.1);
+  --composer-send-active-bg: #ffd700;
+  --composer-send-active-fg: #1a1708;
+  --composer-send-disabled-bg: hsla(48, 50%, 50%, 0.15);
+  --composer-send-disabled-fg: hsla(48, 30%, 60%, 0.5);
+}
+
+[data-theme='neela'] {
+  --composer-gpt-bg: hsl(222, 47%, 14%);
+  --composer-gpt-border: hsla(217, 91%, 60%, 0.2);
+  --composer-gpt-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+  --composer-gpt-shadow-focus: 0 4px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px hsla(217, 91%, 60%, 0.35);
+  --composer-gpt-focus-ring: hsla(217, 91%, 60%, 0.4);
+  --composer-gpt-inner-focus: hsla(217, 70%, 50%, 0.1);
+  --composer-send-active-bg: #fbbf24;
+  --composer-send-active-fg: #0f172a;
+  --composer-send-disabled-bg: hsla(217, 50%, 50%, 0.15);
+  --composer-send-disabled-fg: hsla(217, 30%, 60%, 0.5);
+}
+
+[data-theme='khalsa-gold'] {
+  --composer-gpt-bg: hsl(28, 28%, 14%);
+  --composer-gpt-border: hsla(43, 65%, 52%, 0.2);
+  --composer-gpt-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+  --composer-gpt-shadow-focus: 0 4px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px hsla(43, 65%, 52%, 0.35);
+  --composer-gpt-focus-ring: hsla(43, 65%, 52%, 0.4);
+  --composer-gpt-inner-focus: hsla(40, 50%, 50%, 0.1);
+  --composer-send-active-bg: #d4af37;
+  --composer-send-active-fg: #1c1410;
+  --composer-send-disabled-bg: hsla(43, 40%, 50%, 0.15);
+  --composer-send-disabled-fg: hsla(40, 30%, 60%, 0.5);
+}
+
+[data-theme='nihangs-navy'] {
+  --composer-gpt-bg: hsl(240, 45%, 12%);
+  --composer-gpt-border: hsla(240, 60%, 60%, 0.2);
+  --composer-gpt-shadow: 0 4px 28px rgba(0, 0, 0, 0.4);
+  --composer-gpt-shadow-focus: 0 4px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px hsla(48, 96%, 63%, 0.3);
+  --composer-gpt-focus-ring: hsla(48, 96%, 63%, 0.4);
+  --composer-gpt-inner-focus: hsla(240, 40%, 50%, 0.1);
+  --composer-send-active-bg: #fde047;
+  --composer-send-active-fg: #0a0a1a;
+  --composer-send-disabled-bg: hsla(240, 40%, 50%, 0.15);
+  --composer-send-disabled-fg: hsla(240, 30%, 60%, 0.5);
+}

@@ -1,0 +1,77 @@
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--color-bg);
+  color: var(--text-primary);
+}
+
+.landing-inner {
+  max-width: 520px;
+  text-align: center;
+}
+
+.landing-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.landing h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.landing-tagline {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.landing-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.landing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.landing-btn-primary {
+  background: var(--gold-gradient);
+  color: var(--on-accent-text, var(--midnight));
+  box-shadow: var(--gold-glow);
+}
+
+.landing-btn-secondary {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-glass);
+  color: var(--gold);
+}
+
+.landing-btn:hover {
+  transform: translateY(-1px);
+}
+
+.landing-foot {
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

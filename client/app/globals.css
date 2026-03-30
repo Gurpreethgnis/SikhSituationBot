@@ -52,6 +52,15 @@
   box-sizing: border-box;
 }
 
+/*
+ * Native select dropdowns often render options on a light surface while inheriting
+ * the select’s light text color — unreadable. Force readable option colors.
+ */
+select option {
+  background-color: #ffffff;
+  color: #1a1a2e;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -201,14 +210,14 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--gold-light);
 }
 
-/* Chat Input Component */
+/* Legacy single-field chat input (not the ChatGPT-style composer) */
 .chat-input-container {
   width: 100%;
   max-width: 800px;
   position: relative;
 }
 
-.chat-input {
+.chat-input:not(.chat-input--gpt) {
   width: 100%;
   background: hsla(230, 50%, 12%, 0.7);
   border: 1px solid hsla(48, 100%, 55%, 0.25);
@@ -227,12 +236,12 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.01em;
 }
 
-.chat-input::placeholder {
+.chat-input:not(.chat-input--gpt)::placeholder {
   color: hsla(230, 20%, 75%, 0.6);
   font-weight: 400;
 }
 
-.chat-input:focus {
+.chat-input:not(.chat-input--gpt):focus {
   background: hsla(230, 50%, 20%, 0.8);
   border-color: var(--gold);
   box-shadow: 0 0 25px hsla(48, 100%, 55%, 0.3);
@@ -422,6 +431,19 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 720px;
 }
 .error-message { color: var(--text-secondary); margin: 0 0 12px 0 }
+
+.error-message--prominent {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  border: 1px solid hsla(0, 70%, 50%, 0.35);
+  background: hsla(0, 60%, 40%, 0.15);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
 .error-actions { display:flex; gap:8px }
 .error-retry {
   background: var(--gold-gradient);
@@ -440,12 +462,60 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 16px;
 }
 
+.ai-insight.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  border-top: none;
+}
+
 .insight-label {
   font-size: 0.75rem;
   font-weight: 800;
   color: var(--gold-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 4px;
+  font-size: 2rem;
+  color: var(--gold);
+}
+
+.loading-dots span {
+  animation: dotBlink 1.4s infinite both;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotBlink {
+  0%, 80%, 100% { opacity: 0; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-5px); }
+}
+
+.shabad-divider {
+  width: 60px;
+  height: 2px;
+  background: var(--border-gold);
+  margin: 0 auto 24px;
+  border-radius: 99px;
+}
+
+.shabad-result {
+  width: 100%;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .insight-divider {
@@ -496,3 +566,84 @@ h1, h2, h3, h4, h5, h6 {
   border-left-color: var(--gold);
 }
 
+/* Mini Shabad Card for Chat Bubbles */
+.shabad-card.mini {
+  margin: 1rem 0 0 0;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: none;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.shabad-card.mini .gurmukhi-text {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.shabad-card.mini .translation {
+  font-size: 0.95rem;
+  margin-bottom: 0;
+  max-width: 100%;
+}
+
+/* Chat Welcome Screen */
+.chat-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1;
+  padding: 2rem;
+  gap: 1.5rem;
+  opacity: 0.8;
+  animation: fadeIn 1s ease-out;
+}
+
+.chat-welcome h2 {
+  font-size: 2rem;
+  margin: 0;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app__title--small {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 0;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.footer-disclaimer {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.75rem;
+    opacity: 0.6;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}

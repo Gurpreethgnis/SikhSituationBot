@@ -7,6 +7,7 @@
 venv/
 .venv/
 server/venv/
+venv_img/
 
 # Python cache and temporary files
 __pycache__/
@@ -18,8 +19,17 @@ server/__pycache__/
 .pytest_cache/
 pytest_output*
 pytest_diagnostic*
+pytest_fail_report*
+pytest_final_tests.txt
+pytest_latest_run.txt
+pytest_retest.txt
+pytest_run_latest.txt
+pytest_server_tests_report*
+pytest_skip_vectorutils.txt
+pytest_tests_dir_report*
 
 # Frontend
+client/.vercel/
 client/.next/
 client/node_modules/
 node_modules/
@@ -28,19 +38,14 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
-pytest_fail_report_utf8.txt
-pytest_fail_report.txt
-pytest_final_tests.txt
-pytest_latest_run.txt
-pytest_retest.txt
-pytest_run_latest.txt
-pytest_server_tests_report_utf8.txt
-pytest_server_tests_report.txt
-pytest_skip_vectorutils.txt
-pytest_tests_dir_report_utf8.txt
-pytest_tests_dir_report.txt
-SikhSituationBot.code-workspace
 
-# IDE specific
-.vscode/
-.sfdx/
+# Cache files
+server/cache.dat
+cache.dat
+
+# Scratch and Binary files
+gh
+use_rembg.py
+remove_bg.py
+SikhSituationBot.code-workspace
+.vercel

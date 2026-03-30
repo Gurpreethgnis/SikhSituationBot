@@ -1,7 +1,7 @@
 {
   "name": "sikhsituationbot-client",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,9 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "next": "^15.5.12",
+    "next-auth": "^4.24.13",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-markdown": "^9.0.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.2",

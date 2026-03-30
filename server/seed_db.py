@@ -124,7 +124,18 @@ def seed_database(json_file_path: str, batch_size: int = 10, skip_duplicates: bo
                 db.session.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
                 db.session.commit()
             except Exception as e:
-                logger.warning(f"Failed to setup pgvector (normal for SQLite): {e}")
+                logger.warning(f"Failed to setup pgvector: {e}")
+                db.session.rollback()
+
+            # Ensure tables exist AFTER extension is created
+            db.create_all()
+
+            # Ensure the embedding column is unconstrained (in case it was created with a specific dimension previously)
+            try:
+                db.session.execute(text('ALTER TABLE shabads ALTER COLUMN embedding TYPE vector'))
+                db.session.commit()
+            except Exception as e:
+                logger.warning(f"Failed to alter embedding column: {e}")
                 db.session.rollback()
 
             batch_items = []
@@ -160,7 +171,6 @@ def seed_database(json_file_path: str, batch_size: int = 10, skip_duplicates: bo
                         gurmukhi=gurmukhi,
                         english_translation=item.get('english_translation') or item.get('english'),
                         romanization=item.get('romanization') or item.get('roman'),
-                        page=item.get('page'),
                         embedding=embedding,
                         context_tags=item.get('context_tags', [])
                     )

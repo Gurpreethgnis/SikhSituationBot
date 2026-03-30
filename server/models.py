@@ -1,18 +1,189 @@
 import os
-from flask_sqlalchemy import SQLAlchemy
-from pgvector.sqlalchemy import Vector
-from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy import Column, Integer, String, Text, DateTime
 from datetime import datetime
 
+from flask_sqlalchemy import SQLAlchemy
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import relationship
+
 db = SQLAlchemy()
+
+
+class User(db.Model):
+    """Registered user (email/password or OAuth-linked)."""
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    name = Column(String(100))
+    avatar_url = Column(String(500))
+    password_hash = Column(String(512))  # null for OAuth-only; scrypt hashes can be long
+    preferred_language = Column(String(10), default="en")
+    preferred_persona = Column(String(20), default="adult")
+    # default = show persona picker; google = inferred from Google birthday; manual = user set in settings
+    persona_source = Column(String(20), default="default", nullable=False)
+    birth_year = Column(Integer, nullable=True)  # year of birth; included only in self-facing user JSON
+    preferred_theme = Column(String(20), default="saffron")
+    is_admin = Column(Boolean, default=False, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime)
+    # Cross-session memory (issue #42): optional facts extracted from chats
+    memory_enabled = Column(Boolean, default=True, nullable=False)
+    memory_retention_days = Column(Integer, default=90, nullable=False)
+
+    chats = relationship("Chat", back_populates="user", lazy="dynamic", cascade="all, delete-orphan")
+    memories = relationship(
+        "UserMemory",
+        back_populates="user",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
+    def to_dict(self, include_sensitive=False):
+        d = {
+            "id": self.id,
+            "email": self.email,
+            "name": self.name,
+            "avatar_url": self.avatar_url,
+            "preferred_language": self.preferred_language,
+            "preferred_persona": self.preferred_persona,
+            "persona_source": self.persona_source or "default",
+            "birth_year": self.birth_year,
+            "preferred_theme": self.preferred_theme,
+            "is_admin": self.is_admin,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_login": self.last_login.isoformat() if self.last_login else None,
+            "memory_enabled": bool(self.memory_enabled),
+            "memory_retention_days": int(self.memory_retention_days or 90),
+        }
+        if include_sensitive:
+            d["is_active"] = self.is_active
+        return d
+
+
+class Chat(db.Model):
+    """A conversation thread owned by a user."""
+
+    __tablename__ = "chats"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), default="New chat")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    is_shared = Column(Boolean, default=False, nullable=False)
+    share_id = Column(String(36), unique=True, index=True)
+
+    user = relationship("User", back_populates="chats")
+    messages = relationship("Message", back_populates="chat", lazy="dynamic", cascade="all, delete-orphan")
+
+    def to_dict(self, include_messages=False):
+        d = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "title": self.title,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "is_shared": self.is_shared,
+            "share_id": self.share_id,
+        }
+        if include_messages:
+            d["messages"] = [m.to_dict() for m in self.messages.order_by(Message.created_at.asc()).all()]
+        return d
+
+
+class Message(db.Model):
+    """Single turn in a chat."""
+
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True)
+    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(20), nullable=False)  # user | assistant
+    content = Column(Text, nullable=False)
+    shabad_row_id = Column(Integer, ForeignKey("shabads.id", ondelete="SET NULL"), nullable=True)
+    persona = Column(String(20))
+    language = Column(String(10), default="en")
+    llm_provider = Column(String(32), nullable=True)
+    llm_model = Column(String(128), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    chat = relationship("Chat", back_populates="messages")
+    shabad = relationship("Shabad", backref="linked_messages")
+
+    def to_dict(self):
+        out = {
+            "id": self.id,
+            "chat_id": self.chat_id,
+            "role": self.role,
+            "content": self.content,
+            "persona": self.persona,
+            "language": self.language,
+            "llm_provider": self.llm_provider,
+            "llm_model": self.llm_model,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+        if self.shabad:
+            out["shabad"] = self.shabad.to_api_dict()
+        else:
+            out["shabad"] = None
+        return out
+
+
+class UserMemory(db.Model):
+    """Short facts extracted from conversations for cross-session continuity (issue #42)."""
+
+    __tablename__ = "user_memories"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    fact_type = Column(String(50), nullable=False)
+    content = Column(Text, nullable=False)
+    source_chat_id = Column(Integer, ForeignKey("chats.id", ondelete="SET NULL"), nullable=True)
+    source_user_message_id = Column(Integer, ForeignKey("messages.id", ondelete="SET NULL"), nullable=True)
+    source_assistant_message_id = Column(Integer, ForeignKey("messages.id", ondelete="SET NULL"), nullable=True)
+    importance = Column(Integer, default=5, nullable=False)
+    is_pinned = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="memories")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "fact_type": self.fact_type,
+            "content": self.content,
+            "importance": self.importance,
+            "is_pinned": bool(self.is_pinned),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class LLMSettings(db.Model):
+    """Singleton row (id=1): active chat synthesis provider and model for /ask."""
+
+    __tablename__ = "llm_settings"
+
+    id = Column(Integer, primary_key=True)
+    provider = Column(String(32), nullable=False, default="gemini")
+    model_id = Column(String(128), nullable=False, default="models/gemini-2.5-flash-lite")
+    guidance_shabad_count = Column(Integer, nullable=False, default=3)
+    parmaan_shabad_count = Column(Integer, nullable=False, default=5)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 class Shabad(db.Model):
     """
     Model for storing Gurbani verses with vector embeddings for semantic search.
     Designed for scalability on Google Cloud SQL (PostgreSQL).
     """
-    __tablename__ = 'shabads'
+
+    __tablename__ = "shabads"
 
     id = Column(Integer, primary_key=True)
     shabad_id = Column(String(50), unique=True, nullable=False)
@@ -20,31 +191,68 @@ class Shabad(db.Model):
     romanization = Column(Text)
     english_translation = Column(Text, nullable=False)
     source = Column(String(100))
-    recommended_persona = Column(String(20), default='any')
-    
-    # context_tags allows for quick metadata filtering (e.g. filter by 'child' persona)
+    recommended_persona = Column(String(20), default="any")
+
     context_tags = Column(ARRAY(String))
-    
-    # embedding column stores the vector from Vertex AI (text-embedding-004 is 768 dims)
-    # If using the base model, it might be 384 or 768. 768 is default for gecko/004.
-    embedding = Column(Vector(768)) 
-    
+
+    # Content quality (Raag/Mehla header stubs vs full shabads) — see gurbani_content_quality.py
+    is_header_only = Column(Boolean, nullable=True)
+    verse_count = Column(Integer, nullable=True)
+    content_length = Column(Integer, nullable=True)
+
+    embedding = Column(Vector())
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<Shabad {self.shabad_id}>'
+        return f"<Shabad {self.shabad_id}>"
 
-    def to_dict(self):
-        """Convert Shabad instance to dictionary."""
+    @staticmethod
+    def sttm_url_for(shabad_id: str) -> str:
+        """Public SikhiToTheMax link for this verse identifier."""
+        if not shabad_id:
+            return ""
+        
+        # Extract numeric ID from shabad_id format like "sggs_123"
+        numeric_id = shabad_id
+        if shabad_id.startswith("sggs_"):
+            numeric_id = shabad_id[5:]  # Remove "sggs_" prefix
+        
+        return f"https://www.sikhitothemax.org/shabad?id={numeric_id}"
+
+    def to_dict(self, include_embedding=True):
+        """Full dict including embedding (for internal RAG / tests)."""
         return {
-            'id': self.id,
-            'shabad_id': self.shabad_id,
-            'gurmukhi': self.gurmukhi,
-            'romanization': self.romanization,
-            'english_translation': self.english_translation,
-            'source': self.source,
-            'recommended_persona': self.recommended_persona,
-            'context_tags': self.context_tags,
-            'embedding': self.embedding,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            "id": self.id,
+            "shabad_id": self.shabad_id,
+            "gurmukhi": self.gurmukhi,
+            "romanization": self.romanization,
+            "english_translation": self.english_translation,
+            "source": self.source,
+            "recommended_persona": self.recommended_persona,
+            "context_tags": self.context_tags,
+            "is_header_only": self.is_header_only,
+            "verse_count": self.verse_count,
+            "content_length": self.content_length,
+            "embedding": self.embedding if include_embedding else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "sttm_link": self.sttm_url_for(self.shabad_id),
+        }
+
+    def to_api_dict(self):
+        """Safe JSON for clients (no embedding)."""
+        return {
+            "id": self.id,
+            "shabad_id": self.shabad_id,
+            "gurmukhi": self.gurmukhi,
+            "romanization": self.romanization,
+            "english_translation": self.english_translation,
+            "source": self.source,
+            "recommended_persona": self.recommended_persona,
+            "context_tags": self.context_tags,
+            "is_header_only": self.is_header_only,
+            "verse_count": self.verse_count,
+            "content_length": self.content_length,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "sttm_link": self.sttm_url_for(self.shabad_id),
         }

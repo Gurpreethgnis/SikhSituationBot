@@ -1,0 +1,91 @@
+/* Shared thread view — tokens from app/styles/themes.css (data-theme on <html>) */
+
+.shared-page {
+  min-height: 100vh;
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--color-bg);
+  color: var(--text-primary);
+}
+
+.shared-header h1 {
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+}
+
+.shared-sub {
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.shared-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.shared-cta {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  background: var(--color-accent);
+  color: var(--on-accent-text);
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shared-cta:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 0 0 1px var(--border-gold);
+}
+
+.shared-link {
+  color: var(--color-accent);
+  align-self: center;
+  font-weight: 600;
+}
+
+.shared-link:hover {
+  color: var(--gold-light);
+}
+
+.shared-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.shared-msg {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--text-primary);
+}
+
+.shared-msg--assistant {
+  background: var(--color-bg-elevated);
+}
+
+.shared-msg-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.shared-sttm {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.shared-sttm:hover {
+  color: var(--gold-light);
+}
