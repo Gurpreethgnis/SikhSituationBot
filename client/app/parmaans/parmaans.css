@@ -1,8 +1,10 @@
+/* Parmaans — tokens from app/styles/themes.css (data-theme on <html>) */
+
 .parmaans-page {
   min-height: 100vh;
   padding: 1.5rem clamp(1rem, 4vw, 3rem);
-  background: var(--color-background, #1a1a2e);
-  color: var(--color-text-primary, #fff);
+  background: var(--color-bg);
+  color: var(--text-primary);
 }
 
 .parmaans-header {
@@ -11,18 +13,19 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--color-border, #2a3a5c);
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 1rem;
 }
 
 .parmaans-header h1 {
   margin: 0 0 0.35rem;
   font-size: 1.75rem;
+  color: var(--text-primary);
 }
 
 .parmaans-sub {
   margin: 0;
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
   max-width: 42rem;
 }
 
@@ -33,12 +36,13 @@
 }
 
 .parmaans-nav a {
-  color: var(--color-primary, #ff6b00);
+  color: var(--color-accent);
   text-decoration: none;
   font-weight: 600;
 }
 
 .parmaans-nav a:hover {
+  color: var(--gold-light);
   text-decoration: underline;
 }
 
@@ -46,20 +50,27 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .parmaans-tabs button {
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--color-border, #2a3a5c);
-  background: var(--color-surface, #16213e);
-  color: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--text-primary);
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.parmaans-tabs button:hover:not(.active) {
+  background: var(--surface-glass-hover);
 }
 
 .parmaans-tabs button.active {
-  border-color: var(--color-primary, #ff6b00);
-  color: var(--color-primary, #ff6b00);
+  border-color: var(--border-gold);
+  color: var(--color-accent);
+  background: var(--color-bg-elevated);
 }
 
 .parmaans-error {
@@ -68,6 +79,7 @@
   padding: 0.75rem 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
+  color: var(--text-primary);
 }
 
 .parmaans-panel {
@@ -78,25 +90,38 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.25rem;
+  flex-wrap: wrap;
 }
 
 .parmaans-search-form input {
   flex: 1;
+  min-width: 12rem;
   padding: 0.65rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid var(--color-border, #2a3a5c);
-  background: var(--color-surface-elevated, #1f2b47);
-  color: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--text-primary);
+}
+
+.parmaans-search-form input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
 }
 
 .parmaans-search-form button {
   padding: 0.65rem 1.25rem;
   border-radius: 8px;
   border: none;
-  background: var(--color-primary, #ff6b00);
-  color: #0f0f1a;
+  background: var(--color-accent);
+  color: var(--on-accent-text);
   font-weight: 700;
   cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.parmaans-search-form button:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 0 0 1px var(--border-gold);
 }
 
 .shabad-grid {
@@ -113,18 +138,20 @@
   text-align: left;
   padding: 1rem;
   border-radius: 12px;
-  border: 1px solid var(--color-border, #2a3a5c);
-  background: var(--color-surface, #16213e);
-  color: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--text-primary);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   min-height: 5rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .shabad-card-btn:hover {
-  border-color: var(--color-primary, #ff6b00);
+  border-color: var(--border-gold);
+  background: var(--surface-glass-hover);
 }
 
 .shabad-card-btn .gurmukhi {
@@ -134,7 +161,7 @@
 
 .shabad-card-btn .eng {
   font-size: 0.8rem;
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
 }
 
 .parmaans-pager {
@@ -143,15 +170,27 @@
   justify-content: center;
   gap: 1rem;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .parmaans-pager button {
   padding: 0.4rem 0.9rem;
   border-radius: 8px;
-  border: 1px solid var(--color-border, #2a3a5c);
-  background: var(--color-surface, #16213e);
-  color: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--text-primary);
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.parmaans-pager button:hover:not(:disabled) {
+  background: var(--surface-glass-hover);
+  border-color: var(--border-gold);
+}
+
+.parmaans-pager button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .category-grid {
@@ -163,23 +202,28 @@
 .category-tile {
   padding: 1rem;
   border-radius: 12px;
-  border: 1px solid var(--color-border, #2a3a5c);
-  background: var(--color-surface-elevated, #1f2b47);
-  color: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.category-tile:hover {
+  border-color: var(--border-gold);
 }
 
 .category-tile strong {
-  color: var(--color-accent, #ffd93d);
+  color: var(--color-accent);
 }
 
 .category-tile span {
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
 }
 
 .parmaans-detail {
@@ -188,12 +232,13 @@
   top: 0;
   bottom: 0;
   width: min(440px, 100vw);
-  background: var(--color-surface-elevated, #1f2b47);
-  border-left: 1px solid var(--color-border, #2a3a5c);
+  background: var(--color-bg-elevated);
+  border-left: 1px solid var(--color-border);
   padding: 1.25rem;
   overflow-y: auto;
   z-index: 200;
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
 }
 
 .parmaans-close {
@@ -202,45 +247,55 @@
   right: 0.75rem;
   border: none;
   background: transparent;
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
   font-size: 1.5rem;
   cursor: pointer;
   line-height: 1;
+}
+
+.parmaans-close:hover {
+  color: var(--color-accent);
 }
 
 .gurmukhi-large {
   font-size: 1.25rem;
   line-height: 1.45;
   margin: 0 2rem 0.5rem 0;
+  color: var(--text-primary);
 }
 
 .eng-large {
   line-height: 1.5;
   margin: 0.5rem 0;
+  color: var(--text-primary);
 }
 
 .roman {
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .meta {
   font-size: 0.8rem;
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
 }
 
 .sttm-btn {
   display: inline-block;
   margin: 0.75rem 0 1rem;
-  color: var(--color-primary, #ff6b00);
+  color: var(--color-accent);
   font-weight: 600;
+}
+
+.sttm-btn:hover {
+  color: var(--gold-light);
 }
 
 .related-tabs h3 {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
   margin: 1rem 0 0.5rem;
 }
 
@@ -256,17 +311,17 @@
   padding: 0.4rem 0;
   border: none;
   background: none;
-  color: var(--color-text-primary, #fff);
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 0.85rem;
 }
 
 .mini-list li button:hover {
-  color: var(--color-primary, #ff6b00);
+  color: var(--color-accent);
 }
 
 .opposite-q {
   font-size: 0.8rem;
-  color: var(--color-text-secondary, #b8b8d1);
+  color: var(--text-secondary);
   font-style: italic;
 }

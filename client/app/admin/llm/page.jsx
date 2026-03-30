@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { apiBase, authHeaders } from '../../../lib/api'
-import '../admin.css'
 
 export default function AdminLLMPage() {
   const { data: session } = useSession()

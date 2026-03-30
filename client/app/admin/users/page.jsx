@@ -103,12 +103,12 @@ export default function AdminUsersPage() {
           </tbody>
         </table>
       </div>
-      <p>
+      <p className="admin-pagination-note">
         Page {page} — {total} total{' '}
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+        <button type="button" className="admin-btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
           Prev
         </button>{' '}
-        <button type="button" disabled={page * 40 >= total} onClick={() => setPage((p) => p + 1)}>
+        <button type="button" className="admin-btn" disabled={page * 40 >= total} onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </p>

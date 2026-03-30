@@ -165,6 +165,7 @@ def synthesize_chat_response(
     language: str = "en",
     message_history: Any = None,
     guidance_mode: str = "guidance",
+    parmaan_discovery_type: str = "similar",
 ) -> Tuple[str, str, str]:
     """
     Build the RAG prompt and call the configured provider.
@@ -177,6 +178,7 @@ def synthesize_chat_response(
         language=language,
         message_history=message_history,
         guidance_mode=guidance_mode,
+        parmaan_discovery_type=parmaan_discovery_type,
     )
     provider, model_id = get_llm_settings()
 
@@ -203,6 +205,7 @@ def synthesize_chat_response(
             language=language,
             message_history=message_history,
             guidance_mode=guidance_mode,
+            parmaan_discovery_type=parmaan_discovery_type,
         )
         if fb is None or (isinstance(fb, str) and not fb.strip()):
             fb = FALLBACK_RESPONSE
