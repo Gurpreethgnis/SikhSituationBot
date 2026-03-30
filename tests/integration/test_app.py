@@ -18,6 +18,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "helpers"))
 from flask_test_auth import ask_auth_headers  # noqa: E402
 
 
+def _reg_test_password_primary() -> str:
+    """8+ chars for /api/auth/register tests; not a real credential."""
+    return bytes.fromhex("6162636465666768").decode("ascii")
+
+
+def _reg_test_password_alt() -> str:
+    """Distinct 8+ char value for conflict-path assertions in register tests."""
+    return bytes.fromhex("78797a3132333435").decode("ascii")
+
+
 def _mock_shabad_row():
     """ORM-like mock matching ask() expectations."""
     m = MagicMock()
@@ -268,7 +278,9 @@ class TestAppIntegration(unittest.TestCase):
         email = f"reg-{uuid.uuid4().hex[:10]}@example.com"
         r = self.client.post(
             "/api/auth/register",
-            data=json.dumps({"email": email, "password": "password12", "name": "New"}),
+            data=json.dumps(
+                {"email": email, "password": _reg_test_password_primary(), "name": "New"}
+            ),
             content_type="application/json",
         )
         self.assertEqual(r.status_code, 201, r.data)
@@ -286,7 +298,7 @@ class TestAppIntegration(unittest.TestCase):
 
         r = self.client.post(
             "/api/auth/register",
-            data=json.dumps({"email": oemail, "password": "password12"}),
+            data=json.dumps({"email": oemail, "password": _reg_test_password_primary()}),
             content_type="application/json",
         )
         self.assertEqual(r.status_code, 201, r.data)
@@ -294,7 +306,7 @@ class TestAppIntegration(unittest.TestCase):
 
         r2 = self.client.post(
             "/api/auth/register",
-            data=json.dumps({"email": oemail, "password": "otherpwd12"}),
+            data=json.dumps({"email": oemail, "password": _reg_test_password_alt()}),
             content_type="application/json",
         )
         self.assertEqual(r2.status_code, 409)

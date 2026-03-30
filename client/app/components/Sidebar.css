@@ -51,6 +51,21 @@
   padding-top: 0.75rem;
 }
 
+.sidebar__settings-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar__settings-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .user-meta {
   display: flex;
   flex-direction: column;
