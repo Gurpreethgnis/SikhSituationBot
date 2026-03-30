@@ -145,15 +145,10 @@ class TestAppIntegration(unittest.TestCase):
     def test_ask_parmaan_skips_clarification_when_query_seems_vague(
         self, mock_synth, mock_search, mock_emb, mock_assess
     ):
-        """Short Gurbani-style lines must not trigger guidance clarification in Parmaan mode."""
+        """Parmaan always returns top-5 disambiguation first; vague-query clarification is guidance-only."""
         mock_assess.return_value = (True, "vague")
         mock_emb.return_value = [0.1] * 8
-        mock_search.return_value = [_mock_shabad_row()]
-        mock_synth.return_value = (
-            "Here is verse #1… [Open on SikhiToTheMax](https://example)\n\n[SUGGESTIONS]\n- a\n- b\n- c",
-            "gemini",
-            "models/gemini-2.5-flash-lite",
-        )
+        mock_search.return_value = [_mock_shabad_row() for _ in range(5)]
 
         response = self.client.post(
             "/ask",
@@ -171,23 +166,27 @@ class TestAppIntegration(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertFalse(data.get("is_clarification"))
+        self.assertTrue(data.get("is_disambiguation"))
         self.assertEqual(data.get("guidance_mode"), "parmaan")
-        mock_synth.assert_called_once()
-        kwargs = mock_synth.call_args.kwargs
-        self.assertEqual(kwargs.get("guidance_mode"), "parmaan")
-        self.assertEqual(kwargs.get("parmaan_discovery_type"), "similar")
+        self.assertEqual(len(data.get("disambiguation_candidates") or []), 5)
+        mock_synth.assert_not_called()
+        self.assertEqual(mock_search.call_args.kwargs.get("limit"), 5)
 
+    @patch("app.find_similar_to_shabad")
+    @patch("app.get_shabad_by_id")
     @patch("app.assess_query_clarity")
     @patch("app.get_embedding")
     @patch("app.search_similar_shabads")
     @patch("llm_synthesis._generate_gemini")
     def test_ask_parmaan_prepends_canonical_database_text(
-        self, mock_gen, mock_search, mock_emb, mock_assess
+        self, mock_gen, mock_search, mock_emb, mock_assess, mock_get_by_id, mock_find_sim
     ):
         """Issue #49: Parmaan replies must include server-built verbatim blocks before LLM prose."""
         mock_assess.return_value = (False, "")
         mock_emb.return_value = [0.1] * 8
-        mock_search.return_value = [_mock_shabad_row()]
+        row = _mock_shabad_row()
+        mock_get_by_id.return_value = row
+        mock_find_sim.return_value = [row, row]
         mock_gen.return_value = "Theme commentary only.\n\n[SUGGESTIONS]\n- a\n- b\n- c"
 
         response = self.client.post(
@@ -199,6 +198,7 @@ class TestAppIntegration(unittest.TestCase):
                     "guidance_mode": "parmaan",
                     "parmaan_discovery_type": "similar",
                     "parmaan_shabad_count": 2,
+                    "anchor_shabad_id": "test-1",
                 }
             ),
             headers=ask_auth_headers(self.app, email="itest-ask@example.com"),
