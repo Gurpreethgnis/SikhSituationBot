@@ -79,7 +79,8 @@ def _persona_from_birth_year(birth_year: int) -> str:
 def get_assessment_model():
     global query_assessment_model
     if query_assessment_model is None and GEMINI_API_KEY:
-        query_assessment_model = genai.GenerativeModel("models/gemini-2.0-flash")
+        # gemini-2.0-flash returns 404 for many new API keys; use rolling latest.
+        query_assessment_model = genai.GenerativeModel("models/gemini-flash-latest")
     return query_assessment_model
 
 
@@ -215,6 +216,16 @@ def _coerce_synthesis_result(result: Any) -> Tuple[str, Optional[str], Optional[
     if a is None or (isinstance(a, str) and not str(a).strip()):
         return FALLBACK_RESPONSE, b, c
     return str(a), b, c
+
+
+def _finalize_ask_response_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Never return HTTP 200 with an empty response string (the client shows 'no response')."""
+    text = (payload.get("response") or "").strip()
+    if text:
+        return payload
+    out = dict(payload)
+    out["response"] = FALLBACK_RESPONSE
+    return out
 
 
 def _conversation_snippet_from_history(history: List[Dict[str, Any]], max_chars: int = 1200) -> str:
@@ -926,7 +937,7 @@ def ask():
             active_chat.title = generate_chat_title(query_text)
             db.session.commit()
             payload["chat_title"] = active_chat.title
-        return jsonify(payload), 200
+        return jsonify(_finalize_ask_response_payload(payload)), 200
 
     query_vector = get_embedding(query_text)
     if not query_vector:
@@ -983,7 +994,7 @@ def ask():
                     active_chat.title = generate_chat_title(query_text)
                 db.session.commit()
                 payload["chat_title"] = active_chat.title
-            return jsonify(payload), 200
+            return jsonify(_finalize_ask_response_payload(payload)), 200
 
         # Default: Guidance mode - retrieve top shabads and provide guidance with summary
         similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, persona=persona)
@@ -1034,7 +1045,7 @@ def ask():
             db.session.commit()
             payload["chat_title"] = active_chat.title
 
-        return jsonify(payload), 200
+        return jsonify(_finalize_ask_response_payload(payload)), 200
 
     except Exception as e:
         logger.error("Error during retrieval or synthesis: %s", e)
