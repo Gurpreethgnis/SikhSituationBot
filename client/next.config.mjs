@@ -35,6 +35,7 @@ function flaskRewrites() {
     { source: '/api/auth/me', destination: `${b}/api/auth/me` },
     { source: '/api/memory', destination: `${b}/api/memory` },
     { source: '/api/memory/:path*', destination: `${b}/api/memory/:path*` },
+    { source: '/api/feedback', destination: `${b}/api/feedback` },
   ]
 }
 

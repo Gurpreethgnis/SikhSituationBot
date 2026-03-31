@@ -10,6 +10,8 @@ import ParmaanDiscoveryBar from '../components/ParmaanDiscoveryBar.jsx'
 import Logo from '../components/Logo'
 import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
+import FeedbackButton from '../components/FeedbackButton.jsx'
+import FeedbackModal from '../components/FeedbackModal.jsx'
 import { apiBase, authHeaders } from '../../lib/api'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { useTranslation, SUPPORTED_UI_LANGUAGES } from '../contexts/TranslationContext.jsx'
@@ -67,6 +69,8 @@ export default function ChatPage() {
   const [shareStatus, setShareStatus] = useState('')
   const [copiedIndex, setCopiedIndex] = useState(null)
   const [shabadCount, setShabadCount] = useState(null)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackResponseContent, setFeedbackResponseContent] = useState('')
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -251,7 +255,7 @@ export default function ChatPage() {
   }
 
   const handleSend = async (query, options = {}) => {
-    const { anchorShabadId } = options
+    const { anchorShabadId, parmaanOriginalQuery } = options
     if (!token) {
       const msg =
         sessionStatus === 'unauthenticated'
@@ -302,6 +306,9 @@ export default function ChatPage() {
         body.parmaan_shabad_count = parmaanShabadCount
       }
       if (anchorShabadId) body.anchor_shabad_id = anchorShabadId
+      if (parmaanOriginalQuery && guidanceMode === 'parmaan') {
+        body.parmaan_original_query = parmaanOriginalQuery
+      }
       if (chatId) body.chat_id = chatId
 
       const askController = new AbortController()
@@ -395,14 +402,24 @@ export default function ChatPage() {
     handleSend(suggestion)
   }
 
-  const handleDisambiguationSelect = (candidate) => {
+  const handleDisambiguationSelect = (candidate, originalSearchQuery) => {
     if (!candidate?.shabad_id || loading) return
     const gm = candidate.gurmukhi || ''
     const en = candidate.english_translation || ''
     const preview = gm ? truncateText(gm, 100) : truncateText(en, 80)
     const userLabel = preview ? `Selected: ${preview}` : `Selected shabad: ${candidate.shabad_id}`
-    handleSend(userLabel, { anchorShabadId: candidate.shabad_id })
+    handleSend(userLabel, {
+      anchorShabadId: candidate.shabad_id,
+      parmaanOriginalQuery: (originalSearchQuery || '').trim() || undefined,
+    })
   }
+
+  const parmaanDiscoveryLabelKey =
+    parmaanDiscoveryType === 'topic'
+      ? 'parmaanDiscoveryTopic'
+      : parmaanDiscoveryType === 'dissimilar'
+        ? 'parmaanDiscoveryContrasts'
+        : 'parmaanDiscoverySimilar'
 
   const chatGroups = groupChatsByDate(chats)
 
@@ -507,26 +524,48 @@ export default function ChatPage() {
                 <div key={index} className={`message message--${msg.role}`}>
                   <div className="message-toolbar">
                     <div className="message-label">{msg.role === 'user' ? t('you') : t('guru')}</div>
-                    <button
-                      type="button"
-                      className="message-copy-btn"
-                      onClick={() => copyMessageText(msg.content, index)}
-                      aria-label={t('copyMessage')}
-                    >
-                      {copiedIndex === index ? t('copyMessageDone') : t('copyMessage')}
-                    </button>
+                    <div className="message-toolbar-actions">
+                      <button
+                        type="button"
+                        className="message-copy-btn"
+                        onClick={() => copyMessageText(msg.content, index)}
+                        aria-label={t('copyMessage')}
+                      >
+                        {copiedIndex === index ? t('copyMessageDone') : t('copyMessage')}
+                      </button>
+                      {msg.role === 'assistant' &&
+                        !msg.isDisambiguation &&
+                        typeof msg.content === 'string' &&
+                        msg.content.trim() !== '' && (
+                          <FeedbackButton
+                            label={t('feedbackButton')}
+                            disabled={loading}
+                            onClick={() => {
+                              setFeedbackResponseContent(msg.content)
+                              setFeedbackOpen(true)
+                            }}
+                          />
+                        )}
+                    </div>
                   </div>
                   <div className="message-content">
                     <MarkdownRenderer content={msg.content} />
                     {msg.isDisambiguation && msg.disambiguationCandidates?.length > 0 && (
                       <div className="disambiguation-options" aria-label="Choose matching shabad">
-                        {msg.disambiguationCandidates.map((c) => (
+                        {guidanceMode === 'parmaan' ? (
+                          <p className="disambiguation-parmaan-context" role="note">
+                            {t('parmaanDisambiguationContextNote')
+                              .replace('{discovery}', t(parmaanDiscoveryLabelKey))
+                              .replace('{count}', String(parmaanShabadCount))}
+                          </p>
+                        ) : null}
+                        {msg.disambiguationCandidates.map((c, cidx) => (
                           <button
-                            key={c.shabad_id}
+                            key={`${c.shabad_id}-${cidx}`}
                             type="button"
                             className="disambiguation-btn"
                             disabled={loading}
-                            onClick={() => handleDisambiguationSelect(c)}
+                            onClick={() => handleDisambiguationSelect(c, msg.originalQuery)}
                           >
                             {c.source ? (
                               <span className="disambiguation-meta">{c.source}</span>
@@ -662,6 +701,16 @@ export default function ChatPage() {
             </p>
           </div>
         </footer>
+
+        <FeedbackModal
+          open={feedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+          responseContent={feedbackResponseContent}
+          chatId={activeChatId}
+          token={token}
+          baseUrl={baseUrl}
+          t={t}
+        />
       </main>
     </div>
   )

@@ -41,7 +41,6 @@ from prompts import (
 )
 from retrieval import (
     browse_shabads,
-    find_shabads_by_text_match,
     find_similar_to_shabad,
     get_random_shabads,
     get_shabad_by_id,
@@ -54,6 +53,16 @@ from user_memory import (
     maybe_extract_and_save_after_guidance_turn,
 )
 from vector_utils import get_embedding
+from feedback_github import (
+    MAX_DESCRIPTION_LEN,
+    MAX_RESPONSE_SNIPPET_LEN,
+    create_feedback_issue,
+    feedback_rate_limit_allows,
+    parse_screenshot_base64,
+    record_feedback_submission,
+    sanitize_text,
+    upload_feedback_screenshot,
+)
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -78,6 +87,10 @@ if not INTERNAL_API_KEY:
         "FLASK_INTERNAL_API_KEY is not set; Next.js cannot call /api/auth/oauth-sync. "
         "Google sign-in will not receive a Flask JWT or admin flags from the API."
     )
+
+# Parmaan: nearest-neighbor candidates shown before full retrieval (user must pick one).
+PARMAAN_DISAMBIGUATION_TOP_N = 5
+PARMAAN_ORIGINAL_QUERY_MAX_LEN = 4000
 
 # Throttle purge of stale chats; honours each user's memory_retention_days.
 _last_stale_chat_purge_utc: Optional[datetime] = None
@@ -746,6 +759,81 @@ def get_shared(share_id: str):
     ), 200
 
 
+@app.route("/api/feedback", methods=["POST"])
+@require_auth
+def submit_feedback():
+    """
+    Create a GitHub issue from authenticated user feedback (requires GITHUB_TOKEN on server).
+    """
+    gh_token = (os.environ.get("GITHUB_TOKEN") or "").strip()
+    if not gh_token:
+        return jsonify({"error": "Feedback is not configured on this server."}), 503
+
+    repo_full = (os.environ.get("GITHUB_FEEDBACK_REPO") or "Gurpreethgnis/SikhSituationBot").strip()
+    if "/" not in repo_full:
+        logger.error("GITHUB_FEEDBACK_REPO must be owner/repo")
+        return jsonify({"error": "Server feedback configuration error."}), 500
+    owner, repo = repo_full.split("/", 1)
+    branch = (os.environ.get("GITHUB_FEEDBACK_BRANCH") or "main").strip() or "main"
+
+    allowed, rate_err = feedback_rate_limit_allows(request.user_id)
+    if not allowed:
+        return jsonify({"error": rate_err}), 429
+
+    data = request.get_json(silent=True) or {}
+    fb_type = (data.get("type") or "other").strip().lower()
+    description = sanitize_text(data.get("description") or "", MAX_DESCRIPTION_LEN)
+    response_content = sanitize_text(data.get("response_content") or "", MAX_RESPONSE_SNIPPET_LEN)
+    if not description:
+        return jsonify({"error": "Description is required."}), 400
+
+    chat_id_raw = data.get("chat_id")
+    chat_id: Optional[int] = None
+    if chat_id_raw is not None and chat_id_raw != "":
+        try:
+            chat_id = int(chat_id_raw)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid chat_id."}), 400
+        chat = Chat.query.filter_by(id=chat_id, user_id=request.user_id).first()
+        if not chat:
+            return jsonify({"error": "Chat not found."}), 404
+
+    screenshot_url: Optional[str] = None
+    screenshot_b64 = data.get("screenshot_base64")
+    if screenshot_b64:
+        try:
+            parsed = parse_screenshot_base64(screenshot_b64)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        if parsed:
+            raw_bytes, ext = parsed
+            screenshot_url = upload_feedback_screenshot(gh_token, owner, repo, branch, raw_bytes, ext)
+            if not screenshot_url:
+                return jsonify(
+                    {"error": "Could not upload screenshot. Try again without an image or later."}
+                ), 502
+
+    user = request.user
+    issue_url, gh_err = create_feedback_issue(
+        token=gh_token,
+        owner=owner,
+        repo=repo,
+        branch=branch,
+        feedback_type=fb_type,
+        description=description,
+        response_snippet=response_content,
+        reporter_user_id=user.id,
+        reporter_email=user.email or "",
+        screenshot_url=screenshot_url,
+        chat_id=chat_id,
+    )
+    if not issue_url:
+        return jsonify({"error": gh_err or "Failed to create GitHub issue"}), 502
+
+    record_feedback_submission(request.user_id)
+    return jsonify({"ok": True, "issue_url": issue_url}), 201
+
+
 # --- Parmaans / discovery ---
 PARMAAN_CATEGORIES = [
     {"id": "peace", "label": "Peace & calm", "hints": ["peace", "calm", "anxiety", "stress"]},
@@ -1219,6 +1307,9 @@ def ask():
         return jsonify({"error": "Invalid JSON"}), 400
 
     query_text = (data.get("query") or "").strip()
+    parmaan_original_query = (data.get("parmaan_original_query") or "").strip()
+    if len(parmaan_original_query) > PARMAAN_ORIGINAL_QUERY_MAX_LEN:
+        parmaan_original_query = parmaan_original_query[:PARMAAN_ORIGINAL_QUERY_MAX_LEN]
     language = resolve_language(data.get("language"))
     chat_id = data.get("chat_id")
     client_history = data.get("message_history") or []
@@ -1301,7 +1392,15 @@ def ask():
             "is_clarification": True,
         }
         msg_ids = _persist_messages(
-            active_chat, query_text, ai_response, None, persona, language, llm_provider, llm_model
+            active_chat,
+            query_text,
+            ai_response,
+            None,
+            persona,
+            language,
+            llm_provider,
+            llm_model,
+            was_fallback=(llm_provider == "gemini-fallback"),
         )
         if msg_ids and getattr(user, "memory_enabled", True):
             umid, amid = msg_ids
@@ -1340,6 +1439,8 @@ def ask():
     if anchor_raw and anchor_row is None:
         return jsonify({"error": "Unknown shabad id for anchor selection"}), 400
 
+    query_vector: Optional[List[float]] = None
+
     # Parmaan: multiple literal text hits -> ask user to pick before similar-shabad retrieval
     # Single text hit -> auto-select as anchor (skip embedding search, use matched shabad)
     if guidance_mode == "parmaan" and anchor_row is None:
@@ -1365,7 +1466,15 @@ def ask():
                 "parmaan_shabad_count": effective_parmaan_count,
             }
             _persist_messages(
-                active_chat, query_text, dis_msg, None, persona, language, None, None
+                active_chat,
+                query_text,
+                dis_msg,
+                None,
+                persona,
+                language,
+                None,
+                None,
+                was_fallback=False,
             )
             if active_chat:
                 active_chat.updated_at = datetime.utcnow()
@@ -1374,10 +1483,77 @@ def ask():
                 db.session.commit()
                 payload["chat_title"] = active_chat.title
             return jsonify(_finalize_ask_response_payload(payload)), 200
-        elif len(text_hits) == 1:
+        if len(text_hits) == 1:
             anchor_row = text_hits[0]
 
-    query_vector = get_embedding(query_text)
+    # Parmaan without anchor: always confirm intent — show top-N nearest shabads to the question embedding.
+    if guidance_mode == "parmaan" and anchor_row is None:
+        query_vector = get_embedding(query_text)
+        if not query_vector:
+            logger.error("Embedding generation failed")
+            return jsonify({"error": "Failed to process query embedding"}), 500
+        candidate_rows = search_similar_shabads(
+            query_embedding=query_vector,
+            limit=PARMAAN_DISAMBIGUATION_TOP_N,
+            persona=persona,
+            exclude_parmaan_low_quality=True,
+        )
+        if not candidate_rows:
+            candidate_rows = search_similar_shabads(
+                query_embedding=query_vector,
+                limit=PARMAAN_DISAMBIGUATION_TOP_N,
+                exclude_parmaan_low_quality=True,
+            )
+        if not candidate_rows:
+            return jsonify({"error": "No matching shabads found for this topic"}), 404
+
+        n = len(candidate_rows)
+        if n >= PARMAAN_DISAMBIGUATION_TOP_N:
+            dis_msg = (
+                f"Here are the {PARMAAN_DISAMBIGUATION_TOP_N} shabads in our database closest to your search. "
+                "Which one did you mean? Tap a choice below to see related verses and commentary."
+            )
+        else:
+            dis_msg = (
+                f"Here are the {n} closest shabads we found. "
+                "Which one did you mean? Tap below to see related verses and commentary."
+            )
+        candidates = [_disambiguation_candidate_dict(r) for r in candidate_rows]
+        payload = {
+            "response": dis_msg,
+            "is_disambiguation": True,
+            "is_clarification": False,
+            "disambiguation_candidates": candidates,
+            "original_query": query_text,
+            "shabad": None,
+            "shabads": [],
+            "persona": persona,
+            "language": language,
+            "guidance_mode": guidance_mode,
+            "parmaan_discovery_type": parmaan_discovery,
+            "parmaan_shabad_count": effective_parmaan_count,
+        }
+        _persist_messages(
+            active_chat,
+            query_text,
+            dis_msg,
+            None,
+            persona,
+            language,
+            None,
+            None,
+            was_fallback=False,
+        )
+        if active_chat:
+            active_chat.updated_at = datetime.utcnow()
+            if not active_chat.title or active_chat.title == "New chat":
+                active_chat.title = generate_chat_title(query_text)
+            db.session.commit()
+            payload["chat_title"] = active_chat.title
+        return jsonify(_finalize_ask_response_payload(payload)), 200
+
+    if query_vector is None:
+        query_vector = get_embedding(query_text)
     if not query_vector:
         logger.error("Embedding generation failed")
         return jsonify({"error": "Failed to process query embedding"}), 500
@@ -1400,9 +1576,14 @@ def ask():
             for shabad in similar_shabads:
                 shabads_list.append(_shabad_response_payload(shabad))
 
+            # After disambiguation, client may send "Selected: …" as query_text; use original search for LLM context.
+            synthesis_user_query = query_text
+            if anchor_row is not None and parmaan_original_query:
+                synthesis_user_query = parmaan_original_query
+
             # Generate a brief intro about the shabads found
             raw = synthesize_chat_response(
-                query_text,
+                synthesis_user_query,
                 [s.to_dict(include_embedding=True) for s in similar_shabads],
                 persona,
                 language=language,
@@ -1425,8 +1606,15 @@ def ask():
                 "parmaan_shabad_count": effective_parmaan_count,
             }
             _persist_messages(
-                active_chat, query_text, ai_response, similar_shabads[0].id if similar_shabads else None,
-                persona, language, llm_provider, llm_model
+                active_chat,
+                query_text,
+                ai_response,
+                similar_shabads[0].id if similar_shabads else None,
+                persona,
+                language,
+                llm_provider,
+                llm_model,
+                was_fallback=(llm_provider == "gemini-fallback"),
             )
             if active_chat:
                 active_chat.updated_at = datetime.utcnow()
@@ -1478,6 +1666,7 @@ def ask():
             language,
             llm_provider,
             llm_model,
+            was_fallback=(llm_provider == "gemini-fallback"),
         )
         if msg_ids and getattr(user, "memory_enabled", True):
             umid, amid = msg_ids
@@ -1512,6 +1701,8 @@ def _persist_messages(
     language: str,
     llm_provider: Optional[str] = None,
     llm_model: Optional[str] = None,
+    *,
+    was_fallback: bool = False,
 ) -> Optional[Tuple[int, int]]:
     """Persist user + assistant turns; returns (user_message_id, assistant_message_id) when chat exists."""
     if not chat:
@@ -1533,6 +1724,7 @@ def _persist_messages(
             language=language,
             llm_provider=llm_provider,
             llm_model=llm_model,
+            was_fallback=bool(was_fallback),
         )
         db.session.add(user_msg)
         db.session.add(asst_msg)
