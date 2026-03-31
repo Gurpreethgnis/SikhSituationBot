@@ -41,6 +41,7 @@ from prompts import (
 )
 from retrieval import (
     browse_shabads,
+    find_shabads_by_text_match,
     find_similar_to_shabad,
     get_random_shabads,
     get_shabad_by_id,
