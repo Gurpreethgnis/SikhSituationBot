@@ -65,6 +65,7 @@ from feedback_github import (
     sanitize_text,
     upload_feedback_screenshot,
 )
+from search_routes import search_blueprint
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -234,6 +235,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 
 
 app = Flask(__name__)
+app.register_blueprint(search_blueprint)
 CORS(
     app,
     resources={

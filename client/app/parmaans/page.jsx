@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import SearchGurbani from './SearchGurbani'
 import { apiBase } from '../../lib/api'
 import './parmaans.css'
 
@@ -128,7 +129,10 @@ export default function ParmaansPage() {
 
       <div className="parmaans-tabs">
         <button type="button" className={tab === 'search' ? 'active' : ''} onClick={() => setTab('search')}>
-          Search
+          Semantic Search
+        </button>
+        <button type="button" className={tab === 'live-search' ? 'active' : ''} onClick={() => setTab('live-search')}>
+          Live Search
         </button>
         <button type="button" className={tab === 'browse' ? 'active' : ''} onClick={() => setTab('browse')}>
           Browse
@@ -139,6 +143,12 @@ export default function ParmaansPage() {
       </div>
 
       {err && <div className="parmaans-error">{err}</div>}
+
+      {tab === 'live-search' && (
+        <section className="parmaans-panel">
+          <SearchGurbani onSelectShabad={openShabad} />
+        </section>
+      )}
 
       {tab === 'search' && (
         <section className="parmaans-panel">
