@@ -12,6 +12,8 @@ from typing import Any, Dict, List, Optional, Set
 
 import google.generativeai as genai
 
+from sqlalchemy.exc import IntegrityError
+
 from models import User, UserMemory, db
 from prompts import _RELAXED_SAFETY, _safe_response_text
 
@@ -50,9 +52,10 @@ def load_active_memories_for_user(user: User) -> List[UserMemory]:
         return []
     q = UserMemory.query.filter_by(user_id=user.id, is_deleted=False)
     days = int(getattr(user, "memory_retention_days", 90) or 90)
-    if days > 0:
-        cutoff = datetime.utcnow() - timedelta(days=days)
-        q = q.filter(UserMemory.created_at >= cutoff)
+    # Clamp to sensible range: 1–365 days (no indefinite storage).
+    days = max(1, min(days, 365))
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    q = q.filter(UserMemory.created_at >= cutoff)
     rows = q.order_by(
         UserMemory.is_pinned.desc(),
         UserMemory.importance.desc(),
@@ -187,7 +190,7 @@ def save_memory_facts(
     user_message_id: Optional[int] = None,
     assistant_message_id: Optional[int] = None,
 ) -> int:
-    """Insert facts; returns count saved."""
+    """Insert facts; returns count saved.  Idempotent: duplicates are silently skipped."""
     if not facts:
         return 0
     n = 0
@@ -206,8 +209,15 @@ def save_memory_facts(
             source_assistant_message_id=assistant_message_id,
         )
         db.session.add(row)
-        fingerprints.add(fp)
-        n += 1
+        try:
+            db.session.flush()  # detect unique-constraint violations early
+            fingerprints.add(fp)
+            n += 1
+        except IntegrityError:
+            db.session.rollback()
+            # Row already exists — skip silently (idempotency).
+            logger.debug("Duplicate memory skipped for user %s: %s", user_id, fp[:80])
+            continue
     if n:
         try:
             db.session.commit()
