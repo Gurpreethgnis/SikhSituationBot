@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import inspect
+import hashlib
 from typing import List, Dict, Any, Optional
 
 import google.generativeai as genai
@@ -106,6 +107,103 @@ For full guidance responses, make suggestions that deepen their spiritual journe
 - If the context is only a short line, say that explicitly and encourage opening the STTM link—do not fabricate a full shabad.
 
 Always maintain the highest respect for Sikh scripture. Present Gurbani verses accurately—not imaginatively."""
+
+# Controlled response-form policy used by prompt builder.
+RESPONSE_FORM_POLICY = """
+RESPONSE FORM POLICY (NON-BREAKING STYLE VARIETY):
+- Short-form vs exploratory:
+  - Use SHORT form when the user asks a direct, narrow question or asks for a brief answer.
+  - Use EXPLORATORY form when the user shares layered emotions, multiple constraints, or asks for deeper reflection.
+- Clarify vs answer:
+  - Ask 1-2 clarifying questions only when the user message is vague/incomplete and there is not enough context.
+  - Answer directly when user intent is clear, including clear follow-ups in an existing thread.
+- Variation rule:
+  - Do not repeat the same opening style, section label scaffold, and closing rhythm on consecutive turns.
+  - Rotate naturally between question-led and declarative openings when appropriate.
+  - For short answers, merge sections when possible and avoid boilerplate headings.
+- Hard constraints:
+  - Never invent SGGS lines, Ang numbers, or historical facts.
+  - If evidence is missing, state uncertainty or return [INSUFFICIENT_EVIDENCE] per policy.
+"""
+
+STYLE_PROFILES: Dict[str, Dict[str, str]] = {
+    "question_led": {
+        "opener_style": "Start with one gentle, focused question before offering guidance.",
+        "transition_style": "Use concise transitions that connect the question to the provided Gurbani context.",
+        "closing_style": "Close with one practical reflection sentence, then suggestions.",
+    },
+    "reflective": {
+        "opener_style": "Start with a brief reflective statement that mirrors the emotional tone.",
+        "transition_style": "Use calm, flowing transitions between insight and action.",
+        "closing_style": "Close with a grounded contemplative sentence, then suggestions.",
+    },
+    "direct_practical": {
+        "opener_style": "Open directly with a clear practical framing sentence.",
+        "transition_style": "Use crisp transitions and avoid repeated spiritual cliches.",
+        "closing_style": "End with a concise, actionable closing sentence, then suggestions.",
+    },
+    "scripture_first_contextual": {
+        "opener_style": "Open by situating the user concern alongside the retrieved Gurbani theme.",
+        "transition_style": "Move from scripture context to lived application in plain language.",
+        "closing_style": "Close by reconnecting to the scripture theme with humility, then suggestions.",
+    },
+}
+
+
+def _deterministic_pick(options: List[str], seed: str, avoid: Optional[str] = None) -> str:
+    if not options:
+        return ""
+    ranked = sorted(options)
+    digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
+    idx = int(digest[:8], 16) % len(ranked)
+    choice = ranked[idx]
+    if avoid and len(ranked) > 1 and choice == avoid:
+        choice = ranked[(idx + 1) % len(ranked)]
+    return choice
+
+
+def build_style_state(
+    user_query: str,
+    guidance_mode: str,
+    is_clarification: bool,
+    style_state: Optional[Dict[str, Any]] = None,
+) -> Dict[str, str]:
+    """Create deterministic, non-random style controls for this turn."""
+    prior = style_state or {}
+    last_profile = str(prior.get("last_profile") or "").strip() or None
+    last_length_mode = str(prior.get("last_length_mode") or "").strip() or None
+    seed_base = f"{guidance_mode}|{user_query.strip().lower()}|{bool(is_clarification)}"
+    profile = _deterministic_pick(list(STYLE_PROFILES.keys()), seed_base, avoid=last_profile)
+
+    explicit_short = any(
+        token in user_query.lower()
+        for token in ("brief", "short", "in one line", "quick answer", "concise")
+    )
+    length_mode = "short" if (is_clarification or explicit_short or len(user_query) < 90) else "exploratory"
+    if last_length_mode and length_mode == last_length_mode and not is_clarification:
+        length_mode = "short" if length_mode == "exploratory" else "exploratory"
+
+    return {
+        "profile": profile,
+        "length_mode": length_mode,
+        "last_profile": profile,
+        "last_length_mode": length_mode,
+    }
+
+
+def _style_instructions(style_cfg: Dict[str, str], length_mode: str) -> str:
+    mode_line = (
+        "Keep structure compact: merge short sections when natural and avoid repetitive boilerplate."
+        if length_mode == "short"
+        else "Use exploratory depth where useful, but vary cadence and avoid repeating section rhythm."
+    )
+    return (
+        f"STYLE PROFILE:\n"
+        f"- {style_cfg.get('opener_style', '').strip()}\n"
+        f"- {style_cfg.get('transition_style', '').strip()}\n"
+        f"- {style_cfg.get('closing_style', '').strip()}\n"
+        f"- {mode_line}\n"
+    )
 
 model = genai.GenerativeModel(
     'models/gemini-2.5-flash-lite',
@@ -447,6 +545,7 @@ def synthesize_gemini_response(
     guidance_mode: str = "guidance",
     parmaan_discovery_type: str = "similar",
     user_memory_context: Any = None,
+    style_state: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """Synthesize a response using Gemini API based on user query and retrieved shabads."""
     stack = [f.filename for f in inspect.stack()]
@@ -476,6 +575,7 @@ def synthesize_gemini_response(
                 guidance_mode=guidance_mode,
                 parmaan_discovery_type=parmaan_discovery_type,
                 user_memory_context=user_memory_context,
+                style_state=style_state,
             )
 
         response = model.generate_content(prompt, safety_settings=_RELAXED_SAFETY)
@@ -506,6 +606,7 @@ def build_gemini_response_prompt(
     parmaan_discovery_type: str = "similar",
     grounding_retry: bool = False,
     user_memory_context: Any = None,
+    style_state: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Build a focused prompt for Gemini API response synthesis.
     Handles inconsistent argument order from different test suites.
@@ -535,9 +636,18 @@ def build_gemini_response_prompt(
         pdt = "dissimilar"
     elif pdt != "topic":
         pdt = "similar"
+    style_cfg_state = build_style_state(
+        user_query=user_query,
+        guidance_mode=gm,
+        is_clarification=(shabads is None or (isinstance(shabads, list) and len(shabads) == 0)),
+        style_state=style_state,
+    )
+    style_cfg = STYLE_PROFILES.get(style_cfg_state["profile"], STYLE_PROFILES["reflective"])
+    style_block = _style_instructions(style_cfg, style_cfg_state["length_mode"])
 
     if gm == "situational":
         return f"""{SYSTEM_PROMPT}
+{RESPONSE_FORM_POLICY}
 
 OUTPUT LANGUAGE: {lang_line}
 
@@ -545,6 +655,7 @@ PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 
 MODE: **Situational guidance** — practical, compassionate framing from Sikh values for the situation described. No retrieved-verse block is attached; do not invent specific Gurbani lines, Ang numbers, or SikhiToTheMax links.
+{style_block}
 
 {history_block}USER'S MESSAGE: {user_query}
 
@@ -581,6 +692,7 @@ Provide clear situational guidance and end with the [SUGGESTIONS] block (3 items
             task_extra = "Explain what makes these shabads resonate with the user's wording or intent."
 
         prompt = f"""{SYSTEM_PROMPT}
+{RESPONSE_FORM_POLICY}
 
 OUTPUT LANGUAGE: {lang_line}
 
@@ -590,6 +702,7 @@ Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 
 MODE: The user is in **Parmaan Search Mode** — they want Gurbani discovery only (NOT life coaching, NOT therapy-style empathy, NOT asking them to share more about their feelings or situation).
 {discovery_line}
+{style_block}
 
 RETRIEVAL SUMMARY — metadata and theme tags only (no verse text here; full Gurmukhi/English for each hit is rendered in fixed blocks shown to the user **before** your reply):
 {shabad_context}
@@ -614,6 +727,7 @@ Keep the focus on commentary; scripture lives in the fixed blocks above your tex
 
     if is_clarification:
         prompt = f"""{SYSTEM_PROMPT}
+{RESPONSE_FORM_POLICY}
 
 OUTPUT LANGUAGE: {lang_line}
 
@@ -626,6 +740,7 @@ IMPORTANT: The user's query appears vague or incomplete. Your task is to:
 2. Ask 1-2 gentle, specific clarifying questions to understand their situation better
 3. Do NOT provide scripture or full guidance yet - wait for more context
 4. End with the [SUGGESTIONS] block with 3 options to help them share more
+5. Vary opening and closing phrasing from the last turn while preserving empathy and clarity.
 
 {history_block}USER'S MESSAGE: {user_query}
 
@@ -633,12 +748,14 @@ Respond with empathy and gentle clarifying questions."""
     else:
         # Default: Guidance mode - life situation + shabad-based guidance with summary
         prompt = f"""{SYSTEM_PROMPT}
+{RESPONSE_FORM_POLICY}
 
 OUTPUT LANGUAGE: {lang_line}
 
 PERSONA: {p_ctx['context']} {p_ctx['response_style']}
 You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
+{style_block}
 
 GURBANI CONTEXT (one or more relevant shabads to draw wisdom from):
 {shabad_context}

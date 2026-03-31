@@ -8,6 +8,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'server')
 
 from prompts import (
     PERSONA_CONTEXTS,
+    RESPONSE_FORM_POLICY,
+    STYLE_PROFILES,
+    build_style_state,
     build_gemini_response_prompt,
     format_shabad_context,
     get_persona_context
@@ -80,6 +83,7 @@ class TestPrompts(unittest.TestCase):
         self.assertIn('test english 1', result)
         self.assertIn('GURBANI CONTEXT', result)
         self.assertIn('QUESTION:', result)
+        self.assertIn('RESPONSE FORM POLICY', result)
 
     def test_build_gemini_response_prompt_includes_user_memory(self):
         mem = "STORED CONTEXT from earlier signed-in conversations"
@@ -283,6 +287,23 @@ class TestPrompts(unittest.TestCase):
 
         styles = [PERSONA_CONTEXTS[p]['response_style'] for p in PERSONA_CONTEXTS]
         self.assertEqual(len(styles), len(set(styles)), "Response styles should be unique")
+
+    def test_build_style_state_rotates_away_from_last_profile(self):
+        prior = {"last_profile": "reflective", "last_length_mode": "short"}
+        state = build_style_state(
+            user_query="Please give me a longer reflection for this.",
+            guidance_mode="guidance",
+            is_clarification=False,
+            style_state=prior,
+        )
+        self.assertIn(state["profile"], STYLE_PROFILES)
+        self.assertNotEqual(state["profile"], "reflective")
+        self.assertIn(state["length_mode"], ("short", "exploratory"))
+
+    def test_response_form_policy_contains_required_rules(self):
+        self.assertIn("Short-form vs exploratory", RESPONSE_FORM_POLICY)
+        self.assertIn("Clarify vs answer", RESPONSE_FORM_POLICY)
+        self.assertIn("Hard constraints", RESPONSE_FORM_POLICY)
 
 
 if __name__ == '__main__':

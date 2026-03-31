@@ -35,12 +35,14 @@ from prompts import (
     LANGUAGE_INSTRUCTIONS,
     _RELAXED_SAFETY,
     _safe_response_text,
+    build_style_state,
     generate_chat_title,
     generate_opposite_theme_query,
     resolve_language,
 )
 from retrieval import (
     browse_shabads,
+    find_shabads_by_text_match,
     find_similar_to_shabad,
     get_random_shabads,
     get_shabad_by_id,
@@ -96,6 +98,36 @@ PARMAAN_ORIGINAL_QUERY_MAX_LEN = 4000
 _last_stale_chat_purge_utc: Optional[datetime] = None
 DEFAULT_CHAT_RETENTION_DAYS = 90  # fallback when user has no preference
 STALE_CHAT_PURGE_INTERVAL_SEC = 3600
+_STYLE_STATE_BY_SESSION: Dict[str, Dict[str, str]] = {}
+
+
+def _style_session_key(user_id: int, chat_id: Optional[int]) -> str:
+    if chat_id:
+        return f"chat:{int(chat_id)}"
+    return f"user:{int(user_id)}"
+
+
+def _next_style_state(
+    *,
+    user_id: int,
+    chat_id: Optional[int],
+    user_query: str,
+    guidance_mode: str,
+    is_clarification: bool,
+) -> Dict[str, str]:
+    key = _style_session_key(user_id, chat_id)
+    prior = _STYLE_STATE_BY_SESSION.get(key) or {}
+    next_state = build_style_state(
+        user_query=user_query,
+        guidance_mode=guidance_mode,
+        is_clarification=is_clarification,
+        style_state=prior,
+    )
+    _STYLE_STATE_BY_SESSION[key] = {
+        "last_profile": next_state.get("last_profile", ""),
+        "last_length_mode": next_state.get("last_length_mode", ""),
+    }
+    return next_state
 
 
 def _maybe_purge_stale_chats_for_user(user) -> None:
@@ -1368,12 +1400,22 @@ def ask():
 
     user_memory_for_prompt = None
     if guidance_mode != "parmaan" and getattr(user, "memory_enabled", True):
-        _mem_block = format_memory_context_for_prompt(load_active_memories_for_user(user))
-        if _mem_block.strip():
-            user_memory_for_prompt = _mem_block
+        try:
+            _mem_block = format_memory_context_for_prompt(load_active_memories_for_user(user))
+            if _mem_block.strip():
+                user_memory_for_prompt = _mem_block
+        except Exception as e:
+            logger.warning("ask: memory context unavailable, continuing without memory: %s", e)
 
     # Parmaan search: short lines and themes are expected; do not run guidance-style clarification.
     if needs_clarification and guidance_mode != "parmaan":
+        style_state = _next_style_state(
+            user_id=user.id,
+            chat_id=active_chat.id if active_chat else None,
+            user_query=query_text,
+            guidance_mode="guidance",
+            is_clarification=True,
+        )
         raw = synthesize_chat_response(
             query_text,
             None,
@@ -1382,6 +1424,7 @@ def ask():
             message_history=message_history,
             guidance_mode="guidance",
             user_memory_context=user_memory_for_prompt,
+            style_state=style_state,
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
         payload = {
@@ -1591,6 +1634,13 @@ def ask():
                 guidance_mode="parmaan",
                 parmaan_discovery_type=parmaan_discovery,
                 user_memory_context=None,
+                style_state=_next_style_state(
+                    user_id=user.id,
+                    chat_id=active_chat.id if active_chat else None,
+                    user_query=synthesis_user_query,
+                    guidance_mode="parmaan",
+                    is_clarification=False,
+                ),
             )
             ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 
@@ -1641,6 +1691,13 @@ def ask():
             message_history=message_history,
             guidance_mode="guidance",
             user_memory_context=user_memory_for_prompt,
+            style_state=_next_style_state(
+                user_id=user.id,
+                chat_id=active_chat.id if active_chat else None,
+                user_query=query_text,
+                guidance_mode="guidance",
+                is_clarification=False,
+            ),
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 

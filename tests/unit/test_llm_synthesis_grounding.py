@@ -31,6 +31,7 @@ class TestLlmSynthesisGrounding(unittest.TestCase):
             "adult",
             guidance_mode="parmaan",
             parmaan_discovery_type="similar",
+            style_state={"last_profile": "reflective", "last_length_mode": "short"},
         )
         self.assertEqual(prov, "gemini")
         self.assertIn("Retrieved Gurbani (verbatim from database)", text)
@@ -41,6 +42,7 @@ class TestLlmSynthesisGrounding(unittest.TestCase):
         self.assertIn("RETRIEVAL SUMMARY", prompt_arg)
         self.assertNotIn("ਸਤਿਗੁਰ ਤੇਰੀ", prompt_arg)
         self.assertNotIn("English line", prompt_arg)
+        self.assertIn("STYLE PROFILE", prompt_arg)
 
     @patch.object(llm_synthesis, "_generate_gemini")
     @patch.object(llm_synthesis, "get_llm_settings")
