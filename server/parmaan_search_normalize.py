@@ -106,6 +106,25 @@ def latin_token_search_variants(token: str) -> List[str]:
                 _add_variant(nxt, s.replace(" ji", "ji"))
             if re.search(r"[a-z]ji\b", s):
                 _add_variant(nxt, re.sub(r"([a-z])ji\b", r"\1 ji", s))
+            # Informal Roman vs STTM/SikhiToTheMax: dropped schwa before ੜ cluster (ratre ↔ ratare)
+            if "ratre" in s and "ratare" not in s:
+                _add_variant(nxt, s.replace("ratre", "ratare"))
+            if "ratare" in s:
+                _add_variant(nxt, s.replace("ratare", "ratre", 1))
+            # py- vs pia- for ਪਿਆਰේ / ਪਿਆਰ (common typed "pyare")
+            if re.search(r"\bpyare\b", s):
+                _add_variant(nxt, re.sub(r"\bpyare\b", "piaare", s))
+            if re.search(r"\bpyar\b", s):
+                _add_variant(nxt, re.sub(r"\bpyar\b", "piaar", s))
+            if re.search(r"\bpiare\b", s):
+                _add_variant(nxt, re.sub(r"\bpiare\b", "piaare", s))
+            if "piaare" in s:
+                _add_variant(nxt, s.replace("piaare", "pyare", 1))
+            # STTM optional nasal in romanization: ka(n)t vs kant
+            if re.search(r"\bkant\b", s):
+                _add_variant(nxt, re.sub(r"\bkant\b", "ka(n)t", s))
+            if "ka(n)t" in s:
+                _add_variant(nxt, s.replace("ka(n)t", "kant", 1))
         return nxt
 
     # Run two passes so satgur→satigur can combine with other rules

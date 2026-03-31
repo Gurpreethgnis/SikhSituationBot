@@ -65,6 +65,22 @@ class TestParmaanSearchNormalize(unittest.TestCase):
         self.assertIn("nanak", v)
         self.assertIn("naanak", v)
 
+    def test_ratre_includes_ratare_sttm_romanization(self):
+        """Informal 'ratre' must match DB lines romanized as 'ratare' (ਚੋਲੇ ਰਤੜੇ)."""
+        v = latin_token_search_variants("ratre")
+        self.assertIn("ratre", v)
+        self.assertIn("ratare", v)
+
+    def test_pyare_includes_piaare(self):
+        v = latin_token_search_variants("pyare")
+        self.assertIn("pyare", v)
+        self.assertIn("piaare", v)
+
+    def test_kant_includes_sttm_ka_nt(self):
+        v = latin_token_search_variants("kant")
+        self.assertIn("kant", v)
+        self.assertIn("ka(n)t", v)
+
 
 if __name__ == "__main__":
     unittest.main()
