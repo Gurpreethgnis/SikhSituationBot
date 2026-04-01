@@ -100,7 +100,7 @@ def seed_database(json_file_path: str, batch_size: int = 10, skip_duplicates: bo
 
     try:
         # Use standard open for mock compatibility and encoding support
-        with open(json_file_path, 'r') as f:
+        with open(json_file_path, 'r', encoding='utf-8') as f:
             shabads_data = json.load(f)
             logger.info(f"Loaded {len(shabads_data)} items from {json_file_path}")
             if not shabads_data:

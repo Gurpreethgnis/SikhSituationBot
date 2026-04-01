@@ -193,6 +193,21 @@ def get_embedding(text: str, model: Optional[str] = None, prefer_gemini: bool = 
         logger.warning(f"Text too long ({len(text)} chars), truncating to 10000 chars")
         text = text[:10000]
 
+    # Offline/Mock behavior if no API key is present and user requested offline mode
+    # (Checking for 'your-gemini-api-key' placeholder as well as empty)
+    gemini_key = os.environ.get('GEMINI_API_KEY', '')
+    if not gemini_key or 'your-gemini-api-key' in gemini_key:
+        logger.debug("No valid Gemini API key found, skipping Gemini embedding.")
+        # Try local model
+        embedding = get_embedding_local(text)
+        if embedding:
+            return embedding
+        
+        # If local model fails/not installed, return zero-vector to allow DB seeding to proceed
+        # Default to 384 dimensions (standard for all-MiniLM-L6-v2)
+        logger.warning("Both Gemini and Local embedding failed. Returning zero-vector (mock).")
+        return [0.0] * 384
+
     if prefer_gemini:
         # Try Gemini first, then fallback to local
         embedding = get_embedding_gemini(text, model)

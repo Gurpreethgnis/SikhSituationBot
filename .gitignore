@@ -49,3 +49,6 @@ use_rembg.py
 remove_bg.py
 SikhSituationBot.code-workspace
 .vercel
+tmp/setup_local_db.py
+client/npm_install_log.txt
+docker-compose.yml

@@ -249,12 +249,7 @@ CORS(
 )
 
 
-@app.after_request
-def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Internal-Key"
-    return response
+
 
 
 is_testing = os.environ.get("TESTING") == "true" or os.environ.get("FLASK_ENV") == "testing"

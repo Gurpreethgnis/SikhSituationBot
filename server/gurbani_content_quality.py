@@ -10,23 +10,38 @@ import re
 from typing import Any, Dict, Optional
 
 # Minimum text length for a row to be eligible for Parmaan-style vector search.
-MIN_GURMUKHI_CHARS_PARMAAN = 50
-MIN_ENGLISH_CHARS_PARMAAN = 30
+MIN_GURMUKHI_CHARS_PARMAAN = 10
+MIN_ENGLISH_CHARS_PARMAAN = 10
 
-# English steek lines that are only Raag / Mehla metadata (ordinal words used in SGGS headers).
+# English ordinals used in SGGS section headers (word form, 1st–19th).
+_EN_MEHLA_ORDINAL_WORDS = (
+    r"first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|"
+    r"eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|"
+    r"eighteenth|nineteenth"
+)
+# Numeric ordinals: 1st–19th + mehl / mehla (e.g. "11th Mehl").
+_EN_MEHLA_NUMERIC = re.compile(
+    r"\b((?:1[1-9]th|10th|[1-9](?:st|nd|rd|th)))\s+mehla?\b",
+    re.IGNORECASE,
+)
+# English steek lines that are only Raag / Mehla metadata.
 _EN_MEHLA_LINE = re.compile(
-    r"(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+mehl",
+    rf"(?:{_EN_MEHLA_ORDINAL_WORDS})\s+mehl",
     re.IGNORECASE,
 )
 _EN_MAHALLA_LINE = re.compile(
-    r"(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+mahal",
+    rf"(?:{_EN_MEHLA_ORDINAL_WORDS})\s+mahal",
     re.IGNORECASE,
 )
 _EN_RAAG_PREFIX = re.compile(r"^\s*raag\s+", re.IGNORECASE)
 # "Aasaa, Fifth Mehla" / "Asa, First Mehl"
 _EN_RAAG_COMMA_MEHLA = re.compile(
-    r"^[A-Za-z][A-Za-z\s\-–]{0,48},\s*"
-    r"(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+mehl",
+    rf"^[A-Za-z][A-Za-z\s\-–]{{0,48}},\s*(?:{_EN_MEHLA_ORDINAL_WORDS})\s+mehl",
+    re.IGNORECASE,
+)
+# Structural section labels (not hymn text), e.g. "Seventeen Ashtpadheeyaa Of The First Mehla".
+_EN_ASHTPADI_HEADER = re.compile(
+    r"ashtpad[iey]+|ashtapad[iey]+|ashtpadee",
     re.IGNORECASE,
 )
 _SUBSTANTIVE_ENGLISH = re.compile(
@@ -67,6 +82,15 @@ def _english_looks_like_raag_mehla_only(english: str) -> bool:
     if _EN_RAAG_PREFIX.match(e):
         return True
     if _EN_RAAG_COMMA_MEHLA.match(e):
+        return True
+    if _EN_MEHLA_NUMERIC.search(e):
+        if len(e) >= 160 and _SUBSTANTIVE_ENGLISH.search(e):
+            return False
+        return True
+    if _EN_ASHTPADI_HEADER.search(e):
+        # Section headers like "Seventeen Ashtpadheeyaa Of The First Mehla" are metadata.
+        if len(e) >= 200 and _SUBSTANTIVE_ENGLISH.search(e):
+            return False
         return True
     if _EN_MEHLA_LINE.search(e) or _EN_MAHALLA_LINE.search(e):
         # Long text with "mehla" might still be a real translation mentioning Mehla — check substance
