@@ -34,7 +34,7 @@
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 2rem 1rem 18rem 1rem;
+    padding: 2rem 1rem 24rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -104,6 +104,39 @@
     max-width: 48rem;
     margin: 0 auto;
     pointer-events: auto;
+}
+
+.chat-parmaan-lookup {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0 0;
+    border-top: 1px solid var(--border-glass);
+    pointer-events: auto;
+}
+
+.chat-parmaan-lookup__label {
+    margin: 0 0 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.chat-parmaan-semantic {
+    margin-bottom: 0.5rem;
+}
+
+.chat-parmaan-lookup .search-gurbani-container {
+    margin-top: 0.35rem;
+}
+
+.chat-parmaan-lookup__results,
+.chat-parmaan-lookup .search-gurbani-container .shabad-grid {
+    max-height: min(28vh, 220px);
+    overflow-y: auto;
+    margin-top: 0.5rem;
+    padding-right: 0.25rem;
+    -webkit-overflow-scrolling: touch;
 }
 
 .chat-auth-hint {
@@ -536,6 +569,7 @@
     .chat-messages { 
         padding: 1rem;
         padding-top: 0;
+        padding-bottom: max(22rem, env(safe-area-inset-bottom, 0px));
     }
     
     .sidebar-overlay.open {
