@@ -106,11 +106,50 @@
     pointer-events: auto;
 }
 
+.chat-parmaan-lookup-shell {
+    pointer-events: auto;
+    margin-bottom: 0.5rem;
+}
+
+.chat-parmaan-lookup__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--surface-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chat-parmaan-lookup__toggle:hover {
+    background: var(--surface-glass-hover);
+    border-color: var(--border-gold);
+    color: var(--text-primary);
+}
+
+.chat-parmaan-lookup__toggle[aria-expanded='true'] {
+    border-color: var(--gold);
+    color: var(--text-primary);
+}
+
 .chat-parmaan-lookup {
     margin-bottom: 0.75rem;
     padding: 0.65rem 0 0;
     border-top: 1px solid var(--border-glass);
     pointer-events: auto;
+}
+
+.chat-parmaan-lookup--panel {
+    margin-top: 0.45rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--border-glass);
 }
 
 .chat-parmaan-lookup__hint {
