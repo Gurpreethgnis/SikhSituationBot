@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import ChatInput from '../components/ChatInput.jsx'
 import GuidanceMenu from '../components/GuidanceMenu.jsx'
-import ParmaanDiscoveryBar from '../components/ParmaanDiscoveryBar.jsx'
+import ParmaanControlStrip from '../components/ParmaanControlStrip.jsx'
 import Logo from '../components/Logo'
 import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
@@ -117,6 +117,13 @@ export default function ChatPage() {
       setParmaanLookupSearchEmpty(false)
     }
   }, [guidanceMode])
+
+  const handleParmaanComposerActionChange = useCallback((action) => {
+    setParmaanComposerAction(action)
+    setParmaanSearchResults([])
+    setParmaanSearchErr('')
+    setParmaanLookupSearchEmpty(false)
+  }, [])
 
   const shabadCountLabel =
     shabadCount != null
@@ -744,60 +751,16 @@ export default function ChatPage() {
               </div>
             )}
             {guidanceMode === 'parmaan' && (
-              <ParmaanDiscoveryBar
-                discoveryType={parmaanDiscoveryType}
-                onDiscoveryTypeChange={setParmaanDiscoveryType}
-                shabadCount={parmaanShabadCount}
-                onShabadCountChange={setParmaanShabadCount}
-                disabled={loading}
-              />
-            )}
-            {guidanceMode === 'parmaan' && (
               <div className="chat-parmaan-unified">
-                <div className="chat-parmaan-composer-modes" role="tablist" aria-label={t('parmaanComposerModesLabel')}>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={parmaanComposerAction === 'line'}
-                    className={`chat-parmaan-lookup__tab ${parmaanComposerAction === 'line' ? 'active' : ''}`}
-                    onClick={() => {
-                      setParmaanComposerAction('line')
-                      setParmaanSearchResults([])
-                      setParmaanSearchErr('')
-                      setParmaanLookupSearchEmpty(false)
-                    }}
-                  >
-                    {t('parmaanSearchModeLine')}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={parmaanComposerAction === 'theme'}
-                    className={`chat-parmaan-lookup__tab ${parmaanComposerAction === 'theme' ? 'active' : ''}`}
-                    onClick={() => {
-                      setParmaanComposerAction('theme')
-                      setParmaanSearchResults([])
-                      setParmaanSearchErr('')
-                      setParmaanLookupSearchEmpty(false)
-                    }}
-                  >
-                    {t('parmaanSearchModeTheme')}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={parmaanComposerAction === 'ask'}
-                    className={`chat-parmaan-lookup__tab ${parmaanComposerAction === 'ask' ? 'active' : ''}`}
-                    onClick={() => {
-                      setParmaanComposerAction('ask')
-                      setParmaanSearchResults([])
-                      setParmaanSearchErr('')
-                      setParmaanLookupSearchEmpty(false)
-                    }}
-                  >
-                    {t('parmaanSearchModeAsk')}
-                  </button>
-                </div>
+                <ParmaanControlStrip
+                  composerAction={parmaanComposerAction}
+                  onComposerActionChange={handleParmaanComposerActionChange}
+                  discoveryType={parmaanDiscoveryType}
+                  onDiscoveryTypeChange={setParmaanDiscoveryType}
+                  shabadCount={parmaanShabadCount}
+                  onShabadCountChange={setParmaanShabadCount}
+                  disabled={loading}
+                />
                 <ChatInput
                   key="parmaan-pill"
                   onSend={handleParmaanPillSend}

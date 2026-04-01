@@ -23,6 +23,13 @@ class TestFirstLetterPatterns(unittest.TestCase):
         self.assertTrue(pat.search("tapat maahi thaadh varataaee ||"))
         self.assertFalse(pat.search("maahi thaadh tapat"))
 
+    def test_latin_pattern_allows_macrons_in_romanization(self):
+        """Steek/BaniDB often use ā ī ū in romanization; ASCII-only tails miss STTM-style ladders."""
+        letters = ["m", "l", "d", "d", "p"]
+        pat = re.compile(build_latin_first_letter_pattern(letters), re.IGNORECASE | re.UNICODE)
+        line = "m\u0101ree laaj dharam dharam parabh ||"
+        self.assertTrue(pat.search(line))
+
     def test_latin_continuous_query_parsed(self):
         script, letters = parse_first_letter_query("tmt")
         self.assertEqual(script, "latin")

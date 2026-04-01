@@ -111,13 +111,6 @@
     margin-bottom: 0.5rem;
 }
 
-.chat-parmaan-composer-modes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.55rem;
-}
-
 .chat-parmaan-lookup__hint {
     margin: 0 0 0.6rem;
     font-size: 0.78rem;
