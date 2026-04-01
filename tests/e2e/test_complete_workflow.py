@@ -74,6 +74,30 @@ class TestEndToEnd(unittest.TestCase):
         self.app = app
         self.client = self.app.test_client()
         self.app.config["TESTING"] = True
+        
+        with self.app.app_context():
+            from app import db
+            from sqlalchemy import text
+            try:
+                db.session.execute(text("SELECT 1 FROM user_memories LIMIT 1"))
+            except Exception:
+                db.session.execute(text("""
+                    CREATE TABLE user_memories (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        fact_type VARCHAR(50) NOT NULL,
+                        content TEXT NOT NULL,
+                        source_chat_id INTEGER REFERENCES chats(id) ON DELETE SET NULL,
+                        source_user_message_id INTEGER REFERENCES messages(id) ON DELETE SET NULL,
+                        source_assistant_message_id INTEGER REFERENCES messages(id) ON DELETE SET NULL,
+                        importance INTEGER DEFAULT 1,
+                        is_pinned BOOLEAN DEFAULT 0,
+                        is_deleted BOOLEAN DEFAULT 0,
+                        created_at TIMESTAMP,
+                        updated_at TIMESTAMP
+                    )
+                """))
+                db.session.commit()
 
     def test_health_check_workflow(self):
         response = self.client.get("/health")

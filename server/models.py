@@ -139,6 +139,12 @@ class UserMemory(db.Model):
     """Short facts extracted from conversations for cross-session continuity (issue #42)."""
 
     __tablename__ = "user_memories"
+    # Idempotency: the DB-level partial unique index (see migration SQL) prevents
+    # duplicate active facts for the same user.  This table_args documents intent;
+    # SQLite (used in tests) will enforce the simpler form.
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "content", name="uq_user_memory_user_content"),
+    )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

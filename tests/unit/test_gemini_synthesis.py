@@ -78,6 +78,8 @@ class TestGeminiSynthesis(unittest.TestCase):
         # Should contain shabad context
         self.assertIn("burning heat", prompt)
         self.assertIn("Fearless Lord", prompt)
+        self.assertIn("STYLE PROFILE", prompt)
+        self.assertIn("RESPONSE FORM POLICY", prompt)
 
     def test_build_gemini_response_prompt_child(self):
         """Test building Gemini prompt for child persona."""

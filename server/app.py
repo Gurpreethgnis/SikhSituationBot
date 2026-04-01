@@ -35,6 +35,7 @@ from prompts import (
     LANGUAGE_INSTRUCTIONS,
     _RELAXED_SAFETY,
     _safe_response_text,
+    build_style_state,
     generate_chat_title,
     generate_opposite_theme_query,
     resolve_language,
@@ -64,6 +65,7 @@ from feedback_github import (
     sanitize_text,
     upload_feedback_screenshot,
 )
+from search_routes import search_blueprint
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -93,30 +95,61 @@ if not INTERNAL_API_KEY:
 PARMAAN_DISAMBIGUATION_TOP_N = 5
 PARMAAN_ORIGINAL_QUERY_MAX_LEN = 4000
 
-# Throttle global purge of stale chats (10-day retention) when listing chats.
+# Throttle purge of stale chats; honours each user's memory_retention_days.
 _last_stale_chat_purge_utc: Optional[datetime] = None
-CHAT_RETENTION_DAYS = 10
+DEFAULT_CHAT_RETENTION_DAYS = 90  # fallback when user has no preference
 STALE_CHAT_PURGE_INTERVAL_SEC = 3600
+_STYLE_STATE_BY_SESSION: Dict[str, Dict[str, str]] = {}
 
 
-def _maybe_purge_stale_chats_globally() -> None:
-    """Delete chats not updated in CHAT_RETENTION_DAYS; throttled to avoid per-request heavy deletes."""
-    global _last_stale_chat_purge_utc
-    now = datetime.utcnow()
-    if _last_stale_chat_purge_utc and (now - _last_stale_chat_purge_utc).total_seconds() < STALE_CHAT_PURGE_INTERVAL_SEC:
+def _style_session_key(user_id: int, chat_id: Optional[int]) -> str:
+    if chat_id:
+        return f"chat:{int(chat_id)}"
+    return f"user:{int(user_id)}"
+
+
+def _next_style_state(
+    *,
+    user_id: int,
+    chat_id: Optional[int],
+    user_query: str,
+    guidance_mode: str,
+    is_clarification: bool,
+) -> Dict[str, str]:
+    key = _style_session_key(user_id, chat_id)
+    prior = _STYLE_STATE_BY_SESSION.get(key) or {}
+    next_state = build_style_state(
+        user_query=user_query,
+        guidance_mode=guidance_mode,
+        is_clarification=is_clarification,
+        style_state=prior,
+    )
+    _STYLE_STATE_BY_SESSION[key] = {
+        "last_profile": next_state.get("last_profile", ""),
+        "last_length_mode": next_state.get("last_length_mode", ""),
+    }
+    return next_state
+
+
+def _maybe_purge_stale_chats_for_user(user) -> None:
+    """Delete chats for *this* user that exceed their retention window. Called on chat-list."""
+    if not user:
         return
-    _last_stale_chat_purge_utc = now
-    cutoff = now - timedelta(days=CHAT_RETENTION_DAYS)
+    days = int(getattr(user, "memory_retention_days", DEFAULT_CHAT_RETENTION_DAYS) or DEFAULT_CHAT_RETENTION_DAYS)
+    days = max(1, min(days, 365))
+    cutoff = datetime.utcnow() - timedelta(days=days)
     try:
-        n = Chat.query.filter(Chat.updated_at < cutoff).delete(synchronize_session=False)
+        n = Chat.query.filter(
+            Chat.user_id == user.id, Chat.updated_at < cutoff
+        ).delete(synchronize_session=False)
         if n:
             db.session.commit()
-            logger.info("Purged %s chat(s) older than %s days (by updated_at)", n, CHAT_RETENTION_DAYS)
+            logger.info("Purged %s stale chat(s) for user %s (retention=%sd)", n, user.id, days)
         else:
             db.session.commit()
     except Exception as e:
         db.session.rollback()
-        logger.warning("Stale chat purge failed: %s", e)
+        logger.warning("Stale chat purge failed for user %s: %s", getattr(user, 'id', '?'), e)
 
 
 def _parse_birth_year(data: dict) -> Optional[int]:
@@ -202,6 +235,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 
 
 app = Flask(__name__)
+app.register_blueprint(search_blueprint)
 CORS(
     app,
     resources={
@@ -543,13 +577,65 @@ def me():
 @app.route("/api/memory", methods=["GET"])
 @require_auth
 def list_user_memories():
-    rows = (
-        UserMemory.query.filter_by(user_id=request.user_id, is_deleted=False)
-        .order_by(desc(UserMemory.created_at))
-        .limit(50)
-        .all()
+    try:
+        rows = (
+            UserMemory.query.filter_by(user_id=request.user_id, is_deleted=False)
+            .order_by(desc(UserMemory.created_at))
+            .limit(50)
+            .all()
+        )
+        return jsonify({"memories": [m.to_dict() for m in rows]}), 200
+    except Exception as e:
+        logger.warning("list_user_memories failed (graceful degradation): %s", e)
+        return jsonify({"memories": []}), 200
+
+
+@app.route("/api/memory", methods=["POST"])
+@require_auth
+def create_user_memory():
+    """Idempotent write: if the same user+content already exists (active), return it."""
+    if not getattr(request.user, "memory_enabled", True):
+        return jsonify({"error": "Memory is disabled in your preferences"}), 403
+    data = request.get_json(silent=True) or {}
+    content = (data.get("content") or "").strip()
+    fact_type = (data.get("fact_type") or "topic").strip().lower()
+    if not content or len(content) < 8:
+        return jsonify({"error": "content (8+ chars) required"}), 400
+    if fact_type not in ("situation", "preference", "topic", "entity"):
+        return jsonify({"error": "fact_type must be one of: situation, preference, topic, entity"}), 400
+    # Idempotency: check for existing active row with same content
+    existing = UserMemory.query.filter_by(
+        user_id=request.user_id, content=content, is_deleted=False
+    ).first()
+    if existing:
+        return jsonify({"memory": existing.to_dict(), "created": False}), 200
+    importance = 5
+    try:
+        importance = max(1, min(10, int(data.get("importance", 5))))
+    except (TypeError, ValueError):
+        pass
+    row = UserMemory(
+        user_id=request.user_id,
+        fact_type=fact_type,
+        content=content[:500],
+        importance=importance,
     )
-    return jsonify({"memories": [m.to_dict() for m in rows]}), 200
+    try:
+        db.session.add(row)
+        db.session.commit()
+        return jsonify({"memory": row.to_dict(), "created": True}), 201
+    except IntegrityError:
+        db.session.rollback()
+        existing = UserMemory.query.filter_by(
+            user_id=request.user_id, content=content, is_deleted=False
+        ).first()
+        if existing:
+            return jsonify({"memory": existing.to_dict(), "created": False}), 200
+        return jsonify({"error": "Could not save memory"}), 500
+    except Exception as e:
+        db.session.rollback()
+        logger.warning("create_user_memory failed: %s", e)
+        return jsonify({"error": "Could not save memory"}), 500
 
 
 @app.route("/api/memory/<int:memory_id>", methods=["DELETE"])
@@ -605,7 +691,7 @@ def patch_me():
     if "memory_retention_days" in data:
         try:
             rd = int(data["memory_retention_days"])
-            if 1 <= rd <= 3650:
+            if 1 <= rd <= 365:
                 u.memory_retention_days = rd
         except (TypeError, ValueError):
             pass
@@ -613,11 +699,30 @@ def patch_me():
     return jsonify({"user": u.to_dict()}), 200
 
 
+# --- Threads / active thread resume ---
+@app.route("/api/threads/active", methods=["GET"])
+@require_auth
+def get_active_thread():
+    """Return the user's most recently updated chat so the client can auto-resume."""
+    try:
+        chat = (
+            Chat.query.filter_by(user_id=request.user_id)
+            .order_by(desc(Chat.updated_at))
+            .first()
+        )
+        if not chat:
+            return jsonify({"thread": None}), 200
+        return jsonify({"thread": chat.to_dict(include_messages=True)}), 200
+    except Exception as e:
+        logger.warning("get_active_thread failed (graceful degradation): %s", e)
+        return jsonify({"thread": None}), 200
+
+
 # --- Chats ---
 @app.route("/api/chats", methods=["GET"])
 @require_auth
 def list_chats():
-    _maybe_purge_stale_chats_globally()
+    _maybe_purge_stale_chats_for_user(request.user)
     chats = (
         Chat.query.filter_by(user_id=request.user_id)
         .order_by(desc(Chat.updated_at), desc(Chat.created_at))
@@ -1297,12 +1402,22 @@ def ask():
 
     user_memory_for_prompt = None
     if guidance_mode != "parmaan" and getattr(user, "memory_enabled", True):
-        _mem_block = format_memory_context_for_prompt(load_active_memories_for_user(user))
-        if _mem_block.strip():
-            user_memory_for_prompt = _mem_block
+        try:
+            _mem_block = format_memory_context_for_prompt(load_active_memories_for_user(user))
+            if _mem_block.strip():
+                user_memory_for_prompt = _mem_block
+        except Exception as e:
+            logger.warning("ask: memory context unavailable, continuing without memory: %s", e)
 
     # Parmaan search: short lines and themes are expected; do not run guidance-style clarification.
     if needs_clarification and guidance_mode != "parmaan":
+        style_state = _next_style_state(
+            user_id=user.id,
+            chat_id=active_chat.id if active_chat else None,
+            user_query=query_text,
+            guidance_mode="guidance",
+            is_clarification=True,
+        )
         raw = synthesize_chat_response(
             query_text,
             None,
@@ -1311,6 +1426,7 @@ def ask():
             message_history=message_history,
             guidance_mode="guidance",
             user_memory_context=user_memory_for_prompt,
+            style_state=style_state,
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
         payload = {
@@ -1520,6 +1636,13 @@ def ask():
                 guidance_mode="parmaan",
                 parmaan_discovery_type=parmaan_discovery,
                 user_memory_context=None,
+                style_state=_next_style_state(
+                    user_id=user.id,
+                    chat_id=active_chat.id if active_chat else None,
+                    user_query=synthesis_user_query,
+                    guidance_mode="parmaan",
+                    is_clarification=False,
+                ),
             )
             ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 
@@ -1570,6 +1693,13 @@ def ask():
             message_history=message_history,
             guidance_mode="guidance",
             user_memory_context=user_memory_for_prompt,
+            style_state=_next_style_state(
+                user_id=user.id,
+                chat_id=active_chat.id if active_chat else None,
+                user_query=query_text,
+                guidance_mode="guidance",
+                is_clarification=False,
+            ),
         )
         ai_response, llm_provider, llm_model = _coerce_synthesis_result(raw)
 
