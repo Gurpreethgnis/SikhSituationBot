@@ -106,50 +106,16 @@
     pointer-events: auto;
 }
 
-.chat-parmaan-lookup-shell {
+.chat-parmaan-unified {
     pointer-events: auto;
     margin-bottom: 0.5rem;
 }
 
-.chat-parmaan-lookup__toggle {
+.chat-parmaan-composer-modes {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin: 0;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background: var(--surface-glass);
-    border: 1px solid var(--border-glass);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.chat-parmaan-lookup__toggle:hover {
-    background: var(--surface-glass-hover);
-    border-color: var(--border-gold);
-    color: var(--text-primary);
-}
-
-.chat-parmaan-lookup__toggle[aria-expanded='true'] {
-    border-color: var(--gold);
-    color: var(--text-primary);
-}
-
-.chat-parmaan-lookup {
-    margin-bottom: 0.75rem;
-    padding: 0.65rem 0 0;
-    border-top: 1px solid var(--border-glass);
-    pointer-events: auto;
-}
-
-.chat-parmaan-lookup--panel {
-    margin-top: 0.45rem;
-    padding-top: 0.6rem;
-    border-top: 1px dashed var(--border-glass);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
 }
 
 .chat-parmaan-lookup__hint {
@@ -158,6 +124,11 @@
     line-height: 1.45;
     color: var(--text-muted);
     text-align: left;
+}
+
+.chat-parmaan-lookup__hint--below-pill {
+    margin-top: 0.45rem;
+    margin-bottom: 0.35rem;
 }
 
 .chat-parmaan-lookup__empty {
@@ -169,12 +140,6 @@
     border-radius: 8px;
     background: var(--surface-glass);
     border: 1px solid var(--border-glass);
-}
-
-.chat-parmaan-lookup__tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.65rem;
 }
 
 .chat-parmaan-lookup__tab {
@@ -198,10 +163,6 @@
     background: var(--gold);
     border-color: var(--gold);
     color: var(--text-on-gold);
-}
-
-.chat-parmaan-search {
-    margin-bottom: 0.5rem;
 }
 
 .chat-parmaan-lookup__results {
