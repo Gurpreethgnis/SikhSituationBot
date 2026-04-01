@@ -193,12 +193,12 @@
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(8px);
-    max-width: 280px;
+    max-width: min(100%, 420px);
+    width: fit-content;
     text-align: left;
     line-height: 1.4;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .suggestion-chip:hover {
