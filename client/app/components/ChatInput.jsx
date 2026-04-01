@@ -6,18 +6,38 @@ import './ChatInput.css'
 
 /**
  * Chat composer styled like ChatGPT: single rounded bar, optional left control (+ menu), send on the right.
+ * Optional controlled mode: pass value + onChange; submit never clears when controlled (parent owns value).
+ * submitLoading: second busy state (e.g. Parmaan Line/Theme search) for the send button spinner/disable.
  */
-export default function ChatInput({ onSend, placeholder, disabled, loading, startAdornment }) {
-  const [value, setValue] = useState('')
+export default function ChatInput({
+  onSend,
+  placeholder,
+  disabled,
+  loading,
+  submitLoading = false,
+  startAdornment,
+  value: valueProp,
+  onChange: onChangeProp,
+  sendAriaLabel,
+}) {
+  const [internalValue, setInternalValue] = useState('')
   const inputRef = useRef(null)
   const { t } = useTranslation()
+  const controlled = typeof valueProp === 'string'
+  const value = controlled ? valueProp : internalValue
+  const setValue = (next) => {
+    if (controlled) onChangeProp?.(next)
+    else setInternalValue(next)
+  }
+
+  const busy = Boolean(loading || submitLoading)
 
   const handleSubmit = (e) => {
     e?.preventDefault()
     const trimmed = value.trim()
-    if (!trimmed || disabled || loading) return
+    if (!trimmed || disabled || busy) return
     onSend?.(trimmed)
-    setValue('')
+    if (!controlled) setInternalValue('')
   }
 
   const handleKeyDown = (e) => {
@@ -26,6 +46,8 @@ export default function ChatInput({ onSend, placeholder, disabled, loading, star
       handleSubmit()
     }
   }
+
+  const sendLabel = sendAriaLabel ?? t('sendMessage')
 
   return (
     <form className="chat-input chat-input--gpt" onSubmit={handleSubmit}>
@@ -46,10 +68,10 @@ export default function ChatInput({ onSend, placeholder, disabled, loading, star
         <button
           type="submit"
           className="chat-input__send"
-          disabled={!value.trim() || disabled || loading}
-          aria-label={t('sendMessage')}
+          disabled={!value.trim() || disabled || busy}
+          aria-label={sendLabel}
         >
-          {loading ? (
+          {busy ? (
             <span className="chat-input__spinner" aria-hidden />
           ) : (
             <svg className="chat-input__send-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
