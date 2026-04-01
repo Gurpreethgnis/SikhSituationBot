@@ -1,11 +1,168 @@
 import re
-from typing import List, Optional, Tuple
+from typing import List, Optional, Pattern, Tuple
 
 from gurbani_content_quality import MIN_ENGLISH_CHARS_PARMAAN, MIN_GURMUKHI_CHARS_PARMAAN
 from models import Shabad, db
 from parmaan_search_normalize import latin_token_search_variants, token_has_gurmukhi
 from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
+
+# STTM-style Gurmukhi ladder keys: user may type ੲ/ੳ instead of full vowel letters.
+_GURMUKHI_LADDER_ALTERNATIVES = {
+    "\u0a72": ("\u0a07", "\u0a08", "\u0a72"),  # ੲ -> ਇ, ਈ, ੲ
+    "\u0a73": ("\u0a09", "\u0a0a", "\u0a73"),  # ੳ -> ਉ, ਊ, ੳ
+}
+
+# Between "words" in Gurmukhi / romanization / English lines in the DB
+_FIRST_LETTER_SEP = r"(?:[\s\u00a0]+|[,;.:!?\u0964\u0965|]+)+"
+
+_LATIN_WORD_TAIL = r"[a-z\(\)]*"
+_ENGLISH_WORD_TAIL = r"[a-z']*"
+_GURMUKHI_WORD_TAIL = r"[\u0a00-\u0a7f]*"
+
+
+def _gurmukhi_char_class(typed: str) -> str:
+    """Regex fragment: one Gurmukhi starter matching what the user typed (with STTM ladder alts)."""
+    alts = _GURMUKHI_LADDER_ALTERNATIVES.get(typed, (typed,))
+    esc = "|".join(re.escape(a) for a in alts)
+    return f"(?:{esc})" if len(alts) > 1 else re.escape(alts[0])
+
+
+def build_latin_first_letter_pattern(letters: List[str]) -> str:
+    """
+    STTM-style: each Latin letter starts a word in order (romanization or English).
+    Words may be separated by spaces, ||, ॥, or light punctuation.
+    """
+    if not letters:
+        return ""
+    parts = [re.escape(L.lower()) + _LATIN_WORD_TAIL for L in letters]
+    return "^" + _FIRST_LETTER_SEP.join(parts)
+
+
+def build_gurmukhi_first_letter_pattern(letters: List[str]) -> str:
+    """Each typed Gurmukhi key starts a Gurmukhi word in order."""
+    if not letters:
+        return ""
+    parts = [_gurmukhi_char_class(L) + _GURMUKHI_WORD_TAIL for L in letters]
+    return "^" + _FIRST_LETTER_SEP.join(parts)
+
+
+def build_english_first_letter_pattern(letters: List[str]) -> str:
+    """Same as Latin but allow apostrophes inside English words."""
+    if not letters:
+        return ""
+    parts = [re.escape(L.lower()) + _ENGLISH_WORD_TAIL for L in letters]
+    return "^" + _FIRST_LETTER_SEP.join(parts)
+
+
+def parse_first_letter_query(query: str) -> Optional[Tuple[str, List[str]]]:
+    """
+    Parse a first-letter ladder query. Returns (script, letters) or None.
+    script is 'gurmukhi' or 'latin' (latin patterns apply to romanization + English).
+    """
+    q = (query or "").strip()
+    if not q:
+        return None
+    if any("\u0a00" <= ch <= "\u0a7f" for ch in q):
+        letters = [ch for ch in q if "\u0a00" <= ch <= "\u0a7f"]
+        if len(letters) < 2:
+            return None
+        return ("gurmukhi", letters)
+    tokens = q.split()
+    if tokens and all(len(t) == 1 and t.isalpha() for t in tokens):
+        letters = [t.lower() for t in tokens]
+        if len(letters) >= 2:
+            return ("latin", letters)
+    if " " not in q:
+        letters = [c.lower() for c in q if c.isalpha()]
+        if 3 <= len(letters) <= 20:
+            return ("latin", letters)
+    return None
+
+
+def looks_like_first_letter_query(query: str) -> bool:
+    """Heuristic for /api/search?mode=auto — avoid treating short English phrases as ladders."""
+    return parse_first_letter_query(query) is not None
+
+
+def _row_matches_first_letters(
+    row: Shabad,
+    script: str,
+    latin_pat: Pattern[str],
+    gurmukhi_pat: Pattern[str],
+    english_pat: Pattern[str],
+) -> bool:
+    if script == "gurmukhi":
+        g = (row.gurmukhi or "").strip()
+        return bool(gurmukhi_pat.search(g))
+    r = (row.romanization or "").strip().lower()
+    e = (row.english_translation or "").strip().lower()
+    return bool(latin_pat.search(r) or english_pat.search(e))
+
+
+def find_shabads_by_first_letters(query: str, limit: int = 20) -> List[Shabad]:
+    """
+    SikhiToTheMax-style first-letter search: successive words must start with the given letters
+    in order (from the start of the line). Gurmukhi ladders match gurmukhi; Latin ladders match
+    romanization OR English translation.
+    """
+    parsed = parse_first_letter_query(query)
+    if not parsed:
+        return []
+    script, letters = parsed
+    try:
+        if script == "gurmukhi":
+            g_pat = re.compile(build_gurmukhi_first_letter_pattern(letters), re.UNICODE)
+            latin_pat = re.compile("$^")  # never matches
+            english_pat = re.compile("$^")
+        else:
+            latin_pat = re.compile(build_latin_first_letter_pattern(letters), re.IGNORECASE | re.UNICODE)
+            english_pat = re.compile(build_english_first_letter_pattern(letters), re.IGNORECASE | re.UNICODE)
+            g_pat = re.compile("$^")
+
+        base = Shabad.query.filter(Shabad.embedding.isnot(None))
+        base = _apply_parmaan_quality_filters(base, True)
+        base = base.order_by(func.coalesce(Shabad.content_length, 0).desc(), Shabad.id.asc())
+
+        dialect = db.engine.dialect.name
+        if dialect == "postgresql":
+            if script == "gurmukhi":
+                pat = build_gurmukhi_first_letter_pattern(letters)
+                col = Shabad.gurmukhi
+            else:
+                # One regex OR: romanization ~* pat OR english ~* pat_eng
+                pat_roman = build_latin_first_letter_pattern(letters)
+                pat_eng = build_english_first_letter_pattern(letters)
+                rows = (
+                    base.filter(
+                        or_(
+                            Shabad.romanization.op("~*")(pat_roman),
+                            Shabad.english_translation.op("~*")(pat_eng),
+                        )
+                    )
+                    .limit(limit)
+                    .all()
+                )
+                return rows
+            rows = base.filter(col.op("~*")(pat)).limit(limit).all()
+            return rows
+
+        # SQLite and others: stream rows and match in Python (tests / local SQLite).
+        matches: List[Shabad] = []
+        max_scan = 25000
+        scanned = 0
+        for row in base.yield_per(400):
+            scanned += 1
+            if scanned > max_scan:
+                break
+            if _row_matches_first_letters(row, script, letters, latin_pat, g_pat, english_pat):
+                matches.append(row)
+                if len(matches) >= limit:
+                    break
+        return matches
+    except SQLAlchemyError as e:
+        print(f"[retrieval] first-letter search failure: {e}")
+        return []
 
 
 def _tokenize_search_words(query: str) -> List[str]:
