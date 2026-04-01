@@ -155,7 +155,7 @@ def find_shabads_by_first_letters(query: str, limit: int = 20) -> List[Shabad]:
             scanned += 1
             if scanned > max_scan:
                 break
-            if _row_matches_first_letters(row, script, letters, latin_pat, g_pat, english_pat):
+            if _row_matches_first_letters(row, script, latin_pat, g_pat, english_pat):
                 matches.append(row)
                 if len(matches) >= limit:
                     break

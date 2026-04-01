@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 import ChatInput from '../components/ChatInput.jsx'
 import GuidanceMenu from '../components/GuidanceMenu.jsx'
 import ParmaanDiscoveryBar from '../components/ParmaanDiscoveryBar.jsx'
-import SearchGurbani from '../parmaans/SearchGurbani.jsx'
 import Logo from '../components/Logo'
 import Sidebar from '../components/Sidebar.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer'
@@ -73,10 +72,11 @@ export default function ChatPage() {
   const [shabadCount, setShabadCount] = useState(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackResponseContent, setFeedbackResponseContent] = useState('')
-  const [parmaanSemanticQ, setParmaanSemanticQ] = useState('')
-  const [parmaanSemanticResults, setParmaanSemanticResults] = useState([])
-  const [parmaanSemanticLoading, setParmaanSemanticLoading] = useState(false)
-  const [parmaanSemanticErr, setParmaanSemanticErr] = useState('')
+  const [parmaanSearchMode, setParmaanSearchMode] = useState('line')
+  const [parmaanSearchQ, setParmaanSearchQ] = useState('')
+  const [parmaanSearchResults, setParmaanSearchResults] = useState([])
+  const [parmaanSearchLoading, setParmaanSearchLoading] = useState(false)
+  const [parmaanSearchErr, setParmaanSearchErr] = useState('')
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -108,9 +108,9 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (guidanceMode !== 'parmaan') {
-      setParmaanSemanticQ('')
-      setParmaanSemanticResults([])
-      setParmaanSemanticErr('')
+      setParmaanSearchQ('')
+      setParmaanSearchResults([])
+      setParmaanSearchErr('')
     }
   }, [guidanceMode])
 
@@ -432,26 +432,40 @@ export default function ChatPage() {
     handleParmaanAnchorPick(candidate, originalSearchQuery)
   }
 
-  const runParmaanSemanticSearch = async (e) => {
+  const runParmaanSearch = async (e) => {
     e?.preventDefault()
-    const q = parmaanSemanticQ.trim()
+    const q = parmaanSearchQ.trim()
     if (!q) return
-    setParmaanSemanticLoading(true)
-    setParmaanSemanticErr('')
+    setParmaanSearchLoading(true)
+    setParmaanSearchErr('')
     try {
-      const r = await fetch(`${baseUrl}/api/parmaans/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, limit: 15 }),
-      })
-      const d = await r.json()
-      if (!r.ok) throw new Error(d.error || r.statusText)
-      setParmaanSemanticResults(d.shabads || [])
+      let shabads = []
+      if (parmaanSearchMode === 'theme') {
+        const r = await fetch(`${baseUrl}/api/parmaans/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, limit: 15 }),
+        })
+        const d = await r.json()
+        if (!r.ok) throw new Error(d.error || r.statusText)
+        shabads = d.shabads || []
+      } else {
+        const r = await fetch(`${baseUrl}/api/search?q=${encodeURIComponent(q)}&mode=auto&limit=15`)
+        const d = await r.json()
+        if (!r.ok) throw new Error(d.error || r.statusText)
+        shabads = (d.results || []).map((m) => ({
+          id: m.shabad_id,
+          shabad_id: m.shabad_id,
+          gurmukhi: m.gurmukhi,
+          english_translation: m.translation || m.english_translation,
+        }))
+      }
+      setParmaanSearchResults(shabads)
     } catch (err) {
-      setParmaanSemanticResults([])
-      setParmaanSemanticErr(err.message || 'Search failed')
+      setParmaanSearchResults([])
+      setParmaanSearchErr(err.message || 'Search failed')
     } finally {
-      setParmaanSemanticLoading(false)
+      setParmaanSearchLoading(false)
     }
   }
 
@@ -725,29 +739,48 @@ export default function ChatPage() {
             )}
             {guidanceMode === 'parmaan' && (
               <div className="chat-parmaan-lookup">
-                <p className="chat-parmaan-lookup__label">{t('parmaanSemanticSearchLabel')}</p>
-                <form className="parmaans-search-form chat-parmaan-semantic" onSubmit={runParmaanSemanticSearch}>
+                <div className="chat-parmaan-lookup__tabs" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={parmaanSearchMode === 'line'}
+                    className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'line' ? 'active' : ''}`}
+                    onClick={() => { setParmaanSearchMode('line'); setParmaanSearchResults([]); setParmaanSearchErr('') }}
+                  >
+                    {t('parmaanSearchModeLine')}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={parmaanSearchMode === 'theme'}
+                    className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'theme' ? 'active' : ''}`}
+                    onClick={() => { setParmaanSearchMode('theme'); setParmaanSearchResults([]); setParmaanSearchErr('') }}
+                  >
+                    {t('parmaanSearchModeTheme')}
+                  </button>
+                </div>
+                <form className="parmaans-search-form chat-parmaan-search" onSubmit={runParmaanSearch}>
                   <input
-                    value={parmaanSemanticQ}
-                    onChange={(e) => setParmaanSemanticQ(e.target.value)}
-                    placeholder={t('parmaanSemanticPlaceholder')}
-                    aria-label={t('parmaanSemanticPlaceholder')}
-                    disabled={loading || parmaanSemanticLoading}
+                    value={parmaanSearchQ}
+                    onChange={(e) => setParmaanSearchQ(e.target.value)}
+                    placeholder={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
+                    aria-label={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
+                    disabled={loading || parmaanSearchLoading}
                   />
-                  <button type="submit" disabled={loading || parmaanSemanticLoading}>
-                    {parmaanSemanticLoading ? t('loading') : t('parmaanSemanticSearch')}
+                  <button type="submit" disabled={loading || parmaanSearchLoading || !parmaanSearchQ.trim()}>
+                    {parmaanSearchLoading ? t('loading') : t('search')}
                   </button>
                 </form>
-                {parmaanSemanticErr && <div className="parmaans-error">{parmaanSemanticErr}</div>}
-                {parmaanSemanticResults.length > 0 && (
-                  <ul className="shabad-grid chat-parmaan-lookup__results" aria-label={t('parmaanSemanticSearchLabel')}>
-                    {parmaanSemanticResults.map((s) => (
-                      <li key={s.id}>
+                {parmaanSearchErr && <div className="parmaans-error">{parmaanSearchErr}</div>}
+                {parmaanSearchResults.length > 0 && (
+                  <ul className="shabad-grid chat-parmaan-lookup__results" aria-label={t('parmaanSearchResults')}>
+                    {parmaanSearchResults.map((s) => (
+                      <li key={s.id || s.shabad_id}>
                         <button
                           type="button"
                           className="shabad-card-btn"
                           disabled={loading}
-                          onClick={() => handleParmaanAnchorPick(s, parmaanSemanticQ)}
+                          onClick={() => handleParmaanAnchorPick(s, parmaanSearchQ)}
                         >
                           <span className="gurmukhi">{s.gurmukhi}</span>
                           <span className="eng">{s.english_translation}</span>
@@ -756,9 +789,6 @@ export default function ChatPage() {
                     ))}
                   </ul>
                 )}
-
-                <p className="chat-parmaan-lookup__label">{t('parmaanLiveSearchLabel')}</p>
-                <SearchGurbani onSelectShabad={(s, ctx) => handleParmaanAnchorPick(s, ctx?.query)} />
               </div>
             )}
             <ChatInput

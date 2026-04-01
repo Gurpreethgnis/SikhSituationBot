@@ -113,26 +113,41 @@
     pointer-events: auto;
 }
 
-.chat-parmaan-lookup__label {
-    margin: 0 0 0.4rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
+.chat-parmaan-lookup__tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
 }
 
-.chat-parmaan-semantic {
+.chat-parmaan-lookup__tab {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.chat-parmaan-lookup__tab:hover {
+    background: var(--surface-glass);
+    border-color: var(--border-gold);
+}
+
+.chat-parmaan-lookup__tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--text-on-gold);
+}
+
+.chat-parmaan-search {
     margin-bottom: 0.5rem;
 }
 
-.chat-parmaan-lookup .search-gurbani-container {
-    margin-top: 0.35rem;
-}
-
-.chat-parmaan-lookup__results,
-.chat-parmaan-lookup .search-gurbani-container .shabad-grid {
-    max-height: min(28vh, 220px);
+.chat-parmaan-lookup__results {
+    max-height: min(32vh, 240px);
     overflow-y: auto;
     margin-top: 0.5rem;
     padding-right: 0.25rem;
