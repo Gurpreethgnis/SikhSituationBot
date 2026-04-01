@@ -1,11 +1,24 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { apiBase } from '../../lib/api'
+import { useTranslation } from '../contexts/TranslationContext.jsx'
+
+const SEARCH_MODE_DEFS = [
+  { value: 'auto', labelKey: 'parmaanLiveSearchModeAuto' },
+  { value: 'first_letter', labelKey: 'parmaanLiveSearchModeFirstLetter' },
+  { value: 'text', labelKey: 'parmaanLiveSearchModeText' },
+]
 
 export default function SearchGurbani({ onSelectShabad }) {
+  const { t } = useTranslation()
+  const searchModes = useMemo(
+    () => SEARCH_MODE_DEFS.map((m) => ({ ...m, label: t(m.labelKey) })),
+    [t]
+  )
   const base = apiBase()
   const [query, setQuery] = useState('')
+  const [searchMode, setSearchMode] = useState('auto')
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -14,8 +27,9 @@ export default function SearchGurbani({ onSelectShabad }) {
   const latestFetchId = useRef(0)
 
   useEffect(() => {
-    // Clear results immediately if query drops below 3 chars
-    if (query.trim().length < 3) {
+    const q = query.trim()
+    const minLen = searchMode === 'text' ? 3 : 2
+    if (q.length < minLen) {
       setResults([])
       setIsLoading(false)
       setError('')
@@ -29,7 +43,10 @@ export default function SearchGurbani({ onSelectShabad }) {
       setError('')
 
       try {
-        const fetchUrl = `${base}/api/search?q=${encodeURIComponent(query.trim())}`
+        const params = new URLSearchParams()
+        params.set('q', q)
+        if (searchMode !== 'auto') params.set('mode', searchMode)
+        const fetchUrl = `${base}/api/search?${params.toString()}`
 
         const res = await fetch(fetchUrl)
         if (!res.ok) {
@@ -55,7 +72,7 @@ export default function SearchGurbani({ onSelectShabad }) {
     }, 300)
 
     return () => clearTimeout(timerId)
-  }, [query, base])
+  }, [query, base, searchMode])
 
   return (
     <div className="search-gurbani-container">
@@ -63,13 +80,27 @@ export default function SearchGurbani({ onSelectShabad }) {
         className="parmaans-search-form" 
         onSubmit={(e) => e.preventDefault()}
       >
+        <select
+          className="parmaans-search-mode"
+          value={searchMode}
+          onChange={(e) => setSearchMode(e.target.value)}
+          aria-label={t('parmaanLiveSearchModeAria')}
+        >
+          {searchModes.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Live search Gurbani (min 3 chars)…"
-          aria-label="Live text search Gurbani"
+          placeholder={t('parmaanLiveSearchPlaceholder')}
+          aria-label={t('parmaanLiveSearchAria')}
         />
-        {isLoading && <span style={{ padding: '0.65rem', color: 'var(--text-secondary)' }}>Loading...</span>}
+        {isLoading && (
+          <span style={{ padding: '0.65rem', color: 'var(--text-secondary)' }}>{t('loading')}</span>
+        )}
       </form>
 
       {error && <div className="parmaans-error">{error}</div>}
@@ -81,7 +112,7 @@ export default function SearchGurbani({ onSelectShabad }) {
               <button 
                 type="button" 
                 className="shabad-card-btn" 
-                onClick={() => onSelectShabad?.(s)}
+                onClick={() => onSelectShabad?.(s, { query: query.trim() })}
               >
                 {/* Line 1: Gurmukhi */}
                 <span className="gurmukhi">{s.gurmukhi}</span>
@@ -103,8 +134,8 @@ export default function SearchGurbani({ onSelectShabad }) {
         </ul>
       )}
 
-      {query.trim().length >= 3 && !isLoading && results.length === 0 && !error && (
-        <p style={{ color: 'var(--text-secondary)' }}>No matches found.</p>
+      {query.trim().length >= (searchMode === 'text' ? 3 : 2) && !isLoading && results.length === 0 && !error && (
+        <p style={{ color: 'var(--text-secondary)' }}>{t('parmaanLiveSearchNoMatches')}</p>
       )}
     </div>
   )

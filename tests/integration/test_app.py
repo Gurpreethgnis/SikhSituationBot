@@ -138,14 +138,16 @@ class TestAppIntegration(unittest.TestCase):
         self.assertIsNotNone(data["shabad"])
         self.assertIn("sttm_link", data["shabad"])
 
+    @patch("app.find_shabads_by_first_letters")
     @patch("app.assess_query_clarity")
     @patch("app.get_embedding")
     @patch("app.search_similar_shabads")
     @patch("app.synthesize_chat_response")
     def test_ask_parmaan_skips_clarification_when_query_seems_vague(
-        self, mock_synth, mock_search, mock_emb, mock_assess
+        self, mock_synth, mock_search, mock_emb, mock_assess, mock_first_letters
     ):
         """Parmaan always returns top-5 disambiguation first; vague-query clarification is guidance-only."""
+        mock_first_letters.return_value = []
         mock_assess.return_value = (True, "vague")
         mock_emb.return_value = [0.1] * 8
         mock_search.return_value = [_mock_shabad_row() for _ in range(5)]
@@ -310,6 +312,23 @@ class TestAppIntegration(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data["shabads"], [])
+
+    @patch("search_routes.find_shabads_by_first_letters")
+    def test_api_search_first_letter_mode(self, mock_fl):
+        mock_fl.return_value = []
+        r = self.client.get("/api/search?q=stm&mode=first_letter")
+        self.assertEqual(r.status_code, 200)
+        data = json.loads(r.data)
+        self.assertIn("results", data)
+        mock_fl.assert_called_once_with("stm", limit=50)
+
+    @patch("search_routes.find_shabads_by_text_match")
+    def test_api_search_text_mode_short_query_returns_empty(self, mock_txt):
+        r = self.client.get("/api/search?q=ab&mode=text")
+        self.assertEqual(r.status_code, 200)
+        mock_txt.assert_not_called()
+        data = json.loads(r.data)
+        self.assertEqual(data["results"], [])
 
     def test_parmaans_categories(self):
         r = self.client.get("/api/parmaans/categories")

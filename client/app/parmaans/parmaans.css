@@ -93,6 +93,15 @@
   flex-wrap: wrap;
 }
 
+.parmaans-search-form select.parmaans-search-mode {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--text-primary);
+  max-width: 100%;
+}
+
 .parmaans-search-form input {
   flex: 1;
   min-width: 12rem;
@@ -224,6 +233,12 @@
 .category-tile span {
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+.parmaans-topic-results-heading {
+  margin: 1.25rem 0 0.65rem;
+  font-size: 1.1rem;
+  color: var(--text-primary);
 }
 
 .parmaans-detail {

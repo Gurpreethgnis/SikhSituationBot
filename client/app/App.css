@@ -34,7 +34,7 @@
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 2rem 1rem 18rem 1rem;
+    padding: 2rem 1rem 24rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -104,6 +104,54 @@
     max-width: 48rem;
     margin: 0 auto;
     pointer-events: auto;
+}
+
+.chat-parmaan-lookup {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0 0;
+    border-top: 1px solid var(--border-glass);
+    pointer-events: auto;
+}
+
+.chat-parmaan-lookup__tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+}
+
+.chat-parmaan-lookup__tab {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.chat-parmaan-lookup__tab:hover {
+    background: var(--surface-glass);
+    border-color: var(--border-gold);
+}
+
+.chat-parmaan-lookup__tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--text-on-gold);
+}
+
+.chat-parmaan-search {
+    margin-bottom: 0.5rem;
+}
+
+.chat-parmaan-lookup__results {
+    max-height: min(32vh, 240px);
+    overflow-y: auto;
+    margin-top: 0.5rem;
+    padding-right: 0.25rem;
+    -webkit-overflow-scrolling: touch;
 }
 
 .chat-auth-hint {
@@ -536,6 +584,7 @@
     .chat-messages { 
         padding: 1rem;
         padding-top: 0;
+        padding-bottom: max(22rem, env(safe-area-inset-bottom, 0px));
     }
     
     .sidebar-overlay.open {

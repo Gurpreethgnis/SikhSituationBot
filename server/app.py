@@ -42,6 +42,7 @@ from prompts import (
 )
 from retrieval import (
     browse_shabads,
+    find_shabads_by_first_letters,
     find_shabads_by_text_match,
     find_similar_to_shabad,
     get_random_shabads,
@@ -1480,6 +1481,50 @@ def ask():
         return jsonify({"error": "Unknown shabad id for anchor selection"}), 400
 
     query_vector: Optional[List[float]] = None
+
+    # Parmaan: STTM-style first-letter ladder first, then full-text match, then embedding disambiguation.
+    if guidance_mode == "parmaan" and anchor_row is None:
+        first_hits = find_shabads_by_first_letters(query_text, limit=12)
+        if len(first_hits) > 1:
+            dis_msg = (
+                "I found several shabads that may match your first-letter search. "
+                "Which one did you mean? Choose an option below to see similar shabads."
+            )
+            candidates = [_disambiguation_candidate_dict(r) for r in first_hits]
+            payload = {
+                "response": dis_msg,
+                "is_disambiguation": True,
+                "is_clarification": False,
+                "disambiguation_candidates": candidates,
+                "original_query": query_text,
+                "shabad": None,
+                "shabads": [],
+                "persona": persona,
+                "language": language,
+                "guidance_mode": guidance_mode,
+                "parmaan_discovery_type": parmaan_discovery,
+                "parmaan_shabad_count": effective_parmaan_count,
+            }
+            _persist_messages(
+                active_chat,
+                query_text,
+                dis_msg,
+                None,
+                persona,
+                language,
+                None,
+                None,
+                was_fallback=False,
+            )
+            if active_chat:
+                active_chat.updated_at = datetime.utcnow()
+                if not active_chat.title or active_chat.title == "New chat":
+                    active_chat.title = generate_chat_title(query_text)
+                db.session.commit()
+                payload["chat_title"] = active_chat.title
+            return jsonify(_finalize_ask_response_payload(payload)), 200
+        if len(first_hits) == 1:
+            anchor_row = first_hits[0]
 
     # Parmaan: multiple literal text hits -> ask user to pick before similar-shabad retrieval
     # Single text hit -> auto-select as anchor (skip embedding search, use matched shabad)
