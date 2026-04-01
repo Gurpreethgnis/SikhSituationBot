@@ -77,6 +77,7 @@ export default function ChatPage() {
   const [parmaanSearchResults, setParmaanSearchResults] = useState([])
   const [parmaanSearchLoading, setParmaanSearchLoading] = useState(false)
   const [parmaanSearchErr, setParmaanSearchErr] = useState('')
+  const [parmaanLookupSearchEmpty, setParmaanLookupSearchEmpty] = useState(false)
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -438,6 +439,7 @@ export default function ChatPage() {
     if (!q) return
     setParmaanSearchLoading(true)
     setParmaanSearchErr('')
+    setParmaanLookupSearchEmpty(false)
     try {
       let shabads = []
       if (parmaanSearchMode === 'theme') {
@@ -461,8 +463,10 @@ export default function ChatPage() {
         }))
       }
       setParmaanSearchResults(shabads)
+      setParmaanLookupSearchEmpty(shabads.length === 0)
     } catch (err) {
       setParmaanSearchResults([])
+      setParmaanLookupSearchEmpty(false)
       setParmaanSearchErr(err.message || 'Search failed')
     } finally {
       setParmaanSearchLoading(false)
@@ -739,13 +743,21 @@ export default function ChatPage() {
             )}
             {guidanceMode === 'parmaan' && (
               <div className="chat-parmaan-lookup">
+                <p className="chat-parmaan-lookup__hint" role="note">
+                  {t('parmaanLookupHint')}
+                </p>
                 <div className="chat-parmaan-lookup__tabs" role="tablist">
                   <button
                     type="button"
                     role="tab"
                     aria-selected={parmaanSearchMode === 'line'}
                     className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'line' ? 'active' : ''}`}
-                    onClick={() => { setParmaanSearchMode('line'); setParmaanSearchResults([]); setParmaanSearchErr('') }}
+                    onClick={() => {
+                      setParmaanSearchMode('line')
+                      setParmaanSearchResults([])
+                      setParmaanSearchErr('')
+                      setParmaanLookupSearchEmpty(false)
+                    }}
                   >
                     {t('parmaanSearchModeLine')}
                   </button>
@@ -754,7 +766,12 @@ export default function ChatPage() {
                     role="tab"
                     aria-selected={parmaanSearchMode === 'theme'}
                     className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'theme' ? 'active' : ''}`}
-                    onClick={() => { setParmaanSearchMode('theme'); setParmaanSearchResults([]); setParmaanSearchErr('') }}
+                    onClick={() => {
+                      setParmaanSearchMode('theme')
+                      setParmaanSearchResults([])
+                      setParmaanSearchErr('')
+                      setParmaanLookupSearchEmpty(false)
+                    }}
                   >
                     {t('parmaanSearchModeTheme')}
                   </button>
@@ -762,7 +779,10 @@ export default function ChatPage() {
                 <form className="parmaans-search-form chat-parmaan-search" onSubmit={runParmaanSearch}>
                   <input
                     value={parmaanSearchQ}
-                    onChange={(e) => setParmaanSearchQ(e.target.value)}
+                    onChange={(e) => {
+                      setParmaanSearchQ(e.target.value)
+                      setParmaanLookupSearchEmpty(false)
+                    }}
                     placeholder={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
                     aria-label={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
                     disabled={loading || parmaanSearchLoading}
@@ -772,6 +792,11 @@ export default function ChatPage() {
                   </button>
                 </form>
                 {parmaanSearchErr && <div className="parmaans-error">{parmaanSearchErr}</div>}
+                {parmaanLookupSearchEmpty && !parmaanSearchLoading && !parmaanSearchErr && (
+                  <p className="chat-parmaan-lookup__empty" role="status">
+                    {t('parmaanSearchNoResults')}
+                  </p>
+                )}
                 {parmaanSearchResults.length > 0 && (
                   <ul className="shabad-grid chat-parmaan-lookup__results" aria-label={t('parmaanSearchResults')}>
                     {parmaanSearchResults.map((s) => (
