@@ -26,7 +26,7 @@ const translations = {
     parmaanLabel: 'Parmaan',
     guidanceModeHint: 'Describe your life situation and receive shabad-based guidance with summaries.',
     parmaanModeHint:
-      'One bar: pick Line, Theme, or Ask. Line/Theme runs search from the same field; tap a match, then switch to Ask to message the assistant.',
+      'One strip: Line, Theme, or Ask (what you type), plus Similar / By topic / Contrasts and how many shabads for answers. Line/Theme searches the corpus; tap a match, then Ask to message the assistant.',
     parmaanGrounded: 'Guidance',
     situationalAdvice: 'Parmaan Search',
     chooseGuidanceType: 'Choose mode',
@@ -65,12 +65,13 @@ const translations = {
     parmaanShabadCountLabel: 'Shabads',
     parmaanMessagePlaceholder: 'Ask the assistant…',
     parmaanComposerModesLabel: 'Composer: Line, Theme, or Ask',
+    parmaanControlStripLabel: 'Parmaan: input mode, discovery type, and number of shabads',
     parmaanSearchModeAsk: 'Ask',
     parmaanResultsHint: 'Tap a match to anchor it, then switch to Ask to follow up in the chat.',
     parmaanSearchNoResults:
       'No matches. Try Theme mode, different Gurmukhi first letters (STTM-style), or at least 3 letters for a word search.',
     parmaanDisambiguationContextNote:
-      'Each row is a button—tap one to continue. Your Parmaan bar below still applies: {discovery} · {count} shabads in the full answer.',
+      'Each row is a button—tap one to continue. Your Parmaan strip still applies: {discovery} · {count} shabads in the full answer.',
     parmaanSearchModeLine: 'Line',
     parmaanSearchModeTheme: 'Theme',
     parmaanLinePlaceholder: 'First letters (e.g. ੲਤਮਪ, stmp) or words…',
@@ -137,7 +138,7 @@ const translations = {
     parmaanLabel: 'ਪ੍ਰਮਾਣ',
     guidanceModeHint: 'ਆਪਣੀ ਜ਼ਿੰਦਗੀ ਦੀ ਸਥਿਤੀ ਦੱਸੋ ਅਤੇ ਸ਼ਬਦ-ਅਧਾਰਤ ਮਾਰਗਦਰਸ਼ਨ ਪ੍ਰਾਪਤ ਕਰੋ।',
     parmaanModeHint:
-      'ਇੱਕ ਬਾਰ: ਪੰਕਤੀ, ਥੀਮ ਜਾਂ ਪੁੱਛੋ। ਪੰਕਤੀ/ਥੀਮ ਇੱਕੋ ਖੇਤਰ ਵਿੱਚ ਖੋਜ; ਮੇਲ ਛੋਹੋ, ਫਿਰ ਪੁੱਛੋ ਤੇ ਜਾਓ।',
+      'ਇੱਕ ਪੱਟੀ: ਪੰਕਤੀ/ਥੀਮ/ਪੁੱਛੋ, ਸਮਾਨ·ਵਿਸ਼ੇ·ਵਿਰੋਧ, ਅਤੇ ਸ਼ਬਦ ਗਿਣਤੀ। ਪੰਕਤੀ/ਥੀਮ ਖੋਜ; ਮੇਲ ਛੋਹੋ, ਫਿਰ ਪੁੱਛੋ।',
     parmaanGrounded: 'ਮਾਰਗਦਰਸ਼ਨ',
     situationalAdvice: 'ਪ੍ਰਮਾਣ ਖੋਜ',
     chooseGuidanceType: 'ਮੋਡ ਚੁਣੋ',
@@ -176,12 +177,13 @@ const translations = {
     parmaanShabadCountLabel: 'ਸ਼ਬਦ',
     parmaanMessagePlaceholder: 'ਸਹਾਇਕ ਨੂੰ ਪੁੱਛੋ…',
     parmaanComposerModesLabel: 'ਕੰਪੋਜ਼ਰ: ਪੰਕਤੀ, ਥੀਮ, ਜਾਂ ਪੁੱਛੋ',
+    parmaanControlStripLabel: 'ਪ੍ਰਮਾਣ: ਇਨਪੁਟ ਮੋਡ, ਖੋਜ ਕਿਸਮ, ਅਤੇ ਸ਼ਬਦਾਂ ਦੀ ਗਿਣਤੀ',
     parmaanSearchModeAsk: 'ਪੁੱਛੋ',
     parmaanResultsHint: 'ਮੇਲ ਛੋਹੋ, ਫਿਰ ਪੁੱਛੋ ਤੇ ਜਾਓ ਤਾਂ ਅੱਗੇ ਗੱਲ ਜਾਰੀ ਰੱਖੋ।',
     parmaanSearchNoResults:
       'ਕੋਈ ਮੇਲ ਨਹੀਂ। ਥੀਮ ਮੋਡ, ਹੋਰ ਪਹਿਲੇ ਅੱਖਰ, ਜਾਂ ਸ਼ਬਦ ਖੋਜ ਲਈ ਘੱਟੋ-ਘੱਟ 3 ਅੱਖਰ ਅਜ਼ਮਾਓ।',
     parmaanDisambiguationContextNote:
-      'ਹਰ ਕਤਾਰ ਬਟਨ ਹੈ—ਅੱਗੇ ਵਧਣ ਲਈ ਇੱਕ ਛੋਹੋ। ਹੇਠਾਂ ਪ੍ਰਮਾਣ ਬਾਰ ਅਜੇ ਵੀ ਲਾਗੂ: {discovery} · ਜਵਾਬ ਵਿੱਚ {count} ਸ਼ਬਦ।',
+      'ਹਰ ਕਤਾਰ ਬਟਨ ਹੈ—ਅੱਗੇ ਵਧਣ ਲਈ ਇੱਕ ਛੋਹੋ। ਪ੍ਰਮਾਣ ਪੱਟੀ ਅਜੇ ਵੀ ਲਾਗੂ: {discovery} · ਜਵਾਬ ਵਿੱਚ {count} ਸ਼ਬਦ।',
     parmaanSearchModeLine: 'ਪੰਕਤੀ',
     parmaanSearchModeTheme: 'ਥੀਮ',
     parmaanLinePlaceholder: 'ਪਹਿਲੇ ਅੱਖਰ (ੲਤਮਪ, stmp) ਜਾਂ ਸ਼ਬਦ…',
@@ -248,7 +250,7 @@ const translations = {
     parmaanLabel: 'प्रमाण',
     guidanceModeHint: 'अपनी जीवन की स्थिति बताएं और शबद-आधारित मार्गदर्शन प्राप्त करें।',
     parmaanModeHint:
-      'एक बार: पंक्ति, थीम या पूछें। पंक्ति/थीम एक ही खोज क्षेत्र में; मेल चुनें, फिर पूछें पर जाएं।',
+      'एक पट्टी: पंक्ति/थीम/पूछें, समान·विषय·विपरीत, और शबद संख्या। पंक्ति/थीम खोजें; मेल चुनें, फिर पूछें।',
     parmaanGrounded: 'मार्गदर्शन',
     situationalAdvice: 'प्रमाण खोज',
     chooseGuidanceType: 'मोड चुनें',
@@ -287,12 +289,13 @@ const translations = {
     parmaanShabadCountLabel: 'शबद',
     parmaanMessagePlaceholder: 'सहायक से पूछें…',
     parmaanComposerModesLabel: 'कंपोज़र: पंक्ति, थीम या पूछें',
+    parmaanControlStripLabel: 'प्रमाण: इनपुट मोड, खोज प्रकार और शबदों की संख्या',
     parmaanSearchModeAsk: 'पूछें',
     parmaanResultsHint: 'मेल चुनें, फिर पूछें पर जाकर चैट जारी रखें।',
     parmaanSearchNoResults:
       'कोई मेल नहीं। थीम मोड, अन्य गुरमुखी अक्षर, या शब्द खोज के लिए कम से कम 3 अक्षर आज़माएँ।',
     parmaanDisambiguationContextNote:
-      'हर पंक्ति बटन है—जारी रखने के लिए एक पर टैप करें। नीचे का प्रमाण बार लागू रहता है: {discovery} · पूर्ण उत्तर में {count} शबद।',
+      'हर पंक्ति बटन है—जारी रखने के लिए एक पर टैप करें। प्रमाण पट्टी लागू रहती है: {discovery} · पूर्ण उत्तर में {count} शबद।',
     parmaanSearchModeLine: 'पंक्ति',
     parmaanSearchModeTheme: 'थीम',
     parmaanLinePlaceholder: 'पहले अक्षर (ੲਤਮਪ, stmp) या शब्द…',
@@ -358,7 +361,8 @@ const translations = {
     guidanceLabel: '指导',
     parmaanLabel: '经典',
     guidanceModeHint: '描述您的生活状况并获得基于经文的指导。',
-    parmaanModeHint: '同一输入栏：经文行、主题或提问。行/主题共用搜索框；点选结果后切到「提问」。',
+    parmaanModeHint:
+      '一条控制带：经文行/主题/提问，相似·按主题·对比与数量。行/主题搜索；点选结果后「提问」。',
     parmaanGrounded: '指导',
     situationalAdvice: '经典搜索',
     chooseGuidanceType: '选择模式',
@@ -397,12 +401,13 @@ const translations = {
     parmaanShabadCountLabel: '数量',
     parmaanMessagePlaceholder: '向助手提问…',
     parmaanComposerModesLabel: '输入栏：经文行、主题或提问',
+    parmaanControlStripLabel: '经典：输入模式、发现类型与数量',
     parmaanSearchModeAsk: '提问',
     parmaanResultsHint: '点选一条结果，再切到「提问」在对话里继续。',
     parmaanSearchNoResults:
       '没有匹配。试试主题模式、更多首字母，或至少三个字的词搜索。',
     parmaanDisambiguationContextNote:
-      '每一行都是可点击的按钮。下方经典选项仍然生效：{discovery} · 完整回答含 {count} 首。',
+      '每一行都是可点击的按钮。经典控制带仍然生效：{discovery} · 完整回答含 {count} 首。',
     parmaanSearchModeLine: '经文行',
     parmaanSearchModeTheme: '主题',
     parmaanLinePlaceholder: '首字母（ੲਤਮਪ、stmp）或词…',
@@ -467,7 +472,7 @@ const translations = {
     parmaanLabel: 'Parmaan',
     guidanceModeHint: 'Describe tu situación y recibe orientación basada en shabads.',
     parmaanModeHint:
-      'Una barra: Línea, Tema o Preguntar. Línea/Tema buscan en el mismo campo; toca un resultado y cambia a Preguntar.',
+      'Una franja: Línea/Tema/Preguntar, Similares·Por tema·Contrastes y cantidad. Línea/Tema buscan; toca un resultado y Preguntar.',
     parmaanGrounded: 'Orientación',
     situationalAdvice: 'Buscar Parmaan',
     chooseGuidanceType: 'Elegir modo',
@@ -506,12 +511,13 @@ const translations = {
     parmaanShabadCountLabel: 'Shabads',
     parmaanMessagePlaceholder: 'Pregunta al asistente…',
     parmaanComposerModesLabel: 'Barra: línea, tema o preguntar',
+    parmaanControlStripLabel: 'Parmaan: modo de entrada, tipo de descubrimiento y cantidad de shabads',
     parmaanSearchModeAsk: 'Preguntar',
     parmaanResultsHint: 'Toca un resultado para anclarlo; luego usa Preguntar para seguir en el chat.',
     parmaanSearchNoResults:
       'Sin coincidencias. Prueba modo Tema, otras letras gurmukhi, o al menos 3 letras para búsqueda por palabra.',
     parmaanDisambiguationContextNote:
-      'Cada fila es un botón: toca uno para continuar. La barra Parmaan de abajo sigue activa: {discovery} · {count} shabads en la respuesta completa.',
+      'Cada fila es un botón: toca uno para continuar. La franja Parmaan sigue activa: {discovery} · {count} shabads en la respuesta completa.',
     parmaanSearchModeLine: 'Línea',
     parmaanSearchModeTheme: 'Tema',
     parmaanLinePlaceholder: 'Primeras letras (ੲਤਮਪ, stmp) o palabras…',
