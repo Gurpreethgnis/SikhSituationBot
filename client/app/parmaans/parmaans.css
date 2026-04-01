@@ -235,6 +235,12 @@
   color: var(--text-secondary);
 }
 
+.parmaans-topic-results-heading {
+  margin: 1.25rem 0 0.65rem;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
 .parmaans-detail {
   position: fixed;
   right: 0;

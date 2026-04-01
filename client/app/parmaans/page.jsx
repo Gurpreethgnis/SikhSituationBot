@@ -2,15 +2,15 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import SearchGurbani from './SearchGurbani'
 import { apiBase } from '../../lib/api'
+import { useTranslation } from '../contexts/TranslationContext.jsx'
 import './parmaans.css'
 
 export default function ParmaansPage() {
+  const { t } = useTranslation()
   const base = apiBase()
   const [categories, setCategories] = useState([])
-  const [searchQ, setSearchQ] = useState('')
-  const [searchResults, setSearchResults] = useState([])
+  const [topicResults, setTopicResults] = useState([])
   const [browse, setBrowse] = useState({ shabads: [], page: 1, total: 0, per_page: 20 })
   const [browseQ, setBrowseQ] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,7 +18,7 @@ export default function ParmaansPage() {
   const [selected, setSelected] = useState(null)
   const [similar, setSimilar] = useState([])
   const [opposite, setOpposite] = useState({ query: '', shabads: [] })
-  const [tab, setTab] = useState('search')
+  const [tab, setTab] = useState('browse')
 
   const loadCategories = useCallback(async () => {
     try {
@@ -63,8 +63,8 @@ export default function ParmaansPage() {
     if (tab === 'browse') loadBrowse(1)
   }, [tab, loadBrowse])
 
-  const runSearch = async (q) => {
-    const query = (q ?? searchQ).trim()
+  const runTopicSemanticSearch = async (queryText) => {
+    const query = (queryText || '').trim()
     if (!query) return
     setLoading(true)
     setErr('')
@@ -76,9 +76,9 @@ export default function ParmaansPage() {
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error || r.statusText)
-      setSearchResults(d.shabads || [])
-      setTab('search')
+      setTopicResults(d.shabads || [])
     } catch (e) {
+      setTopicResults([])
       setErr(e.message || 'Search failed')
     } finally {
       setLoading(false)
@@ -110,77 +110,33 @@ export default function ParmaansPage() {
 
   const categorySearch = (cat) => {
     const q = (cat.hints || []).join(' ')
-    setSearchQ(q)
-    runSearch(q)
+    setTab('categories')
+    runTopicSemanticSearch(q)
   }
 
   return (
     <div className="parmaans-page">
       <header className="parmaans-header">
         <div>
-          <h1>Parmaan discovery</h1>
-          <p className="parmaans-sub">Search, browse, and explore Gurbani with semantic similarity and contrasting themes.</p>
+          <h1>{t('parmaansPageTitle')}</h1>
+          <p className="parmaans-sub">{t('parmaansPageSub')}</p>
         </div>
         <nav className="parmaans-nav">
-          <Link href="/">Home</Link>
-          <Link href="/chat">Chat</Link>
+          <Link href="/">{t('home')}</Link>
+          <Link href="/chat">{t('chat')}</Link>
         </nav>
       </header>
 
       <div className="parmaans-tabs">
-        <button type="button" className={tab === 'search' ? 'active' : ''} onClick={() => setTab('search')}>
-          Semantic Search
-        </button>
-        <button type="button" className={tab === 'live-search' ? 'active' : ''} onClick={() => setTab('live-search')}>
-          Live Search
-        </button>
         <button type="button" className={tab === 'browse' ? 'active' : ''} onClick={() => setTab('browse')}>
-          Browse
+          {t('parmaansBrowseTab')}
         </button>
         <button type="button" className={tab === 'categories' ? 'active' : ''} onClick={() => setTab('categories')}>
-          Topics
+          {t('parmaansTopicsTab')}
         </button>
       </div>
 
       {err && <div className="parmaans-error">{err}</div>}
-
-      {tab === 'live-search' && (
-        <section className="parmaans-panel">
-          <SearchGurbani onSelectShabad={openShabad} />
-        </section>
-      )}
-
-      {tab === 'search' && (
-        <section className="parmaans-panel">
-          <form
-            className="parmaans-search-form"
-            onSubmit={(e) => {
-              e.preventDefault()
-              runSearch()
-            }}
-          >
-            <input
-              value={searchQ}
-              onChange={(e) => setSearchQ(e.target.value)}
-              placeholder="Describe a situation or theme (semantic search)…"
-              aria-label="Search parmaans"
-            />
-            <button type="submit" disabled={loading}>
-              {loading ? '…' : 'Search'}
-            </button>
-          </form>
-          <ul className="shabad-grid">
-            {searchResults.map((s) => (
-              <li key={s.id}>
-                <button type="button" className="shabad-card-btn" onClick={() => openShabad(s)}>
-                  <span className="gurmukhi">{s.gurmukhi}</span>
-                  <span className="eng">{s.english_translation}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       {tab === 'browse' && (
         <section className="parmaans-panel">
@@ -229,13 +185,30 @@ export default function ParmaansPage() {
       )}
 
       {tab === 'categories' && (
-        <section className="parmaans-panel category-grid">
-          {categories.map((c) => (
-            <button key={c.id} type="button" className="category-tile" onClick={() => categorySearch(c)}>
-              <strong>{c.label}</strong>
-              <span>{(c.hints || []).slice(0, 3).join(' · ')}</span>
-            </button>
-          ))}
+        <section className="parmaans-panel">
+          <div className="category-grid">
+            {categories.map((c) => (
+              <button key={c.id} type="button" className="category-tile" onClick={() => categorySearch(c)}>
+                <strong>{c.label}</strong>
+                <span>{(c.hints || []).slice(0, 3).join(' · ')}</span>
+              </button>
+            ))}
+          </div>
+          {topicResults.length > 0 && (
+            <>
+              <h2 className="parmaans-topic-results-heading">{t('parmaansTopicResultsHeading')}</h2>
+              <ul className="shabad-grid">
+                {topicResults.map((s) => (
+                  <li key={s.id}>
+                    <button type="button" className="shabad-card-btn" onClick={() => openShabad(s)}>
+                      <span className="gurmukhi">{s.gurmukhi}</span>
+                      <span className="eng">{s.english_translation}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </section>
       )}
 
