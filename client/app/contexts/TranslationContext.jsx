@@ -63,9 +63,11 @@ const translations = {
     parmaanDiscoveryTopic: 'By topic',
     parmaanDiscoveryContrasts: 'Contrasts',
     parmaanShabadCountLabel: 'Shabads',
-    parmaanMessagePlaceholder: 'Message the assistant—replies appear in the chat above.',
+    parmaanMessagePlaceholder: 'Message the assistant—replies appear above.',
+    parmaanLookupToggleExpand: 'Browse shabads (Line / Theme)',
+    parmaanLookupToggleCollapse: 'Hide shabad browse',
     parmaanLookupHint:
-      'Search (Line/Theme) shows preview matches here—tap one to continue. The message box below sends to the assistant (thread replies above).',
+      'Preview matches here—tap one to add it to the chat. Use the message bar below for your question to the assistant.',
     parmaanSearchNoResults:
       'No matches. Try Theme mode, different Gurmukhi first letters (STTM-style), or at least 3 letters for a word search.',
     parmaanDisambiguationContextNote:
@@ -173,9 +175,11 @@ const translations = {
     parmaanDiscoveryTopic: 'ਵਿਸ਼ੇ ਅਨੁਸਾਰ',
     parmaanDiscoveryContrasts: 'ਵਿਰੋਧ',
     parmaanShabadCountLabel: 'ਸ਼ਬਦ',
-    parmaanMessagePlaceholder: 'ਸਹਾਇਕ ਨੂੰ ਸੁਨੇਹਾ—ਜਵਾਬ ਉੱਪਰ ਚੈਟ ਵਿੱਚ।',
+    parmaanMessagePlaceholder: 'ਸਹਾਇਕ ਨੂੰ ਸੁਨੇਹਾ—ਜਵਾਬ ਉੱਪਰ।',
+    parmaanLookupToggleExpand: 'ਸ਼ਬਦ ਬ੍ਰਾਊਜ਼ (ਪੰਕਤੀ / ਥੀਮ)',
+    parmaanLookupToggleCollapse: 'ਬ੍ਰਾਊਜ਼ ਬੰਦ ਕਰੋ',
     parmaanLookupHint:
-      'ਖੋਜ ਇੱਥੇ ਝਲਕ ਦਿਖਾਉਂਦੀ ਹੈ—ਇੱਕ ਛੋਹੋ। ਹੇਠਾਂ ਸੁਨੇਹਾ ਸਹਾਇਕ ਨੂੰ ਜਾਂਦਾ ਹੈ (ਜਵਾਬ ਉੱਪਰ)।',
+      'ਇੱਥੇ ਝਲਕ—ਇੱਕ ਛੋਹੋ। ਹੇਠਾਂ ਸੁਨੇਹਾ ਸਹਾਇਕ ਨੂੰ ਸਵਾਲ ਲਈ।',
     parmaanSearchNoResults:
       'ਕੋਈ ਮੇਲ ਨਹੀਂ। ਥੀਮ ਮੋਡ, ਹੋਰ ਪਹਿਲੇ ਅੱਖਰ, ਜਾਂ ਸ਼ਬਦ ਖੋਜ ਲਈ ਘੱਟੋ-ਘੱਟ 3 ਅੱਖਰ ਅਜ਼ਮਾਓ।',
     parmaanDisambiguationContextNote:
@@ -283,9 +287,11 @@ const translations = {
     parmaanDiscoveryTopic: 'विषय अनुसार',
     parmaanDiscoveryContrasts: 'विपरीत',
     parmaanShabadCountLabel: 'शबद',
-    parmaanMessagePlaceholder: 'सहायक को संदेश भेजें—उत्तर ऊपर चैट में दिखेंगे।',
+    parmaanMessagePlaceholder: 'सहायक को संदेश—उत्तर ऊपर।',
+    parmaanLookupToggleExpand: 'शबद ब्राउज़ (पंक्ति / थीम)',
+    parmaanLookupToggleCollapse: 'ब्राउज़ छिपाएँ',
     parmaanLookupHint:
-      'खोज यहाँ झलक दिखाती है—एक पर टैप करें। नीचे का बॉक्स सहायक को भेजता है (उत्तर ऊपर)।',
+      'यहाँ झलक दिखेगी—एक चुनें। नीचे सहायक को सवाल भेजें।',
     parmaanSearchNoResults:
       'कोई मेल नहीं। थीम मोड, अन्य गुरमुखी अक्षर, या शब्द खोज के लिए कम से कम 3 अक्षर आज़माएँ।',
     parmaanDisambiguationContextNote:
@@ -392,9 +398,11 @@ const translations = {
     parmaanDiscoveryTopic: '按主题',
     parmaanDiscoveryContrasts: '对比',
     parmaanShabadCountLabel: '数量',
-    parmaanMessagePlaceholder: '向助手发消息—回复显示在上方的对话中。',
+    parmaanMessagePlaceholder: '向助手发消息—回复在上方。',
+    parmaanLookupToggleExpand: '浏览 Shabads（行 / 主题）',
+    parmaanLookupToggleCollapse: '收起浏览',
     parmaanLookupHint:
-      '搜索在此显示预览—点选一条。下方输入框发给助手（回复在上方）。',
+      '此处显示预览—点选一条。下方输入框向助手提问。',
     parmaanSearchNoResults:
       '没有匹配。试试主题模式、更多首字母，或至少三个字的词搜索。',
     parmaanDisambiguationContextNote:
@@ -500,9 +508,11 @@ const translations = {
     parmaanDiscoveryTopic: 'Por tema',
     parmaanDiscoveryContrasts: 'Contrastes',
     parmaanShabadCountLabel: 'Shabads',
-    parmaanMessagePlaceholder: 'Escribe al asistente—las respuestas aparecen arriba en el chat.',
+    parmaanMessagePlaceholder: 'Escribe al asistente—las respuestas arriba.',
+    parmaanLookupToggleExpand: 'Explorar shabads (línea / tema)',
+    parmaanLookupToggleCollapse: 'Ocultar exploración',
     parmaanLookupHint:
-      'La búsqueda muestra vistas previas aquí—toca una. El cuadro de abajo envía al asistente (respuestas arriba).',
+      'Vista previa aquí—toca una. El campo de abajo es para tu pregunta al asistente.',
     parmaanSearchNoResults:
       'Sin coincidencias. Prueba modo Tema, otras letras gurmukhi, o al menos 3 letras para búsqueda por palabra.',
     parmaanDisambiguationContextNote:

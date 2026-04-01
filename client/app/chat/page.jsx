@@ -78,6 +78,7 @@ export default function ChatPage() {
   const [parmaanSearchLoading, setParmaanSearchLoading] = useState(false)
   const [parmaanSearchErr, setParmaanSearchErr] = useState('')
   const [parmaanLookupSearchEmpty, setParmaanLookupSearchEmpty] = useState(false)
+  const [parmaanLookupExpanded, setParmaanLookupExpanded] = useState(false)
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -112,6 +113,8 @@ export default function ChatPage() {
       setParmaanSearchQ('')
       setParmaanSearchResults([])
       setParmaanSearchErr('')
+      setParmaanLookupSearchEmpty(false)
+      setParmaanLookupExpanded(false)
     }
   }, [guidanceMode])
 
@@ -419,6 +422,7 @@ export default function ChatPage() {
 
   const handleParmaanAnchorPick = (shabad, originalQuery) => {
     if (!shabad?.shabad_id || loading) return
+    setParmaanLookupExpanded(false)
     const gm = shabad.gurmukhi || ''
     const en = shabad.english_translation || shabad.translation || ''
     const preview = gm ? truncateText(gm, 100) : truncateText(en, 80)
@@ -742,77 +746,89 @@ export default function ChatPage() {
               />
             )}
             {guidanceMode === 'parmaan' && (
-              <div className="chat-parmaan-lookup">
-                <p className="chat-parmaan-lookup__hint" role="note">
-                  {t('parmaanLookupHint')}
-                </p>
-                <div className="chat-parmaan-lookup__tabs" role="tablist">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={parmaanSearchMode === 'line'}
-                    className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'line' ? 'active' : ''}`}
-                    onClick={() => {
-                      setParmaanSearchMode('line')
-                      setParmaanSearchResults([])
-                      setParmaanSearchErr('')
-                      setParmaanLookupSearchEmpty(false)
-                    }}
-                  >
-                    {t('parmaanSearchModeLine')}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={parmaanSearchMode === 'theme'}
-                    className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'theme' ? 'active' : ''}`}
-                    onClick={() => {
-                      setParmaanSearchMode('theme')
-                      setParmaanSearchResults([])
-                      setParmaanSearchErr('')
-                      setParmaanLookupSearchEmpty(false)
-                    }}
-                  >
-                    {t('parmaanSearchModeTheme')}
-                  </button>
-                </div>
-                <form className="parmaans-search-form chat-parmaan-search" onSubmit={runParmaanSearch}>
-                  <input
-                    value={parmaanSearchQ}
-                    onChange={(e) => {
-                      setParmaanSearchQ(e.target.value)
-                      setParmaanLookupSearchEmpty(false)
-                    }}
-                    placeholder={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
-                    aria-label={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
-                    disabled={loading || parmaanSearchLoading}
-                  />
-                  <button type="submit" disabled={loading || parmaanSearchLoading || !parmaanSearchQ.trim()}>
-                    {parmaanSearchLoading ? t('loading') : t('search')}
-                  </button>
-                </form>
-                {parmaanSearchErr && <div className="parmaans-error">{parmaanSearchErr}</div>}
-                {parmaanLookupSearchEmpty && !parmaanSearchLoading && !parmaanSearchErr && (
-                  <p className="chat-parmaan-lookup__empty" role="status">
-                    {t('parmaanSearchNoResults')}
-                  </p>
-                )}
-                {parmaanSearchResults.length > 0 && (
-                  <ul className="shabad-grid chat-parmaan-lookup__results" aria-label={t('parmaanSearchResults')}>
-                    {parmaanSearchResults.map((s) => (
-                      <li key={s.id || s.shabad_id}>
-                        <button
-                          type="button"
-                          className="shabad-card-btn"
-                          disabled={loading}
-                          onClick={() => handleParmaanAnchorPick(s, parmaanSearchQ)}
-                        >
-                          <span className="gurmukhi">{s.gurmukhi}</span>
-                          <span className="eng">{s.english_translation}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="chat-parmaan-lookup-shell">
+                <button
+                  type="button"
+                  className="chat-parmaan-lookup__toggle"
+                  aria-expanded={parmaanLookupExpanded}
+                  onClick={() => setParmaanLookupExpanded((open) => !open)}
+                >
+                  {parmaanLookupExpanded ? t('parmaanLookupToggleCollapse') : t('parmaanLookupToggleExpand')}
+                </button>
+                {parmaanLookupExpanded && (
+                  <div className="chat-parmaan-lookup chat-parmaan-lookup--panel">
+                    <p className="chat-parmaan-lookup__hint" role="note">
+                      {t('parmaanLookupHint')}
+                    </p>
+                    <div className="chat-parmaan-lookup__tabs" role="tablist">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={parmaanSearchMode === 'line'}
+                        className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'line' ? 'active' : ''}`}
+                        onClick={() => {
+                          setParmaanSearchMode('line')
+                          setParmaanSearchResults([])
+                          setParmaanSearchErr('')
+                          setParmaanLookupSearchEmpty(false)
+                        }}
+                      >
+                        {t('parmaanSearchModeLine')}
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={parmaanSearchMode === 'theme'}
+                        className={`chat-parmaan-lookup__tab ${parmaanSearchMode === 'theme' ? 'active' : ''}`}
+                        onClick={() => {
+                          setParmaanSearchMode('theme')
+                          setParmaanSearchResults([])
+                          setParmaanSearchErr('')
+                          setParmaanLookupSearchEmpty(false)
+                        }}
+                      >
+                        {t('parmaanSearchModeTheme')}
+                      </button>
+                    </div>
+                    <form className="parmaans-search-form chat-parmaan-search" onSubmit={runParmaanSearch}>
+                      <input
+                        value={parmaanSearchQ}
+                        onChange={(e) => {
+                          setParmaanSearchQ(e.target.value)
+                          setParmaanLookupSearchEmpty(false)
+                        }}
+                        placeholder={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
+                        aria-label={parmaanSearchMode === 'theme' ? t('parmaanThemePlaceholder') : t('parmaanLinePlaceholder')}
+                        disabled={loading || parmaanSearchLoading}
+                      />
+                      <button type="submit" disabled={loading || parmaanSearchLoading || !parmaanSearchQ.trim()}>
+                        {parmaanSearchLoading ? t('loading') : t('search')}
+                      </button>
+                    </form>
+                    {parmaanSearchErr && <div className="parmaans-error">{parmaanSearchErr}</div>}
+                    {parmaanLookupSearchEmpty && !parmaanSearchLoading && !parmaanSearchErr && (
+                      <p className="chat-parmaan-lookup__empty" role="status">
+                        {t('parmaanSearchNoResults')}
+                      </p>
+                    )}
+                    {parmaanSearchResults.length > 0 && (
+                      <ul className="shabad-grid chat-parmaan-lookup__results" aria-label={t('parmaanSearchResults')}>
+                        {parmaanSearchResults.map((s) => (
+                          <li key={s.id || s.shabad_id}>
+                            <button
+                              type="button"
+                              className="shabad-card-btn"
+                              disabled={loading}
+                              onClick={() => handleParmaanAnchorPick(s, parmaanSearchQ)}
+                            >
+                              <span className="gurmukhi">{s.gurmukhi}</span>
+                              <span className="eng">{s.english_translation}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 )}
               </div>
             )}
