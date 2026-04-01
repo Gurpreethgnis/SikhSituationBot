@@ -16,8 +16,9 @@ _GURMUKHI_LADDER_ALTERNATIVES = {
 # Between "words" in Gurmukhi / romanization / English lines in the DB
 _FIRST_LETTER_SEP = r"(?:[\s\u00a0]+|[,;.:!?\u0964\u0965|]+)+"
 
-_LATIN_WORD_TAIL = r"[a-z\(\)\-]*"
-_ENGLISH_WORD_TAIL = r"[a-z'\-]*"
+# After the ladder letter: BaniDB / steek romanization uses macrons (mā), IAST, hyphens (ka-o), etc.
+# ASCII-only [a-z]* misses those lines and breaks parity with SikhiToTheMax for queries like "mlddp".
+_ROMAN_OR_ENGLISH_WORD_TAIL = r"[^\s,;.:!?\u0964\u0965|]*"
 _GURMUKHI_WORD_TAIL = r"[\u0a00-\u0a7f]*"
 
 
@@ -35,7 +36,7 @@ def build_latin_first_letter_pattern(letters: List[str]) -> str:
     """
     if not letters:
         return ""
-    parts = [re.escape(L.lower()) + _LATIN_WORD_TAIL for L in letters]
+    parts = [re.escape(L.lower()) + _ROMAN_OR_ENGLISH_WORD_TAIL for L in letters]
     return "^" + _FIRST_LETTER_SEP.join(parts)
 
 
@@ -51,7 +52,7 @@ def build_english_first_letter_pattern(letters: List[str]) -> str:
     """Same as Latin but allow apostrophes inside English words."""
     if not letters:
         return ""
-    parts = [re.escape(L.lower()) + _ENGLISH_WORD_TAIL for L in letters]
+    parts = [re.escape(L.lower()) + _ROMAN_OR_ENGLISH_WORD_TAIL for L in letters]
     return "^" + _FIRST_LETTER_SEP.join(parts)
 
 
