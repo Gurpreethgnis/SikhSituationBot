@@ -20,6 +20,22 @@ class TestGurbaniContentQuality(unittest.TestCase):
         eng = "Aasaa, Fifth Mehl."
         self.assertTrue(is_raag_header_only(g, eng, verse_count=1))
 
+    def test_header_detected_seventeen_ashtpadheeyaa(self):
+        """BaniDB section stubs like sggs_171: metadata only, not a hymn."""
+        g = "ਸਤਨਾਮ ਸ੍ਰੀ ਵਾਹਿਗੁਰੂ"
+        eng = "Seventeen Ashtpadheeyaa Of The First Mehla."
+        self.assertTrue(is_raag_header_only(g, eng, verse_count=1))
+
+    def test_header_detected_eleventh_mehl_word(self):
+        eng = "Some Raag, Eleventh Mehl."
+        g = "ਮਹਲਾ ੧੧ ॥"
+        self.assertTrue(is_raag_header_only(g, eng, verse_count=1))
+
+    def test_header_detected_numeric_ordinal_mehl(self):
+        eng = "Maajh, 15th Mehl."
+        g = "ਮਾਝ ਮਹਲਾ ੧੫ ॥"
+        self.assertTrue(is_raag_header_only(g, eng, verse_count=1))
+
     def test_full_shabad_not_header_multiple_verses(self):
         g = "ਸਤਿਗੁਰ ਤੇਰੀ ਸਾਸਾ ॥ " * 5
         eng = "The True Guru is your hope and refuge. " * 4

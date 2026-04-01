@@ -88,15 +88,17 @@ Your role is to help people find guidance and peace through Sikh teachings.
 - **Strict Boundaries:** Do not invent historical narratives, dates, or stories about the Gurus. Do NOT write your own Punjabi/Gurmukhi text or translate independently. Rely ONLY on the provided translation.
 
 ### FOLLOW-UP SUGGESTIONS:
-At the very end of EVERY response (including clarification questions), you MUST provide 3 suggested follow-up questions or prompts. Make these specific to what the user shared. Format them exactly like this:
+At the very end of EVERY response (including clarification questions), you MUST provide exactly 3 follow-ups as **first-person "I want to…" statements** (not questions). Make them specific to what the user shared. Put them **only** in the block below—do **not** repeat the same suggestions as bullet lists or numbered items in the main prose.
+
+Format them exactly like this:
 
 [SUGGESTIONS]
-- Tell me more about what's causing this feeling
-- Would you like guidance on finding inner peace?
-- How can Gurbani help me overcome this challenge?
+- I want to explore what's causing this feeling a bit more
+- I want to find guidance on inner peace and steadiness
+- I want to see how Gurbani speaks to this challenge
 
-For clarification responses, make suggestions that help the user share more details.
-For full guidance responses, make suggestions that deepen their spiritual journey.
+For clarification responses, use suggestions that help the user share more details (still "I want to…" phrasing).
+For full guidance responses, use suggestions that deepen their spiritual journey (still "I want to…" phrasing).
 
 ### GURBANI ACCURACY (NON-NEGOTIABLE):
 
@@ -691,6 +693,22 @@ Provide clear situational guidance and end with the [SUGGESTIONS] block (3 items
             )
             task_extra = "Explain what makes these shabads resonate with the user's wording or intent."
 
+        n_parmaan = len(shabads) if isinstance(shabads, list) else 0
+        if n_parmaan <= 0:
+            foundation_intro = "My reflections below are based on the shabads shown above."
+        elif n_parmaan == 1:
+            foundation_intro = "My reflections below are based on this shabad (#1) shown above."
+        else:
+            foundation_intro = (
+                f"My reflections below are based on these {n_parmaan} shabads "
+                f"(#1 through #{n_parmaan}) shown above."
+            )
+        coverage_instruction = (
+            f"You must cover **all** {n_parmaan} shabads, not only the first."
+            if n_parmaan > 1
+            else "Comment on the shabad shown above."
+        )
+
         prompt = f"""{SYSTEM_PROMPT}
 {RESPONSE_FORM_POLICY}
 
@@ -710,13 +728,16 @@ RETRIEVAL SUMMARY — metadata and theme tags only (no verse text here; full Gur
 {history_block}USER'S REQUEST: {user_query}
 
 CRITICAL: Your reply is appended **below** pre-rendered Gurmukhi/English blocks and SikhiToTheMax links from the database. Do **NOT** include Gurmukhi, English translations of verses, Roman transliteration of verses, Source lines, Shabad IDs, or markdown links to SikhiToTheMax—those are already shown above.
+Do **NOT** add a separate "### 📜 Scriptural Context (Citations)" section or any duplicate citation block—the fixed blocks above are the citations.
 
-Your task:
-1. Open with one short sentence: if their message looks like a Gurbani line or phrase, say you matched it to the closest verse in the database (verse #1) and related results are listed above; otherwise say you found shabads for their theme (listed above).
-2. For each shabad #1, #2, … in order, write **one or two sentences of theme/commentary only**—no quoting scripture.
-3. {task_extra}
-4. Do NOT ask clarifying questions about their personal life. Do NOT mirror guidance-mode scripture sections.
-5. End with the [SUGGESTIONS] block: 3 short discovery follow-ups only (e.g. "Show more like #1", "Try contrasting shabads", "Another angle on this theme").
+Your task (commentary only; scripture is only in the fixed blocks above):
+1. **Foundation:** Start with: **"{foundation_intro}"** Then add one brief identifying line per shabad (theme or idea by number only—no copying verse text).
+2. **Opening:** One short sentence: if their message looks like a Gurbani line or phrase, say you matched it to the closest verse in the database (#1) and related results are listed above; otherwise say you found shabads for their theme (listed above).
+3. **Every shabad:** For **each** numbered shabad in the fixed blocks above, write **2–3 sentences** of theme/commentary only (no quoting scripture). {coverage_instruction}
+4. **Synthesis:** After individual comments, add **2–4 sentences** that tie the set together: shared threads (imagery, virtues, themes) and **contrasts** where shabads emphasize different angles.
+5. **Discovery angle:** {task_extra}
+6. Do NOT ask clarifying questions about their personal life. Do NOT mirror guidance-mode five-part scripture sections.
+7. End with **only** the [SUGGESTIONS] block: exactly 3 lines, each an **"I want to…"** discovery follow-up (e.g. "I want to see more shabads like #1", "I want to explore contrasting themes", "I want to go deeper on this topic"). Do not put suggestion text in the body of the reply.
 
 Keep the focus on commentary; scripture lives in the fixed blocks above your text."""
         return prompt
