@@ -3,9 +3,16 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { apiBase } from '../../lib/api'
 
+const SEARCH_MODES = [
+  { value: 'auto', label: 'Auto (first letters + full text)' },
+  { value: 'first_letter', label: 'First letter each word' },
+  { value: 'text', label: 'Full text' },
+]
+
 export default function SearchGurbani({ onSelectShabad }) {
   const base = apiBase()
   const [query, setQuery] = useState('')
+  const [searchMode, setSearchMode] = useState('auto')
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -14,8 +21,9 @@ export default function SearchGurbani({ onSelectShabad }) {
   const latestFetchId = useRef(0)
 
   useEffect(() => {
-    // Clear results immediately if query drops below 3 chars
-    if (query.trim().length < 3) {
+    const q = query.trim()
+    const minLen = searchMode === 'text' ? 3 : 2
+    if (q.length < minLen) {
       setResults([])
       setIsLoading(false)
       setError('')
@@ -29,7 +37,10 @@ export default function SearchGurbani({ onSelectShabad }) {
       setError('')
 
       try {
-        const fetchUrl = `${base}/api/search?q=${encodeURIComponent(query.trim())}`
+        const params = new URLSearchParams()
+        params.set('q', q)
+        if (searchMode !== 'auto') params.set('mode', searchMode)
+        const fetchUrl = `${base}/api/search?${params.toString()}`
 
         const res = await fetch(fetchUrl)
         if (!res.ok) {
@@ -55,7 +66,7 @@ export default function SearchGurbani({ onSelectShabad }) {
     }, 300)
 
     return () => clearTimeout(timerId)
-  }, [query, base])
+  }, [query, base, searchMode])
 
   return (
     <div className="search-gurbani-container">
@@ -63,11 +74,23 @@ export default function SearchGurbani({ onSelectShabad }) {
         className="parmaans-search-form" 
         onSubmit={(e) => e.preventDefault()}
       >
+        <select
+          className="parmaans-search-mode"
+          value={searchMode}
+          onChange={(e) => setSearchMode(e.target.value)}
+          aria-label="Search mode"
+        >
+          {SEARCH_MODES.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Live search Gurbani (min 3 chars)…"
-          aria-label="Live text search Gurbani"
+          placeholder="Gurmukhi or Roman first letters (e.g. ੲਤਮਪ, stmp) or full words…"
+          aria-label="Live search Gurbani"
         />
         {isLoading && <span style={{ padding: '0.65rem', color: 'var(--text-secondary)' }}>Loading...</span>}
       </form>
@@ -103,7 +126,7 @@ export default function SearchGurbani({ onSelectShabad }) {
         </ul>
       )}
 
-      {query.trim().length >= 3 && !isLoading && results.length === 0 && !error && (
+      {query.trim().length >= (searchMode === 'text' ? 3 : 2) && !isLoading && results.length === 0 && !error && (
         <p style={{ color: 'var(--text-secondary)' }}>No matches found.</p>
       )}
     </div>
