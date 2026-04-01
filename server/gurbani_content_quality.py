@@ -10,8 +10,8 @@ import re
 from typing import Any, Dict, Optional
 
 # Minimum text length for a row to be eligible for Parmaan-style vector search.
-MIN_GURMUKHI_CHARS_PARMAAN = 50
-MIN_ENGLISH_CHARS_PARMAAN = 30
+MIN_GURMUKHI_CHARS_PARMAAN = 10
+MIN_ENGLISH_CHARS_PARMAAN = 10
 
 # English steek lines that are only Raag / Mehla metadata (ordinal words used in SGGS headers).
 _EN_MEHLA_LINE = re.compile(
