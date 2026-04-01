@@ -27,6 +27,7 @@ function flaskRewrites() {
     { source: '/api/chats/:path*', destination: `${b}/api/chats/:path*` },
     { source: '/api/shared/:path*', destination: `${b}/api/shared/:path*` },
     { source: '/api/parmaans/:path*', destination: `${b}/api/parmaans/:path*` },
+    { source: '/api/search', destination: `${b}/api/search` },
     { source: '/api/admin/:path*', destination: `${b}/api/admin/:path*` },
     /* Flask auth only — do not use /api/auth/:path* or NextAuth breaks */
     { source: '/api/auth/login', destination: `${b}/api/auth/login` },
