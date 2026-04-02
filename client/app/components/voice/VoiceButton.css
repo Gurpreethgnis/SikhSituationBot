@@ -1,0 +1,245 @@
+/* VoiceButton.css */
+
+/* ── Container ──────────────────────────────────────────────── */
+.voice-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+/* ── Mic trigger button ─────────────────────────────────────── */
+.voice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  background: var(--composer-send-disabled-bg, rgba(120, 120, 140, 0.15));
+  color: var(--text-muted, #9ca3af);
+  position: relative;
+}
+
+.voice-btn:hover:not(:disabled) {
+  background: var(--composer-send-disabled-bg, rgba(120, 120, 140, 0.25));
+  transform: scale(1.06);
+}
+
+.voice-btn:focus-visible {
+  outline: 2px solid var(--composer-gpt-focus-ring, #6366f1);
+  outline-offset: 2px;
+}
+
+/* LISTENING state — pulsing red */
+.voice-btn[data-state='LISTENING'] {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  animation: vb-pulse-ring 1.2s ease-in-out infinite;
+}
+
+/* PROCESSING state — indigo spinner tint */
+.voice-btn[data-state='PROCESSING'] {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+  cursor: default;
+}
+
+/* SPEAKING state — green wave tint */
+.voice-btn[data-state='SPEAKING'] {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+}
+
+@keyframes vb-pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  50%       { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* Icons inside the button */
+.voice-btn svg,
+.voice-btn__spinner {
+  width: 18px;
+  height: 18px;
+}
+
+.voice-btn__spinner {
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: vb-spin 0.75s linear infinite;
+}
+
+@keyframes vb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Mode toggle (PTT / Hands-free) ─────────────────────────── */
+.voice-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.7rem;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.voice-mode-toggle:hover {
+  background: rgba(120, 120, 140, 0.15);
+  color: var(--text-primary, #e5e7eb);
+}
+
+.voice-mode-toggle.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+
+.voice-mode-toggle:focus-visible {
+  outline: 2px solid var(--composer-gpt-focus-ring, #6366f1);
+  outline-offset: 2px;
+}
+
+/* ── Sound-wave icon for SPEAKING state ─────────────────────── */
+.voice-wave {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.voice-wave span {
+  display: inline-block;
+  width: 3px;
+  background: currentColor;
+  border-radius: 2px;
+  animation: vb-wave 0.7s ease-in-out infinite;
+}
+.voice-wave span:nth-child(1) { animation-delay: 0s;      animation-duration: 0.65s; }
+.voice-wave span:nth-child(2) { animation-delay: 0.15s;   animation-duration: 0.8s;  }
+.voice-wave span:nth-child(3) { animation-delay: 0.3s;    animation-duration: 0.7s;  }
+.voice-wave span:nth-child(4) { animation-delay: 0.1s;    animation-duration: 0.9s;  }
+
+@keyframes vb-wave {
+  0%, 100% { height: 6px;   opacity: 0.7; }
+  50%       { height: 16px;  opacity: 1;   }
+}
+
+/* ── Privacy consent modal ───────────────────────────────────── */
+.voice-consent-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  backdrop-filter: blur(3px);
+  animation: vb-fade-in 0.2s ease;
+}
+
+.voice-consent-modal {
+  background: var(--card-bg, #1e1e2e);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 16px;
+  padding: 2rem 2.2rem;
+  max-width: 420px;
+  width: 90vw;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+  animation: vb-slide-up 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.voice-consent-modal h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary, #f1f5f9);
+}
+
+.voice-consent-modal p {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.voice-consent-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.voice-consent-modal__skip {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: color 0.15s;
+}
+.voice-consent-modal__skip:hover { color: var(--text-secondary, #94a3b8); }
+
+.voice-consent-modal__allow {
+  padding: 0.5rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background: #6366f1;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.voice-consent-modal__allow:hover { background: #4f46e5; transform: scale(1.02); }
+
+@keyframes vb-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vb-slide-up { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── Mic-denied error strip ─────────────────────────────────── */
+.voice-denied-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 0.8rem;
+}
+
+.voice-denied-strip a {
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Language selector ────────────────────────────────────────── */
+.voice-lang-select {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  background: var(--composer-gpt-bg, rgba(255,255,255,0.04));
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  outline: none;
+  max-width: 100px;
+}
+.voice-lang-select:focus-visible {
+  outline: 2px solid var(--composer-gpt-focus-ring, #6366f1);
+}

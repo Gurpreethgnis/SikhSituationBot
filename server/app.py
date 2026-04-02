@@ -67,6 +67,7 @@ from feedback_github import (
     upload_feedback_screenshot,
 )
 from search_routes import search_blueprint
+from voice_routes import voice_blueprint
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -237,6 +238,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 
 app = Flask(__name__)
 app.register_blueprint(search_blueprint)
+app.register_blueprint(voice_blueprint)
 CORS(
     app,
     resources={
