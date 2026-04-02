@@ -15,6 +15,8 @@ import FeedbackModal from '../components/FeedbackModal.jsx'
 import { apiBase, authHeaders } from '../../lib/api'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { useTranslation, SUPPORTED_UI_LANGUAGES } from '../contexts/TranslationContext.jsx'
+import VoiceButton from '../components/voice/VoiceButton.jsx'
+import VoiceStatusBar from '../components/voice/VoiceStatusBar.jsx'
 import '../App.css'
 import '../parmaans/parmaans.css'
 
@@ -79,6 +81,8 @@ export default function ChatPage() {
   const [parmaanSearchLoading, setParmaanSearchLoading] = useState(false)
   const [parmaanSearchErr, setParmaanSearchErr] = useState('')
   const [parmaanLookupSearchEmpty, setParmaanLookupSearchEmpty] = useState(false)
+  const [voiceState, setVoiceState] = useState('IDLE')
+  const [voiceTranscript, setVoiceTranscript] = useState(null)
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -736,6 +740,7 @@ export default function ChatPage() {
                 )}
               </p>
             )}
+            <VoiceStatusBar voiceState={voiceState} transcript={voiceTranscript} />
             {suggestions.length > 0 && !loading && messages.length > 0 && (
               <div className="suggestions-bar">
                 {suggestions.slice(0, 3).map((suggestion, i) => (
@@ -772,6 +777,22 @@ export default function ChatPage() {
                     setParmaanPillValue(v)
                     setParmaanLookupSearchEmpty(false)
                   }}
+                  endAdornment={
+                    <VoiceButton
+                      onTranscript={(t) => {
+                        setVoiceTranscript(t)
+                        handleSend(t)
+                      }}
+                      onStateChange={setVoiceState}
+                      assistantResponse={
+                        messages.length > 0 && messages[messages.length - 1].role === 'assistant'
+                          ? messages[messages.length - 1].content
+                          : null
+                      }
+                      language={language}
+                      disabled={loading}
+                    />
+                  }
                   placeholder={
                     parmaanComposerAction === 'line'
                       ? t('parmaanLinePlaceholder')
@@ -834,6 +855,22 @@ export default function ChatPage() {
                     onModeChange={setGuidanceMode}
                     disabled={loading}
                     variant="embed"
+                  />
+                }
+                endAdornment={
+                  <VoiceButton
+                    onTranscript={(t) => {
+                      setVoiceTranscript(t)
+                      handleSend(t)
+                    }}
+                    onStateChange={setVoiceState}
+                    assistantResponse={
+                      messages.length > 0 && messages[messages.length - 1].role === 'assistant'
+                        ? messages[messages.length - 1].content
+                        : null
+                    }
+                    language={language}
+                    disabled={loading}
                   />
                 }
               />

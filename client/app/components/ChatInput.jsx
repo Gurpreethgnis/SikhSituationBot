@@ -19,6 +19,7 @@ export default function ChatInput({
   value: valueProp,
   onChange: onChangeProp,
   sendAriaLabel,
+  endAdornment,
 }) {
   const [internalValue, setInternalValue] = useState('')
   const inputRef = useRef(null)
@@ -79,6 +80,7 @@ export default function ChatInput({
             </svg>
           )}
         </button>
+        {endAdornment}
       </div>
     </form>
   )

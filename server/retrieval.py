@@ -16,9 +16,8 @@ _GURMUKHI_LADDER_ALTERNATIVES = {
 # Between "words" in Gurmukhi / romanization / English lines in the DB
 _FIRST_LETTER_SEP = r"(?:[\s\u00a0]+|[,;.:!?\u0964\u0965|]+)+"
 
-# After the ladder letter: BaniDB / steek romanization uses macrons (mā), IAST, hyphens (ka-o), etc.
-# ASCII-only [a-z]* misses those lines and breaks parity with SikhiToTheMax for queries like "mlddp".
-_ROMAN_OR_ENGLISH_WORD_TAIL = r"[^\s,;.:!?\u0964\u0965|]*"
+_LATIN_WORD_TAIL = r"[a-z\(\)\-]*"
+_ENGLISH_WORD_TAIL = r"[a-z'\-]*"
 _GURMUKHI_WORD_TAIL = r"[\u0a00-\u0a7f]*"
 
 
