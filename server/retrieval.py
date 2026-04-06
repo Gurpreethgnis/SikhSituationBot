@@ -21,6 +21,15 @@ _ENGLISH_WORD_TAIL = r"[a-z'\-]*"
 _GURMUKHI_WORD_TAIL = r"[\u0a00-\u0a7f]*"
 
 
+def sanitize_like_filter(search_term: str) -> str:
+    """Escape SQLAlchemy LIKE wildcards (% and _) to avoid 'LIKE injection' (issue audit)."""
+    if not isinstance(search_term, str):
+        return ""
+    # SECURITY: Escape % and _ and \ in user input for LIKE patterns.
+    # Note: SQLite and Postgres both treat backslash as escape char by default in SQLAlchemy.
+    return search_term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def _gurmukhi_char_class(typed: str) -> str:
     """Regex fragment: one Gurmukhi starter matching what the user typed (with STTM ladder alts)."""
     alts = _GURMUKHI_LADDER_ALTERNATIVES.get(typed, (typed,))
@@ -133,6 +142,11 @@ def find_shabads_by_first_letters(query: str, limit: int = 20) -> List[Shabad]:
                 # One regex OR: romanization ~* pat OR english ~* pat_eng
                 pat_roman = build_latin_first_letter_pattern(letters)
                 pat_eng = build_english_first_letter_pattern(letters)
+                
+                # SECURITY: Block extremely broad regex patterns (DoS mitigation)
+                if pat_roman in ("^.*", ".*") or len(letters) < 2:
+                    return []
+
                 rows = (
                     base.filter(
                         or_(
@@ -190,7 +204,8 @@ def _filter_shabad_matches_token(base, token: str):
         variants = latin_token_search_variants(token)
     token_clauses = []
     for v in variants:
-        pattern = f"%{v}%"
+        # SECURITY: sanitize sub-token to prevent LIKE injections
+        pattern = f"%{sanitize_like_filter(v)}%"
         token_clauses.append(
             or_(
                 Shabad.gurmukhi.ilike(pattern),
@@ -325,11 +340,14 @@ def browse_shabads(
     try:
         q = Shabad.query
         if source:
-            q = q.filter(Shabad.source.ilike(f"%{source}%"))
+            # SECURITY: sanitize user-provided source for LIKE
+            s_val = f"%{sanitize_like_filter(source)}%"
+            q = q.filter(Shabad.source.ilike(s_val))
         if persona:
             q = q.filter(Shabad.recommended_persona.in_([persona, "any"]))
         if search:
-            term = f"%{search}%"
+            # SECURITY: sanitize user-provided search term for LIKE
+            term = f"%{sanitize_like_filter(search)}%"
             q = q.filter(
                 or_(
                     Shabad.gurmukhi.ilike(term),

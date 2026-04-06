@@ -49,6 +49,7 @@ from retrieval import (
     get_shabad_by_id,
     get_shabad_by_pk,
     search_similar_shabads,
+    sanitize_like_filter,
 )
 from user_memory import (
     format_memory_context_for_prompt,
@@ -1198,7 +1199,9 @@ def admin_interactions():
         .order_by(desc(Message.created_at))
     )
     if user_email:
-        q = q.filter(User.email.ilike(f"%{user_email}%"))
+        # SECURITY: sanitize admin search input to prevent LIKE injection
+        email_pat = f"%{sanitize_like_filter(user_email)}%"
+        q = q.filter(User.email.ilike(email_pat))
 
     total = q.count()
     rows = q.offset((page - 1) * per_page).limit(per_page).all()

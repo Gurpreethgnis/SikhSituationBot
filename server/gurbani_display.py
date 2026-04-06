@@ -62,8 +62,12 @@ def fetch_banidb_shabad_display(shabad_id_int: int) -> Optional[Dict[str, str]]:
         import banidb  # noqa: WPS433 — optional runtime dep in workers without banidb
     except ImportError:
         return None
+    # SECURITY HARDENING: Ensure shabad_id is a strict integer to prevent malformed BaniDB calls
     try:
-        raw_shabad = banidb.shabad(shabad_id_int)
+        sh_id = int(shabad_id_int)
+        if sh_id < 0:
+             return None
+        raw_shabad = banidb.shabad(sh_id)
     except Exception as e:
         logger.debug("BaniDB shabad %s: %s", shabad_id_int, e)
         return None

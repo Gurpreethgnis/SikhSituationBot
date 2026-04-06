@@ -1,0 +1,170 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\sarab\.gemini\antigravity\scratch\SikhSituationBot
+plugins: anyio-4.12.1
+collected 3 items
+
+server\tests\test_sql_injection.py FEE                                   [100%]
+
+=================================== ERRORS ====================================
+____ ERROR at setup of test_admin_interaction_wildcard_injection_fails_now ____
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2125: in _exec_insertmany_context
+    dialect.do_execute(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.IntegrityError: UNIQUE constraint failed: shabads.shabad_id
+
+The above exception was the direct cause of the following exception:
+server\tests\test_sql_injection.py:57: in client
+    db.session.commit()
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\scoping.py:597: in commit
+    return self._proxied.commit()
+           ^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:2030: in commit
+    trans.commit(_to_root=True)
+<string>:2: in commit
+    ???
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:1311: in commit
+    self._prepare_impl()
+<string>:2: in _prepare_impl
+    ???
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:1286: in _prepare_impl
+    self.session.flush()
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4331: in flush
+    self._flush(objects)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4466: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py:121: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4427: in _flush
+    flush_context.execute()
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py:466: in execute
+    rec.execute(self)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py:93: in save_obj
+    _emit_insert_statements(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py:1143: in _emit_insert_statements
+    result = connection.execute(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1419: in execute
+    return meth(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py:527: in _execute_on_connection
+    return connection._execute_clauseelement(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1641: in _execute_clauseelement
+    ret = self._execute_context(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1844: in _execute_context
+    return self._exec_insertmany_context(dialect, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2133: in _exec_insertmany_context
+    self._handle_dbapi_exception(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2363: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2125: in _exec_insertmany_context
+    dialect.do_execute(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: shabads.shabad_id
+E   [SQL: INSERT INTO shabads (shabad_id, gurmukhi, romanization, english_translation, source, recommended_persona, context_tags, is_header_only, verse_count, content_length, embedding, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id]
+E   [parameters: ('sggs_1', '\u0a74', None, 'One Creator', 'SGGS Ang 1', 'any', None, None, None, None, 'None', '2026-04-06 14:42:25.002051')]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+_______ ERROR at setup of test_regex_ladder_complex_injection_fails_now _______
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2125: in _exec_insertmany_context
+    dialect.do_execute(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.IntegrityError: UNIQUE constraint failed: shabads.shabad_id
+
+The above exception was the direct cause of the following exception:
+server\tests\test_sql_injection.py:57: in client
+    db.session.commit()
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\scoping.py:597: in commit
+    return self._proxied.commit()
+           ^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:2030: in commit
+    trans.commit(_to_root=True)
+<string>:2: in commit
+    ???
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:1311: in commit
+    self._prepare_impl()
+<string>:2: in _prepare_impl
+    ???
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:1286: in _prepare_impl
+    self.session.flush()
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4331: in flush
+    self._flush(objects)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4466: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py:121: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py:4427: in _flush
+    flush_context.execute()
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py:466: in execute
+    rec.execute(self)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py:93: in save_obj
+    _emit_insert_statements(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py:1143: in _emit_insert_statements
+    result = connection.execute(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1419: in execute
+    return meth(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py:527: in _execute_on_connection
+    return connection._execute_clauseelement(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1641: in _execute_clauseelement
+    ret = self._execute_context(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1844: in _execute_context
+    return self._exec_insertmany_context(dialect, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2133: in _exec_insertmany_context
+    self._handle_dbapi_exception(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2363: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2125: in _exec_insertmany_context
+    dialect.do_execute(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: shabads.shabad_id
+E   [SQL: INSERT INTO shabads (shabad_id, gurmukhi, romanization, english_translation, source, recommended_persona, context_tags, is_header_only, verse_count, content_length, embedding, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id]
+E   [parameters: ('sggs_1', '\u0a74', None, 'One Creator', 'SGGS Ang 1', 'any', None, None, None, None, 'None', '2026-04-06 14:42:25.308315')]
+E   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+================================== FAILURES ===================================
+__________________ test_search_wildcard_injection_fails_now ___________________
+server\tests\test_sql_injection.py:67: in test_search_wildcard_injection_fails_now
+    assert resp.status_code == 400
+E   assert 200 == 400
+E    +  where 200 = <WrapperTestResponse streamed [200 OK]>.status_code
+============================== warnings summary ===============================
+server\llm_synthesis.py:60
+  C:\Users\sarab\.gemini\antigravity\scratch\SikhSituationBot\server\llm_synthesis.py:60: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    if LLMSettings.query.get(1) is not None:
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:3624
+server/tests/test_sql_injection.py::test_search_wildcard_injection_fails_now
+server/tests/test_sql_injection.py::test_search_wildcard_injection_fails_now
+server/tests/test_sql_injection.py::test_admin_interaction_wildcard_injection_fails_now
+server/tests/test_sql_injection.py::test_admin_interaction_wildcard_injection_fails_now
+server/tests/test_sql_injection.py::test_regex_ladder_complex_injection_fails_now
+server/tests/test_sql_injection.py::test_regex_ladder_complex_injection_fails_now
+  C:\Users\sarab\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:3624: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED server/tests/test_sql_injection.py::test_search_wildcard_injection_fails_now
+ERROR server/tests/test_sql_injection.py::test_admin_interaction_wildcard_injection_fails_now
+ERROR server/tests/test_sql_injection.py::test_regex_ladder_complex_injection_fails_now
+=================== 1 failed, 8 warnings, 2 errors in 8.74s ===================

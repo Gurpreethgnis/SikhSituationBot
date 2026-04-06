@@ -107,8 +107,18 @@ We use **role-based branches** so everyone can work in parallel. Each person wor
 
 | Component | Command | Port | Tech |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | `cd client && npm install && npm run dev` | `3000` | Next.js, React, CSS Modules |
 | **Backend** | `cd server && pip install -r requirements.txt && python app.py` | `5000` | Flask, PostgreSQL, Gemini SDK |
+
+## 🛡️ Security
+SikhSituationBot follows a proactive security posture to protect the Gurbani corpus and user data.
+*   **[SECURITY.md](SECURITY.md)** — Secure coding standards and vulnerability reporting.
+*   **[THREAT_MODEL.md](THREAT_MODEL.md)** — Attack surface analysis and remediation status.
+
+### Security Testing
+Run the automated security suite to verify SQL injection and pattern-matching mitigations:
+```bash
+pytest server/tests/security/
+```
 
 ### 📂 Key Folders
 - `/client/app`: Next.js frontend application code
