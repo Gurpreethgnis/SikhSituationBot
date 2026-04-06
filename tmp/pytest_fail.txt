@@ -1,0 +1,632 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\sarab\.gemini\antigravity\scratch\SikhSituationBot
+plugins: anyio-4.12.1
+collected 3 items
+
+server\tests\test_sql_injection.py EEE                                   [100%]
+
+=================================== ERRORS ====================================
+_________ ERROR at setup of test_search_wildcard_injection_fails_now __________
+
+self = ARRAY(String())
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0>
+kw = {'type_expression': Column('context_tags', ARRAY(String()), table=<shabads>)}
+
+    def _compiler_dispatch(
+        self: Visitable, visitor: Any, **kw: Any
+    ) -> str:
+        """Look for an attribute named "visit_<visit_name>" on the
+        visitor, and call it with the same kw params.
+    
+        """
+        try:
+>           meth = getter(visitor)
+                   ^^^^^^^^^^^^^^^
+E           AttributeError: 'SQLiteTypeCompiler' object has no attribute 'visit_ARRAY'. Did you mean: 'visit_REAL'?
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:134: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x000001F769727350>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x000001F769735810>, kw = {}
+table = Table('shabads', MetaData(), Column('id', Integer(), table=<shabads>, primary_key=True, nullable=False), Column('shaba...Time(), table=<shabads>, default=CallableColumnDefault(<function datetime.utcnow at 0x000001F72EE60040>)), schema=None)
+preparer = <sqlalchemy.dialects.sqlite.base.SQLiteIdentifierPreparer object at 0x000001F7696E8050>
+text = '\nCREATE TABLE shabads (\n\tid INTEGER NOT NULL, \n\tshabad_id VARCHAR(50) NOT NULL, \n\tgurmukhi TEXT NOT NULL, \n\tromanization TEXT, \n\tenglish_translation TEXT NOT NULL, \n\tsource VARCHAR(100), \n\trecommended_persona VARCHAR(20)'
+create_table_suffix = '', separator = ', \n', first_pk = True
+create_column = <sqlalchemy.sql.ddl.CreateColumn object at 0x000001F76977C9B0>
+
+    def visit_create_table(self, create, **kw):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+    
+        text += "TABLE "
+        if create.if_not_exists:
+            text += "IF NOT EXISTS "
+    
+        text += preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+>               processed = self.process(
+                    create_column, first_pk=column.primary_key and not first_pk
+                )
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6838: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:947: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6869: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\sqlite\base.py:1703: in get_column_specification
+    coltype = self.dialect.type_compiler_instance.process(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:992: in process
+    return type_._compiler_dispatch(self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:136: in _compiler_dispatch
+    return visitor.visit_unsupported_compilation(self, err, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0>
+element = ARRAY(String())
+err = AttributeError("'SQLiteTypeCompiler' object has no attribute 'visit_ARRAY'")
+kw = {'type_expression': Column('context_tags', ARRAY(String()), table=<shabads>)}
+
+    def visit_unsupported_compilation(
+        self, element: Any, err: Exception, **kw: Any
+    ) -> NoReturn:
+>       raise exc.UnsupportedCompilationError(self, element) from err
+E       sqlalchemy.exc.UnsupportedCompilationError: Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0> can't render element of type ARRAY (Background on this error at: https://sqlalche.me/e/20/l7de)
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:997: UnsupportedCompilationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture
+    def client():
+        with app.test_client() as client:
+            with app.app_context():
+                # Vector is mocked above so db.create_all() works on SQLite
+>               db.create_all()
+
+server\tests\test_sql_injection.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\extension.py:900: in create_all
+    self._call_for_binds(bind_key, "create_all")
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\extension.py:881: in _call_for_binds
+    getattr(metadata, op_name)(bind=engine)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:5928: in create_all
+    bind._run_ddl_visitor(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:3268: in _run_ddl_visitor
+    conn._run_ddl_visitor(visitorcallable, element, **kwargs)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2467: in _run_ddl_visitor
+    ).traverse_single(element)
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:661: in traverse_single
+    return meth(obj, **kw)
+           ^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:984: in visit_metadata
+    self.traverse_single(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:661: in traverse_single
+    return meth(obj, **kw)
+           ^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:1022: in visit_table
+    )._invoke_with(self.connection)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:321: in _invoke_with
+    return bind.execute(self)
+           ^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1419: in execute
+    return meth(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:187: in _execute_on_connection
+    return connection._execute_ddl(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1527: in _execute_ddl
+    compiled = ddl.compile(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py:312: in compile
+    return self._compiler(dialect, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:76: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:901: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:947: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x000001F769727350>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x000001F769735810>, kw = {}
+table = Table('shabads', MetaData(), Column('id', Integer(), table=<shabads>, primary_key=True, nullable=False), Column('shaba...Time(), table=<shabads>, default=CallableColumnDefault(<function datetime.utcnow at 0x000001F72EE60040>)), schema=None)
+preparer = <sqlalchemy.dialects.sqlite.base.SQLiteIdentifierPreparer object at 0x000001F7696E8050>
+text = '\nCREATE TABLE shabads (\n\tid INTEGER NOT NULL, \n\tshabad_id VARCHAR(50) NOT NULL, \n\tgurmukhi TEXT NOT NULL, \n\tromanization TEXT, \n\tenglish_translation TEXT NOT NULL, \n\tsource VARCHAR(100), \n\trecommended_persona VARCHAR(20)'
+create_table_suffix = '', separator = ', \n', first_pk = True
+create_column = <sqlalchemy.sql.ddl.CreateColumn object at 0x000001F76977C9B0>
+
+    def visit_create_table(self, create, **kw):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+    
+        text += "TABLE "
+        if create.if_not_exists:
+            text += "IF NOT EXISTS "
+    
+        text += preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+                    create_column, first_pk=column.primary_key and not first_pk
+                )
+                if processed is not None:
+                    text += separator
+                    separator = ", \n"
+                    text += "\t" + processed
+                if column.primary_key:
+                    first_pk = True
+            except exc.CompileError as ce:
+>               raise exc.CompileError(
+                    "(in table '%s', column '%s'): %s"
+                    % (table.description, column.name, ce.args[0])
+                ) from ce
+E               sqlalchemy.exc.CompileError: (in table 'shabads', column 'context_tags'): Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0> can't render element of type ARRAY
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6848: CompileError
+____ ERROR at setup of test_admin_interaction_wildcard_injection_fails_now ____
+
+self = ARRAY(String())
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0>
+kw = {'type_expression': Column('context_tags', ARRAY(String()), table=<shabads>)}
+
+    def _compiler_dispatch(
+        self: Visitable, visitor: Any, **kw: Any
+    ) -> str:
+        """Look for an attribute named "visit_<visit_name>" on the
+        visitor, and call it with the same kw params.
+    
+        """
+        try:
+>           meth = getter(visitor)
+                   ^^^^^^^^^^^^^^^
+E           AttributeError: 'SQLiteTypeCompiler' object has no attribute 'visit_ARRAY'. Did you mean: 'visit_REAL'?
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:134: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x000001F7696BDA50>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x000001F769775A30>, kw = {}
+table = Table('shabads', MetaData(), Column('id', Integer(), table=<shabads>, primary_key=True, nullable=False), Column('shaba...Time(), table=<shabads>, default=CallableColumnDefault(<function datetime.utcnow at 0x000001F72EE60040>)), schema=None)
+preparer = <sqlalchemy.dialects.sqlite.base.SQLiteIdentifierPreparer object at 0x000001F7696E8050>
+text = '\nCREATE TABLE shabads (\n\tid INTEGER NOT NULL, \n\tshabad_id VARCHAR(50) NOT NULL, \n\tgurmukhi TEXT NOT NULL, \n\tromanization TEXT, \n\tenglish_translation TEXT NOT NULL, \n\tsource VARCHAR(100), \n\trecommended_persona VARCHAR(20)'
+create_table_suffix = '', separator = ', \n', first_pk = True
+create_column = <sqlalchemy.sql.ddl.CreateColumn object at 0x000001F76A970DC0>
+
+    def visit_create_table(self, create, **kw):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+    
+        text += "TABLE "
+        if create.if_not_exists:
+            text += "IF NOT EXISTS "
+    
+        text += preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+>               processed = self.process(
+                    create_column, first_pk=column.primary_key and not first_pk
+                )
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6838: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:947: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6869: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\sqlite\base.py:1703: in get_column_specification
+    coltype = self.dialect.type_compiler_instance.process(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:992: in process
+    return type_._compiler_dispatch(self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:136: in _compiler_dispatch
+    return visitor.visit_unsupported_compilation(self, err, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0>
+element = ARRAY(String())
+err = AttributeError("'SQLiteTypeCompiler' object has no attribute 'visit_ARRAY'")
+kw = {'type_expression': Column('context_tags', ARRAY(String()), table=<shabads>)}
+
+    def visit_unsupported_compilation(
+        self, element: Any, err: Exception, **kw: Any
+    ) -> NoReturn:
+>       raise exc.UnsupportedCompilationError(self, element) from err
+E       sqlalchemy.exc.UnsupportedCompilationError: Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0> can't render element of type ARRAY (Background on this error at: https://sqlalche.me/e/20/l7de)
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:997: UnsupportedCompilationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture
+    def client():
+        with app.test_client() as client:
+            with app.app_context():
+                # Vector is mocked above so db.create_all() works on SQLite
+>               db.create_all()
+
+server\tests\test_sql_injection.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\extension.py:900: in create_all
+    self._call_for_binds(bind_key, "create_all")
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\extension.py:881: in _call_for_binds
+    getattr(metadata, op_name)(bind=engine)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:5928: in create_all
+    bind._run_ddl_visitor(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:3268: in _run_ddl_visitor
+    conn._run_ddl_visitor(visitorcallable, element, **kwargs)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2467: in _run_ddl_visitor
+    ).traverse_single(element)
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:661: in traverse_single
+    return meth(obj, **kw)
+           ^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:984: in visit_metadata
+    self.traverse_single(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:661: in traverse_single
+    return meth(obj, **kw)
+           ^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:1022: in visit_table
+    )._invoke_with(self.connection)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:321: in _invoke_with
+    return bind.execute(self)
+           ^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1419: in execute
+    return meth(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:187: in _execute_on_connection
+    return connection._execute_ddl(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1527: in _execute_ddl
+    compiled = ddl.compile(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py:312: in compile
+    return self._compiler(dialect, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:76: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:901: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:947: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x000001F7696BDA50>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x000001F769775A30>, kw = {}
+table = Table('shabads', MetaData(), Column('id', Integer(), table=<shabads>, primary_key=True, nullable=False), Column('shaba...Time(), table=<shabads>, default=CallableColumnDefault(<function datetime.utcnow at 0x000001F72EE60040>)), schema=None)
+preparer = <sqlalchemy.dialects.sqlite.base.SQLiteIdentifierPreparer object at 0x000001F7696E8050>
+text = '\nCREATE TABLE shabads (\n\tid INTEGER NOT NULL, \n\tshabad_id VARCHAR(50) NOT NULL, \n\tgurmukhi TEXT NOT NULL, \n\tromanization TEXT, \n\tenglish_translation TEXT NOT NULL, \n\tsource VARCHAR(100), \n\trecommended_persona VARCHAR(20)'
+create_table_suffix = '', separator = ', \n', first_pk = True
+create_column = <sqlalchemy.sql.ddl.CreateColumn object at 0x000001F76A970DC0>
+
+    def visit_create_table(self, create, **kw):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+    
+        text += "TABLE "
+        if create.if_not_exists:
+            text += "IF NOT EXISTS "
+    
+        text += preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+                    create_column, first_pk=column.primary_key and not first_pk
+                )
+                if processed is not None:
+                    text += separator
+                    separator = ", \n"
+                    text += "\t" + processed
+                if column.primary_key:
+                    first_pk = True
+            except exc.CompileError as ce:
+>               raise exc.CompileError(
+                    "(in table '%s', column '%s'): %s"
+                    % (table.description, column.name, ce.args[0])
+                ) from ce
+E               sqlalchemy.exc.CompileError: (in table 'shabads', column 'context_tags'): Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0> can't render element of type ARRAY
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6848: CompileError
+_______ ERROR at setup of test_regex_ladder_complex_injection_fails_now _______
+
+self = ARRAY(String())
+visitor = <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0>
+kw = {'type_expression': Column('context_tags', ARRAY(String()), table=<shabads>)}
+
+    def _compiler_dispatch(
+        self: Visitable, visitor: Any, **kw: Any
+    ) -> str:
+        """Look for an attribute named "visit_<visit_name>" on the
+        visitor, and call it with the same kw params.
+    
+        """
+        try:
+>           meth = getter(visitor)
+                   ^^^^^^^^^^^^^^^
+E           AttributeError: 'SQLiteTypeCompiler' object has no attribute 'visit_ARRAY'. Did you mean: 'visit_REAL'?
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:134: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x000001F7696BEA50>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x000001F769727BD0>, kw = {}
+table = Table('shabads', MetaData(), Column('id', Integer(), table=<shabads>, primary_key=True, nullable=False), Column('shaba...Time(), table=<shabads>, default=CallableColumnDefault(<function datetime.utcnow at 0x000001F72EE60040>)), schema=None)
+preparer = <sqlalchemy.dialects.sqlite.base.SQLiteIdentifierPreparer object at 0x000001F7696E8050>
+text = '\nCREATE TABLE shabads (\n\tid INTEGER NOT NULL, \n\tshabad_id VARCHAR(50) NOT NULL, \n\tgurmukhi TEXT NOT NULL, \n\tromanization TEXT, \n\tenglish_translation TEXT NOT NULL, \n\tsource VARCHAR(100), \n\trecommended_persona VARCHAR(20)'
+create_table_suffix = '', separator = ', \n', first_pk = True
+create_column = <sqlalchemy.sql.ddl.CreateColumn object at 0x000001F769916A80>
+
+    def visit_create_table(self, create, **kw):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+    
+        text += "TABLE "
+        if create.if_not_exists:
+            text += "IF NOT EXISTS "
+    
+        text += preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+>               processed = self.process(
+                    create_column, first_pk=column.primary_key and not first_pk
+                )
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6838: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:947: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6869: in visit_create_column
+    text = self.get_column_specification(column, first_pk=first_pk)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\dialects\sqlite\base.py:1703: in get_column_specification
+    coltype = self.dialect.type_compiler_instance.process(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:992: in process
+    return type_._compiler_dispatch(self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:136: in _compiler_dispatch
+    return visitor.visit_unsupported_compilation(self, err, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0>
+element = ARRAY(String())
+err = AttributeError("'SQLiteTypeCompiler' object has no attribute 'visit_ARRAY'")
+kw = {'type_expression': Column('context_tags', ARRAY(String()), table=<shabads>)}
+
+    def visit_unsupported_compilation(
+        self, element: Any, err: Exception, **kw: Any
+    ) -> NoReturn:
+>       raise exc.UnsupportedCompilationError(self, element) from err
+E       sqlalchemy.exc.UnsupportedCompilationError: Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0> can't render element of type ARRAY (Background on this error at: https://sqlalche.me/e/20/l7de)
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:997: UnsupportedCompilationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture
+    def client():
+        with app.test_client() as client:
+            with app.app_context():
+                # Vector is mocked above so db.create_all() works on SQLite
+>               db.create_all()
+
+server\tests\test_sql_injection.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\extension.py:900: in create_all
+    self._call_for_binds(bind_key, "create_all")
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\extension.py:881: in _call_for_binds
+    getattr(metadata, op_name)(bind=engine)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:5928: in create_all
+    bind._run_ddl_visitor(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:3268: in _run_ddl_visitor
+    conn._run_ddl_visitor(visitorcallable, element, **kwargs)
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:2467: in _run_ddl_visitor
+    ).traverse_single(element)
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:661: in traverse_single
+    return meth(obj, **kw)
+           ^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:984: in visit_metadata
+    self.traverse_single(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:661: in traverse_single
+    return meth(obj, **kw)
+           ^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:1022: in visit_table
+    )._invoke_with(self.connection)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:321: in _invoke_with
+    return bind.execute(self)
+           ^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1419: in execute
+    return meth(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:187: in _execute_on_connection
+    return connection._execute_ddl(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py:1527: in _execute_ddl
+    compiled = ddl.compile(
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py:312: in compile
+    return self._compiler(dialect, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\ddl.py:76: in _compiler
+    return dialect.ddl_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:901: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:947: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sqlalchemy.dialects.sqlite.base.SQLiteDDLCompiler object at 0x000001F7696BEA50>
+create = <sqlalchemy.sql.ddl.CreateTable object at 0x000001F769727BD0>, kw = {}
+table = Table('shabads', MetaData(), Column('id', Integer(), table=<shabads>, primary_key=True, nullable=False), Column('shaba...Time(), table=<shabads>, default=CallableColumnDefault(<function datetime.utcnow at 0x000001F72EE60040>)), schema=None)
+preparer = <sqlalchemy.dialects.sqlite.base.SQLiteIdentifierPreparer object at 0x000001F7696E8050>
+text = '\nCREATE TABLE shabads (\n\tid INTEGER NOT NULL, \n\tshabad_id VARCHAR(50) NOT NULL, \n\tgurmukhi TEXT NOT NULL, \n\tromanization TEXT, \n\tenglish_translation TEXT NOT NULL, \n\tsource VARCHAR(100), \n\trecommended_persona VARCHAR(20)'
+create_table_suffix = '', separator = ', \n', first_pk = True
+create_column = <sqlalchemy.sql.ddl.CreateColumn object at 0x000001F769916A80>
+
+    def visit_create_table(self, create, **kw):
+        table = create.element
+        preparer = self.preparer
+    
+        text = "\nCREATE "
+        if table._prefixes:
+            text += " ".join(table._prefixes) + " "
+    
+        text += "TABLE "
+        if create.if_not_exists:
+            text += "IF NOT EXISTS "
+    
+        text += preparer.format_table(table) + " "
+    
+        create_table_suffix = self.create_table_suffix(table)
+        if create_table_suffix:
+            text += create_table_suffix + " "
+    
+        text += "("
+    
+        separator = "\n"
+    
+        # if only one primary key, specify it along with the column
+        first_pk = False
+        for create_column in create.columns:
+            column = create_column.element
+            try:
+                processed = self.process(
+                    create_column, first_pk=column.primary_key and not first_pk
+                )
+                if processed is not None:
+                    text += separator
+                    separator = ", \n"
+                    text += "\t" + processed
+                if column.primary_key:
+                    first_pk = True
+            except exc.CompileError as ce:
+>               raise exc.CompileError(
+                    "(in table '%s', column '%s'): %s"
+                    % (table.description, column.name, ce.args[0])
+                ) from ce
+E               sqlalchemy.exc.CompileError: (in table 'shabads', column 'context_tags'): Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x000001F7696E81A0> can't render element of type ARRAY
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\compiler.py:6848: CompileError
+=========================== short test summary info ===========================
+ERROR server/tests/test_sql_injection.py::test_search_wildcard_injection_fails_now
+ERROR server/tests/test_sql_injection.py::test_admin_interaction_wildcard_injection_fails_now
+ERROR server/tests/test_sql_injection.py::test_regex_ladder_complex_injection_fails_now
+============================== 3 errors in 9.38s ==============================
