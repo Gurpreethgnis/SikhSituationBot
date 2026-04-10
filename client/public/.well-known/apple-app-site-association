@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "BXGVKCW3R7.com.gianiji.app",
+        "paths": ["/shared/*"]
+      }
+    ]
+  }
+}
