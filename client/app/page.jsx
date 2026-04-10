@@ -9,7 +9,7 @@ export default function LandingPage() {
         <div className="landing-brand">
           <Logo />
         </div>
-        <h1>SikhSituationBot</h1>
+        <h1>Giani Ji</h1>
         <p className="landing-tagline">
           Seek perspective from Guru Granth Sahib for life&apos;s situations — with respectful, age-aware
           guidance and semantic discovery of Gurbani.

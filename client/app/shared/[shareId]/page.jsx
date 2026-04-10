@@ -18,10 +18,10 @@ export async function generateMetadata({ params }) {
   const data = await fetchShared(shareId)
   const title = data?.chat?.title || 'Shared conversation'
   return {
-    title: `${title} · SikhSituationBot`,
+    title: `${title} · Giani Ji`,
     openGraph: {
       title,
-      description: 'A shared spiritual perspective conversation from SikhSituationBot.',
+      description: 'A shared spiritual perspective conversation from Giani Ji.',
     },
   }
 }
