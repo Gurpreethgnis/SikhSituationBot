@@ -1,0 +1,42 @@
+env: load .env.local
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_FLASK_INTERNAL_KEY EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+Running 17 checks on your project...
+Γ£ö Check package.json for common issues
+Γ£ö Check Expo config for common issues
+Γ£ö Check if the project meets version requirements for submission to app stores
+Γ£ö Check for lock file
+Γ£ö Check dependencies for packages that should not be installed directly
+Γ£ö Check for app config fields that may not be synced in a non-CNG project
+Γ£ö Check for issues with Metro config
+Γ£ö Check npm/yarn versions
+Γ£ö Check native tooling versions
+Γ£ö Check for common project setup issues
+Γ£ö Check that required peer dependencies are installed
+Γ£û Check that packages match versions required by installed Expo SDK
+Γ£û Check Expo config (app.json/ app.config.js) schema
+Γ£ö Check that native modules do not use incompatible support packages
+Γ£ö Check that no duplicate dependencies are installed
+Γ£ö Validate packages against React Native Directory package metadata
+Γ£ö Check for legacy global CLI installed locally
+
+15/17 checks passed. 2 checks failed. Possible issues detected:
+
+Γ£û Check Expo config (app.json/ app.config.js) schema
+Error validating fields in C:\Ideas\SikhSituationBot\mobile\app.json:
+ Field: ios/config - should NOT have additional property 'googleSignIn'.
+Advice:
+Resolve schema errors in your app config. Learn more: https://docs.expo.dev/workflow/configuration/
+
+Γ£û Check that packages match versions required by installed Expo SDK
+
+Γ¥ù Major version mismatches
+package            expected  found    
+babel-preset-expo  ~54.0.10  55.0.15  
+
+
+
+1 package out of date.
+Advice:
+Use 'npx expo install --check' to review and upgrade your dependencies.
+To ignore specific packages, add them to "expo.install.exclude" in package.json. Learn more: https://expo.fyi/dependency-validation
+
