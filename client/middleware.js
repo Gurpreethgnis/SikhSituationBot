@@ -19,6 +19,15 @@ export async function middleware(req) {
   const token = secret ? await getToken({ req, secret }) : null
   const authed = Boolean(token?.accessToken || token?.sub)
 
+  const host = req.headers.get('host')
+  if (host === 'sikhsituationbot.sage-school.com') {
+    const newUrl = new URL(req.nextUrl.href)
+    newUrl.hostname = 'gianiji.com'
+    newUrl.port = ''
+    newUrl.protocol = 'https:'
+    return NextResponse.redirect(newUrl, 301)
+  }
+
   if (path === '/onboarding' || path.startsWith('/onboarding/')) {
     if (!authed) {
       return NextResponse.redirect(loginUrl(req, '/onboarding'))
