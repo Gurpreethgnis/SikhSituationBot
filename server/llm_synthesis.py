@@ -27,7 +27,7 @@ from prompts import (
 logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPEN_API_KEY")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
 # Curated options for admin UI (model IDs are provider-native strings)
