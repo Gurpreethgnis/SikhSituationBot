@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react'
 
 const translations = {
   en: {
-    appName: 'SikhSituationBot',
+    appName: 'Giani Ji',
     tagline: 'Seek guidance from the Guru Granth Sahib for your life situations.',
     newChat: 'New Chat',
     conversations: 'Conversations',
@@ -31,7 +31,7 @@ const translations = {
     situationalAdvice: 'Parmaan Search',
     chooseGuidanceType: 'Choose mode',
     guidanceType: 'Mode',
-    disclaimer: 'Disclaimer: SikhSituationBot provides spiritual perspectives only. This is not professional, legal, medical, or financial advice. Please consult qualified professionals for such matters.',
+    disclaimer: 'Disclaimer: Giani Ji provides spiritual perspectives only. This is not professional, legal, medical, or financial advice. Please consult qualified professionals for such matters.',
     viewOnSttm: 'View on SikhiToTheMax',
     today: 'Today',
     yesterday: 'Yesterday',
@@ -54,7 +54,7 @@ const translations = {
     chat: 'Chat',
     loading: 'Loading...',
     message: 'Message',
-    messagePlaceholder: 'Message SikhSituationBot…',
+    messagePlaceholder: 'Message Giani Ji…',
     sendMessage: 'Send message',
     knowledgeShabadCount: 'Knowledge base: {count} shabads',
     knowledgeShabadCountTitle: 'Shabads in the knowledge base (updates automatically)',
@@ -474,7 +474,7 @@ const translations = {
     voiceNotConfigured: '语音不可用 (缺少 API 密钥)。',
   },
   es: {
-    appName: 'SikhSituationBot',
+    appName: 'Giani Ji',
     tagline: 'Busca orientación del Guru Granth Sahib para las situaciones de tu vida.',
     newChat: 'Nueva conversación',
     conversations: 'Conversaciones',
@@ -501,7 +501,7 @@ const translations = {
     situationalAdvice: 'Buscar Parmaan',
     chooseGuidanceType: 'Elegir modo',
     guidanceType: 'Modo',
-    disclaimer: 'Aviso: SikhSituationBot solo proporciona perspectivas espirituales. No es asesoramiento profesional, legal, médico o financiero.',
+    disclaimer: 'Aviso: Giani Ji solo proporciona perspectivas espirituales. No es asesoramiento profesional, legal, médico o financiero.',
     viewOnSttm: 'Ver en SikhiToTheMax',
     today: 'Hoy',
     yesterday: 'Ayer',
@@ -524,7 +524,7 @@ const translations = {
     chat: 'Chat',
     loading: 'Cargando...',
     message: 'Mensaje',
-    messagePlaceholder: 'Enviar mensaje a SikhSituationBot…',
+    messagePlaceholder: 'Enviar mensaje a Giani Ji…',
     sendMessage: 'Enviar mensaje',
     knowledgeShabadCount: 'Base de conocimiento: {count} shabads',
     knowledgeShabadCountTitle: 'Shabads en la base de conocimiento (se actualiza solo)',

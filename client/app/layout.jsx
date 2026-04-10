@@ -3,7 +3,7 @@ import './styles/themes.css'
 import { Providers } from './providers'
 
 export const metadata = {
-  title: 'SikhSituationBot',
+  title: 'Giani Ji',
   description: "Gurbani-based guidance for life's moments",
 }
 
