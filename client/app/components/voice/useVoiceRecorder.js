@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MAX_RECORDING_MS } from './voiceConfig.js'
 
 /**
@@ -21,6 +21,11 @@ export function useVoiceRecorder(options = {}) {
   const [isRecording, setIsRecording] = useState(false)
   const [audioBlob, setAudioBlob] = useState(null)
   const [error, setError] = useState(null)
+
+  const onRecordingCompleteRef = useRef(options.onRecordingComplete)
+  useEffect(() => {
+    onRecordingCompleteRef.current = options.onRecordingComplete
+  })
 
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
@@ -134,6 +139,7 @@ export function useVoiceRecorder(options = {}) {
       setAudioBlob(blob)
       setIsRecording(false)
       mediaRecorderRef.current = null
+      onRecordingCompleteRef.current?.(blob)
     }
 
     mr.onerror = (e) => {

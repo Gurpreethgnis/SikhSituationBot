@@ -115,6 +115,7 @@ const translations = {
     feedbackCancel: 'Cancel',
     feedbackClose: 'Close',
     voiceListening: 'Listening…',
+    voiceTranscribing: 'Transcribing…',
     voiceProcessing: 'Thinking…',
     voiceSpeaking: 'Speaking…',
     voiceConsentTitle: 'Enable Voice Mode?',
@@ -123,6 +124,7 @@ const translations = {
     voiceConsentLater: 'Later',
     voiceMicDenied: 'Mic blocked.',
     voiceRetry: 'Retry',
+    voiceNotConfigured: 'Voice unavailable (API Key missing).',
   },
   pa: {
     appName: 'ਸਿੱਖ ਸਿਚੁਏਸ਼ਨ ਬੋਟ',
@@ -236,6 +238,7 @@ const translations = {
     feedbackCancel: 'ਰੱਦ ਕਰੋ',
     feedbackClose: 'ਬੰਦ ਕਰੋ',
     voiceListening: 'ਸੁਣ ਰਿਹਾ ਹੈ…',
+    voiceTranscribing: 'ਲਿਖ ਰਿਹਾ ਹੈ…',
     voiceProcessing: 'ਸੋਚ ਰਿਹਾ ਹੈ…',
     voiceSpeaking: 'ਬੋਲ ਰਿਹਾ ਹੈ…',
     voiceConsentTitle: 'ਵੌਇਸ ਮੋਡ ਚਾਲੂ ਕਰੀਏ?',
@@ -244,6 +247,7 @@ const translations = {
     voiceConsentLater: 'ਬਾਅਦ ਵਿੱਚ',
     voiceMicDenied: 'ਮਾਈਕ੍ਰੋਫੋਨ ਬੰਦ ਹੈ।',
     voiceRetry: 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
+    voiceNotConfigured: 'ਵੌਇਸ ਉਪਲਬਧ ਨਹੀਂ (API ਕੁੰਜੀ ਗੈਰਹਾਜ਼ਰ)।',
   },
   hi: {
     appName: 'सिख सिचुएशन बॉट',
@@ -356,6 +360,7 @@ const translations = {
     feedbackSignInRequired: 'प्रतिक्रिया के लिए साइन इन करें।',
     feedbackCancel: 'रद्द करें',
     feedbackClose: 'बंद करें',
+    voiceNotConfigured: 'आवाज अनुपलब्ध (API Key गायब है)।',
   },
   zh: {
     appName: '锡克情境机器人',
@@ -466,6 +471,7 @@ const translations = {
     feedbackSignInRequired: '请登录后发送反馈。',
     feedbackCancel: '取消',
     feedbackClose: '关闭',
+    voiceNotConfigured: '语音不可用 (缺少 API 密钥)。',
   },
   es: {
     appName: 'SikhSituationBot',
@@ -578,6 +584,11 @@ const translations = {
     feedbackSignInRequired: 'Inicia sesión para enviar comentarios.',
     feedbackCancel: 'Cancelar',
     feedbackClose: 'Cerrar',
+    voiceListening: 'Escuchando...',
+    voiceTranscribing: 'Transcribiendo...',
+    voiceProcessing: 'Pensando...',
+    voiceSpeaking: 'Hablando...',
+    voiceNotConfigured: 'Voz no disponible (falta clave API).',
   },
 }
 
@@ -586,9 +597,13 @@ const TranslationContext = createContext(null)
 export function TranslationProvider({ children }) {
   const [uiLanguage, setUiLanguage] = useState('en')
 
-  const t = useCallback((key) => {
+  const t = useCallback((key, params = {}) => {
     const langTranslations = translations[uiLanguage] || translations.en
-    return langTranslations[key] || translations.en[key] || key
+    let text = langTranslations[key] || translations.en[key] || key
+    Object.keys(params).forEach(p => {
+      text = text.replace(`{${p}}`, params[p])
+    })
+    return text
   }, [uiLanguage])
 
   const changeUiLanguage = useCallback((lang) => {
