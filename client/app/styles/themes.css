@@ -85,9 +85,9 @@
   --navy-deep: #f1f5f9;
   --navy: #e2e8f0;
   --royal: #1e293b;
-  --gold: #c2410c;
-  --gold-light: #ea580c;
-  --gold-muted: #9a3412;
+  --gold: #d4af37;
+  --gold-light: #f0c850;
+  --gold-muted: #8b7355;
   --color-bg: #f1f5f9;
   --color-bg-elevated: #ffffff;
   --color-surface: #ffffff;
@@ -99,8 +99,8 @@
   --surface-glass-hover: hsla(0, 0%, 100%, 1);
   --border-glass: hsla(215, 25%, 27%, 0.18);
   --border-gold: hsla(25, 95%, 40%, 0.45);
-  --color-accent: #c2410c;
-  --color-accent-soft: hsla(25, 95%, 42%, 0.2);
+  --color-accent: #d4af37;
+  --color-accent-soft: hsla(43, 65%, 52%, 0.2);
   --color-text: #0f172a;
   --color-text-muted: #475569;
   --header-bar-bg: hsla(0, 0%, 100%, 0.92);
