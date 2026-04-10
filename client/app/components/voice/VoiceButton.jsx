@@ -35,16 +35,24 @@ export default function VoiceButton({
   language = 'en'
 }) {
   const [internalState, setInternalState] = useState(VOICE_STATE.IDLE)
-  const [consentShown, setConsentShown] = useState(true) // assume true initially, check in useEffect
   const [handsFree, setHandsFree] = useState(false)
   const [lastProcessedResponse, setLastProcessedResponse] = useState(null)
   const [micDenied, setMicDenied] = useState(false)
+  const [serverVoiceEnabled, setServerVoiceEnabled] = useState(true)
+  const [serverVoiceErrorVisible, setServerVoiceErrorVisible] = useState(false)
+  const [transcribeError, setTranscribeError] = useState(null)
 
   const { isRecording, startRecording, stopRecording, audioBlob, error: recorderError, clearBlob } = useVoiceRecorder({
     vadEnabled: handsFree,
     onSilence: () => {
       if (internalState === VOICE_STATE.LISTENING) {
         stopRecording()
+      }
+    },
+    onRecordingComplete: (blob) => {
+      if (internalState === VOICE_STATE.LISTENING) {
+        handleTranscribe(blob)
+        clearBlob()
       }
     }
   })
@@ -59,21 +67,29 @@ export default function VoiceButton({
     onStateChange?.(next)
   }, [onStateChange])
 
-  // --- Initial check for consent ---
-  useEffect(() => {
-    const shown = localStorage.getItem(VOICE_CONSENT_KEY)
-    if (!shown) {
-      setConsentShown(false)
+  // --- Initial check for consent (lazy initialization) ---
+  const [consentShown, setConsentShown] = useState(() => {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(VOICE_CONSENT_KEY) === 'true'
     }
-  }, [])
+    return false
+  })
 
-  // --- Handle Recording Completion (STT Trigger) ---
+  // --- Check Backend Configuration ---
   useEffect(() => {
-    if (audioBlob && internalState === VOICE_STATE.LISTENING) {
-      handleTranscribe(audioBlob)
-      clearBlob()
-    }
-  }, [audioBlob, internalState, clearBlob])
+    fetch(`${baseUrl}/api/voice/config`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.voice_enabled === false) {
+          setServerVoiceEnabled(false)
+        }
+      })
+      .catch((err) => {
+        console.warn('[VoiceButton] Could not fetch voice config:', err)
+      })
+  }, [baseUrl])
+
+  // --- STT trigger now handled by onRecordingComplete ---
 
   // --- Handle Recorder Errors ---
   useEffect(() => {
@@ -119,17 +135,23 @@ export default function VoiceButton({
         body: formData,
       })
 
-      if (!res.ok) throw new Error('STT failed')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.message || 'STT failed')
+      }
       const data = await res.json()
       
       if (data.transcript) {
+        // Send to parent immediately - parent should trigger handleSend
         onTranscript?.(data.transcript)
-        // We stay in PROCESSING until assistantResponse is updated and handleSynthesize is called
+        // Transition to IDLE unless parent triggers PROCESSING via assistantResponse
+        updateState(VOICE_STATE.IDLE)
       } else {
         updateState(VOICE_STATE.IDLE)
       }
     } catch (err) {
-      console.error('[VoiceButton] Transcribe error:', err)
+      console.error('[VoiceButton] Transcribe error:', err.message)
+      setTranscribeError(err.message)
       updateState(VOICE_STATE.IDLE)
     }
   }
@@ -156,6 +178,14 @@ export default function VoiceButton({
   }
 
   const handleClick = () => {
+    if (!consentShown) return // Block interaction until consent is handled
+    setTranscribeError(null)
+
+    if (!serverVoiceEnabled) {
+      setServerVoiceErrorVisible(true)
+      return
+    }
+
     if (internalState === VOICE_STATE.IDLE) {
       startRecording()
       updateState(VOICE_STATE.LISTENING)
@@ -182,6 +212,24 @@ export default function VoiceButton({
       <div className="voice-denied-strip">
         <span>{t('voiceMicDenied')}</span>
         <a onClick={() => setMicDenied(false)}>{t('voiceRetry')}</a>
+      </div>
+    )
+  }
+
+  if (serverVoiceErrorVisible) {
+    return (
+      <div className="voice-denied-strip">
+        <span>{t('voiceNotConfigured')}</span>
+        <a onClick={() => setServerVoiceErrorVisible(false)}>{t('feedbackClose')}</a>
+      </div>
+    )
+  }
+
+  if (transcribeError) {
+    return (
+      <div className="voice-denied-strip">
+        <span>{t('voiceUnavailable') || 'Voice feature is currently unavailable. Please try again later.'}</span>
+        <a onClick={() => setTranscribeError(null)}>{t('feedbackClose')}</a>
       </div>
     )
   }

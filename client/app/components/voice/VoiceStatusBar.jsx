@@ -20,7 +20,7 @@ export default function VoiceStatusBar({ voiceState = 'IDLE', transcript }) {
   const LABELS = {
     IDLE: '',
     LISTENING: t('voiceListening'),
-    PROCESSING: t('voiceProcessing'),
+    PROCESSING: transcript ? t('voiceProcessing') : t('voiceTranscribing'),
     SPEAKING: t('voiceSpeaking'),
   }
   const label = LABELS[voiceState] || ''
