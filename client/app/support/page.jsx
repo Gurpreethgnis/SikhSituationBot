@@ -22,7 +22,8 @@ export default function SupportPage() {
         <section>
           <h2>Contact Information</h2>
           <p>
-            Email us directly at: <a href="mailto:support@gianiji.com">support@gianiji.com</a>
+            Email us directly at:{' '}
+            <a href="mailto:gurpreets.nanda@gmail.com">gurpreets.nanda@gmail.com</a>
           </p>
         </section>
 
