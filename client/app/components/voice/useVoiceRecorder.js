@@ -85,9 +85,13 @@ export function useVoiceRecorder(options = {}) {
         analyserRef.current = analyser
 
         const buffer = new Float32Array(analyser.fftSize)
-        let lastSpeakTime = Date.now()
-        const SILENCE_THRESHOLD = 0.015
-        const SILENCE_TIMEOUT_MS = 1500
+        let lastSpeakTime = null // null = waiting for speech to start
+        let speechStarted = false
+        const SILENCE_THRESHOLD = 0.012 // Lower threshold to be more sensitive
+        const SPEECH_START_THRESHOLD = 0.02 // Higher threshold to confirm speech started
+        const SILENCE_TIMEOUT_MS = 1800 // 1.8 seconds of silence after speech ends
+        const MAX_WAIT_FOR_SPEECH_MS = 10000 // Give up after 10s if no speech detected
+        const startTime = Date.now()
 
         const checkVoice = () => {
           if (!analyserRef.current) return
@@ -97,11 +101,30 @@ export function useVoiceRecorder(options = {}) {
           const rms = Math.sqrt(sumSq / buffer.length)
 
           const now = Date.now()
+
+          // Phase 1: Wait for speech to start
+          if (!speechStarted) {
+            if (rms > SPEECH_START_THRESHOLD) {
+              speechStarted = true
+              lastSpeakTime = now
+              console.log('[VAD] Speech detected, starting silence monitoring')
+            } else if (now - startTime > MAX_WAIT_FOR_SPEECH_MS) {
+              // Timeout waiting for speech - end recording anyway
+              console.log('[VAD] No speech detected after timeout, ending')
+              onSilence?.()
+              return
+            }
+            vadRafRef.current = requestAnimationFrame(checkVoice)
+            return
+          }
+
+          // Phase 2: Monitor for silence after speech started
           if (rms > SILENCE_THRESHOLD) {
             lastSpeakTime = now
           }
 
           if (now - lastSpeakTime > SILENCE_TIMEOUT_MS) {
+            console.log('[VAD] Silence detected after speech, ending recording')
             onSilence?.()
             return // Stop loop
           }
