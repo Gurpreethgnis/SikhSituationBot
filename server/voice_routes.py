@@ -126,11 +126,13 @@ def _mime_to_ext(mime: str) -> str:
 @voice_blueprint.route("/api/voice/config", methods=["GET"])
 def voice_config():
     """Return supported languages, available TTS voices, and VAD capability flag."""
+    key = (os.environ.get("OPENAI_API_KEY") or os.environ.get("OPEN_API_KEY") or "").strip()
     return jsonify(
         {
             "supported_languages": SUPPORTED_LANGUAGES,
             "available_voices": AVAILABLE_VOICES,
             "vad_enabled": True,
+            "voice_enabled": bool(key),
         }
     ), 200
 

@@ -421,78 +421,9 @@ def health_check():
     ), 200
 
 
-# --- Voice Interaction (OpenAI) ---
-@app.route("/api/voice/transcribe", methods=["POST"])
-@require_auth
-def transcribe_audio():
-    """
-    STT: Transcribe audio file from mobile/web using OpenAI Whisper.
-    Expects 'audio' file in multipart/form-data.
-    """
-    openai_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPEN_API_KEY")
-    if not openai_key:
-        return jsonify({"error": "Voice transcription not configured (missing API key)"}), 503
-
-    if 'audio' not in request.files:
-        return jsonify({"error": "No audio file provided"}), 400
-
-    audio_file = request.files['audio']
-    if audio_file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=openai_key)
-
-        # Transcribe using Whisper
-        # Note: Whisper expects a file with a supported extension (e.g. .m4a, .mp3, .wav)
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file
-        )
-
-        return jsonify({"text": transcript.text}), 200
-    except Exception as e:
-        logger.error("Voice transcription failed: %s", e)
-        return jsonify({"error": "Transcription failed"}), 500
-
-
-@app.route("/api/voice/synthesize", methods=["POST"])
-@require_auth
-def synthesize_speech():
-    """
-    TTS: Convert text to speech using OpenAI TTS.
-    Expects JSON: { "text": "...", "voice": "alloy" }
-    """
-    openai_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPEN_API_KEY")
-    if not openai_key:
-        return jsonify({"error": "Voice synthesis not configured (missing API key)"}), 503
-
-    data = request.get_json(silent=True) or {}
-    text = (data.get("text") or "").strip()
-    voice = (data.get("voice") or "alloy").strip()
-
-    if not text:
-        return jsonify({"error": "Text is required"}), 400
-
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=openai_key)
-
-        # Generate speech
-        response = client.audio.speech.create(
-            model="tts-1",
-            voice=voice,
-            input=text
-        )
-
-        # Return audio stream directly or save to cloud (returning direct stream for now)
-        # In production, you might want to cache this or upload to S3/GCS.
-        return response.content, 200, {'Content-Type': 'audio/mpeg'}
-    except Exception as e:
-        logger.error("Speech synthesis failed: %s", e)
-        return jsonify({"error": "Synthesis failed"}), 500
-
+# Voice STT/TTS is implemented only in voice_blueprint (voice_routes.py). Duplicate
+# @app.route handlers here previously required JWT on transcribe while the web
+# VoiceButton called the API without Authorization, causing production failures.
 
 @app.route("/api/stats/knowledge", methods=["GET"])
 def knowledge_stats():
