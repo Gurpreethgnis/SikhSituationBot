@@ -26,3 +26,7 @@ google-play-service-account.json
 
 expo-env.d.ts
 # @end expo-cli
+
+# Native projects from `expo prebuild` (large; regenerate locally / use EAS)
+android/
+ios/

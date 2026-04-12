@@ -23,6 +23,18 @@ export default function SettingsPage() {
   const [memories, setMemories] = useState([])
   const [memoriesOpen, setMemoriesOpen] = useState(false)
   const [memoriesLoading, setMemoriesLoading] = useState(false)
+  const [preferredVoice, setPreferredVoice] = useState('coral')
+
+  const VOICE_OPTIONS = [
+    { id: 'alloy', label: 'Alloy', description: 'Neutral and balanced' },
+    { id: 'ash', label: 'Ash', description: 'Warm and conversational' },
+    { id: 'ballad', label: 'Ballad', description: 'Soft and melodic' },
+    { id: 'coral', label: 'Coral', description: 'Friendly and approachable' },
+    { id: 'echo', label: 'Echo', description: 'Clear and articulate' },
+    { id: 'sage', label: 'Sage', description: 'Calm and wise' },
+    { id: 'shimmer', label: 'Shimmer', description: 'Bright and energetic' },
+    { id: 'verse', label: 'Verse', description: 'Thoughtful and measured' },
+  ]
 
   const base = apiBase()
 
@@ -50,6 +62,7 @@ export default function SettingsPage() {
         if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
           setTheme(u.preferred_theme)
         }
+        if (u?.preferred_voice) setPreferredVoice(u.preferred_voice)
         setError('')
       } catch (e) {
         if (!cancelled) setError(e.message || 'Could not load settings')
@@ -83,6 +96,7 @@ export default function SettingsPage() {
           preferred_theme: theme,
           memory_enabled: memoryEnabled,
           memory_retention_days: memoryRetentionDays,
+          preferred_voice: preferredVoice,
         }),
       })
       const d = await r.json()
@@ -251,6 +265,25 @@ export default function SettingsPage() {
           <p className="settings-hint">Applies across the app. Saved on this device; use Save below to sync theme to your account.</p>
           <ThemeSwitcher />
         </div>
+
+        <label className="settings-label" htmlFor="pref-voice">
+          Voice for conversations
+        </label>
+        <p className="settings-hint">
+          Choose the voice used when speaking with Giani Ji. Tap the mic button in chat to start a voice conversation.
+        </p>
+        <select
+          id="pref-voice"
+          className="settings-select"
+          value={preferredVoice}
+          onChange={(e) => setPreferredVoice(e.target.value)}
+        >
+          {VOICE_OPTIONS.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.label} — {v.description}
+            </option>
+          ))}
+        </select>
 
         <span className="settings-label">Conversation memory</span>
         <p className="settings-hint">

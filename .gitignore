@@ -54,3 +54,5 @@ client/npm_install_log.txt
 docker-compose.yml
 .agent/workflows/start-dev.md
 .agent/workflows/push-pr.md
+.env*.local
+.env.vercel.production
