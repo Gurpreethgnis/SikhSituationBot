@@ -113,6 +113,29 @@
   outline-offset: 2px;
 }
 
+/* ── End session button (appears in hands-free mode) ────────── */
+.voice-end-session {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.voice-end-session:hover {
+  background: rgba(239, 68, 68, 0.25);
+  transform: scale(1.1);
+}
+
 /* ── Sound-wave icon for SPEAKING state ─────────────────────── */
 .voice-wave {
   display: flex;

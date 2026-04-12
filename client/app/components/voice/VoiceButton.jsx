@@ -41,6 +41,10 @@ export default function VoiceButton({
   const [serverVoiceEnabled, setServerVoiceEnabled] = useState(true)
   const [serverVoiceErrorVisible, setServerVoiceErrorVisible] = useState(false)
   const [transcribeError, setTranscribeError] = useState(null)
+  // Track if we're in an active voice conversation session (user initiated voice)
+  const [voiceSessionActive, setVoiceSessionActive] = useState(false)
+  // Track if we're waiting for assistant response to speak
+  const [awaitingResponse, setAwaitingResponse] = useState(false)
 
   const { isRecording, startRecording, stopRecording, audioBlob, error: recorderError, clearBlob } = useVoiceRecorder({
     vadEnabled: handsFree,
@@ -106,22 +110,29 @@ export default function VoiceButton({
   useEffect(() => {
     if (assistantResponse && assistantResponse !== lastProcessedResponse) {
       setLastProcessedResponse(assistantResponse)
-      // Only auto-speak if we are currently in a voice-active session (not IDLE)
-      // or if we just finished a PROCESSING turn.
-      if (internalState === VOICE_STATE.PROCESSING) {
+      // Speak if we're in a voice session and waiting for response
+      // This allows TTS even when state has transitioned to IDLE after transcription
+      if (voiceSessionActive && awaitingResponse) {
+        setAwaitingResponse(false)
         handleSynthesize(assistantResponse)
       }
     }
-  }, [assistantResponse, lastProcessedResponse, internalState])
+  }, [assistantResponse, lastProcessedResponse, voiceSessionActive, awaitingResponse])
 
   // --- Sync component state with audio playback ---
   useEffect(() => {
     if (isPlaying) {
       updateState(VOICE_STATE.SPEAKING)
     } else if (internalState === VOICE_STATE.SPEAKING) {
-      updateState(VOICE_STATE.IDLE)
+      // Bot finished speaking - if hands-free mode is on, auto-restart listening
+      if (handsFree && voiceSessionActive) {
+        startRecording()
+        updateState(VOICE_STATE.LISTENING)
+      } else {
+        updateState(VOICE_STATE.IDLE)
+      }
     }
-  }, [isPlaying, internalState, updateState])
+  }, [isPlaying, internalState, updateState, handsFree, voiceSessionActive, startRecording])
 
   const handleTranscribe = async (blob) => {
     updateState(VOICE_STATE.PROCESSING)
@@ -142,10 +153,12 @@ export default function VoiceButton({
       const data = await res.json()
       
       if (data.transcript) {
+        // Mark that we're waiting for assistant response to speak it
+        setAwaitingResponse(true)
         // Send to parent immediately - parent should trigger handleSend
         onTranscript?.(data.transcript)
-        // Transition to IDLE unless parent triggers PROCESSING via assistantResponse
-        updateState(VOICE_STATE.IDLE)
+        // Show processing state while waiting for response
+        updateState(VOICE_STATE.PROCESSING)
       } else {
         updateState(VOICE_STATE.IDLE)
       }
@@ -187,6 +200,8 @@ export default function VoiceButton({
     }
 
     if (internalState === VOICE_STATE.IDLE) {
+      // Start a voice conversation session
+      setVoiceSessionActive(true)
       startRecording()
       updateState(VOICE_STATE.LISTENING)
     } else if (internalState === VOICE_STATE.LISTENING) {
@@ -195,8 +210,19 @@ export default function VoiceButton({
     } else if (internalState === VOICE_STATE.SPEAKING) {
       interruptAudio()
       updateState(VOICE_STATE.IDLE)
+    } else if (internalState === VOICE_STATE.PROCESSING) {
+      // User wants to cancel while waiting for response
+      setAwaitingResponse(false)
+      setVoiceSessionActive(false)
+      updateState(VOICE_STATE.IDLE)
     }
   }
+
+  // End voice session when user manually stops (non-hands-free)
+  const endVoiceSession = useCallback(() => {
+    setVoiceSessionActive(false)
+    setAwaitingResponse(false)
+  }, [])
 
   const handleConsentAllow = () => {
     localStorage.setItem(VOICE_CONSENT_KEY, 'true')
@@ -265,11 +291,30 @@ export default function VoiceButton({
 
         <button 
           className={`voice-mode-toggle ${handsFree ? 'active' : ''}`}
-          onClick={() => setHandsFree(!handsFree)}
-          title={handsFree ? 'Hands-free active' : 'Push-to-talk'}
+          onClick={() => {
+            const newHandsFree = !handsFree
+            setHandsFree(newHandsFree)
+            // If turning off hands-free while in a session, end the session
+            if (!newHandsFree && voiceSessionActive && internalState === VOICE_STATE.IDLE) {
+              setVoiceSessionActive(false)
+            }
+          }}
+          title={handsFree ? 'Hands-free: conversation continues automatically' : 'Push-to-talk: manual control'}
         >
           {handsFree ? 'HF' : 'PTT'}
         </button>
+        {voiceSessionActive && handsFree && internalState === VOICE_STATE.IDLE && (
+          <button 
+            className="voice-end-session"
+            onClick={() => {
+              setVoiceSessionActive(false)
+              setAwaitingResponse(false)
+            }}
+            title="End voice conversation"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {!consentShown && (
