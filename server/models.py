@@ -33,6 +33,8 @@ class User(db.Model):
     # Cross-session memory (issue #42): optional facts extracted from chats
     memory_enabled = Column(Boolean, default=True, nullable=False)
     memory_retention_days = Column(Integer, default=90, nullable=False)
+    # Voice preference for Realtime API TTS
+    preferred_voice = Column(String(20), default="coral", nullable=False)
 
     chats = relationship("Chat", back_populates="user", lazy="dynamic", cascade="all, delete-orphan")
     memories = relationship(
@@ -58,6 +60,7 @@ class User(db.Model):
             "last_login": self.last_login.isoformat() if self.last_login else None,
             "memory_enabled": bool(self.memory_enabled),
             "memory_retention_days": int(self.memory_retention_days or 90),
+            "preferred_voice": self.preferred_voice or "coral",
         }
         if include_sensitive:
             d["is_active"] = self.is_active

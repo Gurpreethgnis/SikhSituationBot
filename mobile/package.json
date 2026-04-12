@@ -4,9 +4,14 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "sync-env": "node ./scripts/sync-env-from-root.mjs",
+    "verify:google-android-oauth": "node ./scripts/verify-google-android-oauth.mjs",
+    "eas:build:ios:production": "eas build --platform ios --profile production",
+    "eas:submit:ios:latest": "eas submit --platform ios --latest",
+    "eas:production:ios": "bash ./scripts/eas-production-ios.sh"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -17,6 +22,7 @@
     "expo-build-properties": "~1.0.10",
     "expo-clipboard": "~8.0.8",
     "expo-constants": "~18.0.13",
+    "expo-dev-client": "~6.0.20",
     "expo-device": "~8.0.10",
     "expo-font": "~14.0.11",
     "expo-linking": "~8.0.11",

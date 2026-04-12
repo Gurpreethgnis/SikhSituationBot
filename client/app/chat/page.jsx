@@ -16,7 +16,7 @@ import { apiBase, authHeaders } from '../../lib/api'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { useTranslation, SUPPORTED_UI_LANGUAGES } from '../contexts/TranslationContext.jsx'
 import VoiceButton from '../components/voice/VoiceButton.jsx'
-import VoiceStatusBar from '../components/voice/VoiceStatusBar.jsx'
+import VoiceMode from '../components/voice/VoiceMode.jsx'
 import '../App.css'
 import '../parmaans/parmaans.css'
 
@@ -81,8 +81,8 @@ export default function ChatPage() {
   const [parmaanSearchLoading, setParmaanSearchLoading] = useState(false)
   const [parmaanSearchErr, setParmaanSearchErr] = useState('')
   const [parmaanLookupSearchEmpty, setParmaanLookupSearchEmpty] = useState(false)
-  const [voiceState, setVoiceState] = useState('IDLE')
-  const [voiceTranscript, setVoiceTranscript] = useState(null)
+  const [voiceModeOpen, setVoiceModeOpen] = useState(false)
+  const [preferredVoice, setPreferredVoice] = useState('coral')
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -220,6 +220,7 @@ export default function ChatPage() {
         if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
           setTheme(u.preferred_theme)
         }
+        if (u?.preferred_voice) setPreferredVoice(u.preferred_voice)
       } catch {
         /* ignore */
       }
@@ -740,7 +741,6 @@ export default function ChatPage() {
                 )}
               </p>
             )}
-            <VoiceStatusBar voiceState={voiceState} transcript={voiceTranscript} />
             {suggestions.length > 0 && !loading && messages.length > 0 && (
               <div className="suggestions-bar">
                 {suggestions.slice(0, 3).map((suggestion, i) => (
@@ -779,17 +779,7 @@ export default function ChatPage() {
                   }}
                   endAdornment={
                     <VoiceButton
-                      onTranscript={(t) => {
-                        setVoiceTranscript(t)
-                        handleSend(t)
-                      }}
-                      onStateChange={setVoiceState}
-                      assistantResponse={
-                        messages.length > 0 && messages[messages.length - 1].role === 'assistant'
-                          ? messages[messages.length - 1].content
-                          : null
-                      }
-                      language={language}
+                      onActivate={() => setVoiceModeOpen(true)}
                       disabled={loading}
                     />
                   }
@@ -859,17 +849,7 @@ export default function ChatPage() {
                 }
                 endAdornment={
                   <VoiceButton
-                    onTranscript={(t) => {
-                      setVoiceTranscript(t)
-                      handleSend(t)
-                    }}
-                    onStateChange={setVoiceState}
-                    assistantResponse={
-                      messages.length > 0 && messages[messages.length - 1].role === 'assistant'
-                        ? messages[messages.length - 1].content
-                        : null
-                    }
-                    language={language}
+                    onActivate={() => setVoiceModeOpen(true)}
                     disabled={loading}
                   />
                 }
@@ -889,6 +869,18 @@ export default function ChatPage() {
           token={token}
           baseUrl={baseUrl}
           t={t}
+        />
+
+        <VoiceMode
+          isOpen={voiceModeOpen}
+          onClose={() => setVoiceModeOpen(false)}
+          token={token}
+          voice={preferredVoice}
+          onMessage={(role, text) => {
+            if (role === 'user') {
+              handleSend(text)
+            }
+          }}
         />
       </main>
     </div>

@@ -1,12 +1,14 @@
-import { useEffect, useCallback, useState } from 'react';
-import { LogBox, View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { Stack, useRouter, useSegments, Slot } from 'expo-router';
+import { useEffect } from 'react';
+import { LogBox, View } from 'react-native';
+import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { TranslationProvider } from '../contexts/TranslationContext';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 LogBox.ignoreLogs([
   'Require cycle',
@@ -15,8 +17,6 @@ LogBox.ignoreLogs([
   'Android Push notifications',
 ]);
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
-
 // ---------------------------------------------------------------------------
 // Auth gate — redirects based on auth state
 // ---------------------------------------------------------------------------
@@ -24,33 +24,57 @@ function AuthGate() {
   const { token, user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const navRef = useNavigationContainerRef();
 
   useEffect(() => {
     if (isLoading) return;
-    const inAuthGroup = segments[0] === '(auth)';
-    const inOnboarding = segments[0] === 'onboarding';
 
-    if (!token) {
-      if (!inAuthGroup) router.replace('/(auth)/login');
-    } else if (user?.needs_birth_year && !inOnboarding) {
-      router.replace('/onboarding');
-    } else if (token && !user?.needs_birth_year && inAuthGroup) {
-      router.replace('/(tabs)/chat');
+    let cancelled = false;
+
+    const applyRedirects = (): boolean => {
+      if (!navRef.isReady()) return false;
+      const inAuthGroup = segments[0] === '(auth)';
+      const inOnboarding = segments[0] === 'onboarding';
+
+      if (!token) {
+        if (!inAuthGroup) router.replace('/(auth)/login');
+      } else if (user?.needs_birth_year && !inOnboarding) {
+        router.replace('/onboarding');
+      } else if (token && !user?.needs_birth_year && inAuthGroup) {
+        router.replace('/(tabs)/chat');
+      }
+      return true;
+    };
+
+    if (applyRedirects()) {
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [token, user, isLoading, segments]);
+
+    const id = setInterval(() => {
+      if (cancelled) return;
+      if (applyRedirects()) clearInterval(id);
+    }, 32);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [token, user, isLoading, segments, navRef, router]);
 
   return null;
 }
 
 // ---------------------------------------------------------------------------
-// Inner layout (has access to theme context)
+// Shell: Stack first (navigator must mount before imperative redirects),
+// then AuthGate (polls until NavigationContainer is ready).
 // ---------------------------------------------------------------------------
-function InnerLayout() {
+function AppShell() {
   const { theme } = useTheme();
   const { token } = useAuth();
 
-  // Dynamically import notifications to avoid auto-registration errors in Expo Go
-  useEffect(() => { 
+  useEffect(() => {
     import('../lib/notifications')
       .then(({ configureNotifications }) => configureNotifications())
       .catch(() => {});
@@ -66,69 +90,38 @@ function InnerLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      {/*
+        Stack must mount before any sibling calls router.replace, or Expo Router throws
+        "Attempted to navigate before mounting the Root Layout component".
+      */}
+      <Stack screenOptions={{ headerShown: false, animation: 'default' }} />
       <AuthGate />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="shared/[shareId]" options={{ presentation: 'modal', headerShown: false }} />
-      </Stack>
       <StatusBar style="auto" />
     </View>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Root layout — loads fonts and wraps providers
+// Root layout — fonts + splash
 // ---------------------------------------------------------------------------
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     'NotoSansGurmukhi': require('../assets/fonts/NotoSansGurmukhi-Regular.ttf'),
     'NotoSansGurmukhi-Bold': require('../assets/fonts/NotoSansGurmukhi-Bold.ttf'),
   });
-  const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
-    // Once fonts are loaded (or errored), mark app as ready
     if (fontsLoaded || fontError) {
-      setAppIsReady(true);
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsLoaded, fontError]);
 
-  // Fallback timeout in case fonts take too long
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!appIsReady) {
-        console.warn('Font loading timeout, proceeding anyway');
-        setAppIsReady(true);
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [appIsReady]);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (appIsReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [appIsReady]);
-
-  // Show loading indicator while fonts are loading
-  if (!appIsReady && !fontsLoaded) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingEmoji}>☬</Text>
-        <ActivityIndicator size="large" color="#9b5de5" />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1, backgroundColor: '#0f0c1a' }}>
       <AuthProvider>
         <ThemeProvider>
           <TranslationProvider>
-            <InnerLayout />
+            <AppShell />
           </TranslationProvider>
         </ThemeProvider>
       </AuthProvider>
@@ -136,20 +129,3 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0f0c1a',
-  },
-  loadingEmoji: {
-    fontSize: 64,
-    marginBottom: 20,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#8a80a0',
-  },
-});

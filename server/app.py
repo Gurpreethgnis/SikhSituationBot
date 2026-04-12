@@ -69,6 +69,7 @@ from feedback_github import (
 )
 from search_routes import search_blueprint
 from voice_routes import voice_blueprint
+from realtime_routes import realtime_blueprint, init_realtime_routes
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -240,6 +241,12 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 app = Flask(__name__)
 app.register_blueprint(search_blueprint)
 app.register_blueprint(voice_blueprint)
+app.register_blueprint(realtime_blueprint)
+
+from flask_sock import Sock
+sock = Sock(app)
+init_realtime_routes(sock)
+
 CORS(
     app,
     resources={
@@ -698,6 +705,11 @@ def patch_me():
                 u.memory_retention_days = rd
         except (TypeError, ValueError):
             pass
+    if "preferred_voice" in data:
+        voice = str(data["preferred_voice"]).lower().strip()
+        valid_voices = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"]
+        if voice in valid_voices:
+            u.preferred_voice = voice
     db.session.commit()
     return jsonify({"user": u.to_dict()}), 200
 

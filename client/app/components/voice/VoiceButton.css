@@ -1,13 +1,5 @@
 /* VoiceButton.css */
 
-/* ── Container ──────────────────────────────────────────────── */
-.voice-btn-group {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-
 /* ── Mic trigger button ─────────────────────────────────────── */
 .voice-btn {
   display: flex;
@@ -36,129 +28,10 @@
   outline-offset: 2px;
 }
 
-/* LISTENING state — pulsing red */
-.voice-btn[data-state='LISTENING'] {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  animation: vb-pulse-ring 1.2s ease-in-out infinite;
-}
-
-/* PROCESSING state — indigo spinner tint */
-.voice-btn[data-state='PROCESSING'] {
-  background: rgba(99, 102, 241, 0.12);
-  color: #818cf8;
-  cursor: default;
-}
-
-/* SPEAKING state — green wave tint */
-.voice-btn[data-state='SPEAKING'] {
-  background: rgba(34, 197, 94, 0.12);
-  color: #22c55e;
-}
-
-@keyframes vb-pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
-  50%       { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-}
-
 /* Icons inside the button */
-.voice-btn svg,
-.voice-btn__spinner {
+.voice-btn svg {
   width: 18px;
   height: 18px;
-}
-
-.voice-btn__spinner {
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: vb-spin 0.75s linear infinite;
-}
-
-@keyframes vb-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ── Mode toggle (PTT / Hands-free) ─────────────────────────── */
-.voice-mode-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text-muted, #9ca3af);
-  font-size: 0.7rem;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.voice-mode-toggle:hover {
-  background: rgba(120, 120, 140, 0.15);
-  color: var(--text-primary, #e5e7eb);
-}
-
-.voice-mode-toggle.active {
-  background: rgba(99, 102, 241, 0.15);
-  color: #818cf8;
-  font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.3);
-}
-
-.voice-mode-toggle:focus-visible {
-  outline: 2px solid var(--composer-gpt-focus-ring, #6366f1);
-  outline-offset: 2px;
-}
-
-/* ── End session button (appears in hands-free mode) ────────── */
-.voice-end-session {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-.voice-end-session:hover {
-  background: rgba(239, 68, 68, 0.25);
-  transform: scale(1.1);
-}
-
-/* ── Sound-wave icon for SPEAKING state ─────────────────────── */
-.voice-wave {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 16px;
-}
-
-.voice-wave span {
-  display: inline-block;
-  width: 3px;
-  background: currentColor;
-  border-radius: 2px;
-  animation: vb-wave 0.7s ease-in-out infinite;
-}
-.voice-wave span:nth-child(1) { animation-delay: 0s;      animation-duration: 0.65s; }
-.voice-wave span:nth-child(2) { animation-delay: 0.15s;   animation-duration: 0.8s;  }
-.voice-wave span:nth-child(3) { animation-delay: 0.3s;    animation-duration: 0.7s;  }
-.voice-wave span:nth-child(4) { animation-delay: 0.1s;    animation-duration: 0.9s;  }
-
-@keyframes vb-wave {
-  0%, 100% { height: 6px;   opacity: 0.7; }
-  50%       { height: 16px;  opacity: 1;   }
 }
 
 /* ── Privacy consent modal ───────────────────────────────────── */

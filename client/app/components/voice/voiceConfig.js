@@ -4,11 +4,11 @@
  * Import these into hooks and components — do not hardcode values elsewhere.
  */
 
-/** Default OpenAI TTS voice. alloy is gender-neutral and low-latency. */
-export const DEFAULT_VOICE = 'alloy'
+/** Default OpenAI Realtime API voice. coral is friendly and approachable. */
+export const DEFAULT_VOICE = 'coral'
 
-/** Available TTS voices (mirrors server /api/voice/config). */
-export const AVAILABLE_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+/** Available Realtime API TTS voices. */
+export const AVAILABLE_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse']
 
 /** BCP-47 language codes supported for Whisper STT. */
 export const SUPPORTED_LANGUAGES = [
