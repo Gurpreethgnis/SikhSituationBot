@@ -73,12 +73,12 @@ class TestGeminiSynthesis(unittest.TestCase):
 
         # Should contain persona guidance
         self.assertIn("adult", prompt)
-        self.assertIn("philosophical", prompt)
+        self.assertIn("genuine", prompt)
 
         # Should contain shabad context
         self.assertIn("burning heat", prompt)
         self.assertIn("Fearless Lord", prompt)
-        self.assertIn("STYLE PROFILE", prompt)
+        self.assertIn("CONVERSATIONAL STYLE", prompt)
         self.assertIn("RESPONSE FORM POLICY", prompt)
 
     def test_build_gemini_response_prompt_child(self):
@@ -88,7 +88,7 @@ class TestGeminiSynthesis(unittest.TestCase):
         # Should contain child-specific guidance
         self.assertIn("child", prompt)
         self.assertIn("simple words", prompt)
-        self.assertIn("comforting metaphors", prompt)
+        self.assertIn("playful", prompt)
 
     def test_build_gemini_response_prompt_teen(self):
         """Test building Gemini prompt for teen persona."""
@@ -96,8 +96,8 @@ class TestGeminiSynthesis(unittest.TestCase):
 
         # Should contain teen-specific guidance
         self.assertIn("teen", prompt)
-        self.assertIn("modern language", prompt)
-        self.assertIn("peer pressure", prompt)
+        self.assertIn("modern", prompt)
+        self.assertIn("conversational language", prompt)
 
     def test_build_gemini_response_prompt_no_shabads(self):
         """Test building Gemini prompt when no shabads are found."""
@@ -105,8 +105,8 @@ class TestGeminiSynthesis(unittest.TestCase):
 
         # Empty list triggers clarification-style branch (no scripture yet)
         self.assertIn(self.user_query, prompt)
-        self.assertIn("vague or incomplete", prompt)
-        self.assertIn("clarifying", prompt.lower())
+        self.assertIn("more context", prompt)
+        self.assertIn("caring", prompt.lower())
 
     def test_build_gemini_response_prompt_situational_mode(self):
         """Situational mode uses dedicated instructions without Gurbani context block."""
@@ -144,7 +144,7 @@ class TestGeminiSynthesis(unittest.TestCase):
 
         # Should fallback to adult
         self.assertIn("adult", prompt)
-        self.assertIn("philosophical", prompt)
+        self.assertIn("genuine", prompt)
 
     def test_persona_contexts_structure(self):
         """Test that persona contexts have required structure."""
