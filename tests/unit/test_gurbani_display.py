@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server")
 
 from gurbani_display import (
     canonical_shabad_markdown,
+    ensure_all_sttm_links_for_retrieved_shabads,
     ensure_guidance_grounded,
     format_parmaan_commentary_context,
     guidance_grounding_ok,
@@ -170,6 +171,51 @@ class TestGurbaniDisplay(unittest.TestCase):
         self.assertFalse(guidance_grounding_ok(only_first, shabads))
         both = only_first + " " + ("y" * 50) + " " + ("why " * 15) + " SGGS Ang 2"
         self.assertTrue(guidance_grounding_ok(both, shabads))
+
+    @patch("gurbani_display.fetch_banidb_shabad_display", return_value=None)
+    def test_ensure_all_sttm_inserts_missing_second_url(self, _mock_fetch):
+        """When prose cites two shabads but only embeds one STTM URL, append the other before SUGGESTIONS."""
+        shabads = [
+            {
+                "shabad_id": "sggs_10",
+                "gurmukhi": "A" * 50,
+                "english_translation": "ea " * 15,
+                "source": "SGGS Ang 10",
+            },
+            {
+                "shabad_id": "sggs_20",
+                "gurmukhi": "B" * 50,
+                "english_translation": "eb " * 15,
+                "source": "SGGS Ang 20",
+            },
+        ]
+        u10 = "https://www.sikhitothemax.org/shabad?id=10"
+        u20 = "https://www.sikhitothemax.org/shabad?id=20"
+        body = (
+            f"Reflection.\n\n{'A' * 50}\n{('ea ' * 15).strip()}\n{u10}\n\n"
+            f"{'B' * 50}\n{('eb ' * 15).strip()}\n\n[SUGGESTIONS]\n- a\n- b\n- c\n"
+        )
+        out = ensure_all_sttm_links_for_retrieved_shabads(body, shabads)
+        self.assertIn("complete references", out)
+        self.assertIn(u20, out)
+        self.assertLess(out.find(u20), out.rfind("[SUGGESTIONS]"))
+        self.assertGreaterEqual(out.count(u10), 1)
+
+    @patch("gurbani_display.fetch_banidb_shabad_display", return_value=None)
+    def test_ensure_all_sttm_noop_when_all_urls_present(self, _mock_fetch):
+        shabads = [
+            {
+                "shabad_id": "sggs_3",
+                "gurmukhi": "C" * 50,
+                "english_translation": "ec " * 15,
+                "source": "SGGS Ang 3",
+            },
+        ]
+        u3 = "https://www.sikhitothemax.org/shabad?id=3"
+        body = f"{'C' * 50}\n{u3}\n\n[SUGGESTIONS]\n- x\n"
+        out = ensure_all_sttm_links_for_retrieved_shabads(body, shabads)
+        self.assertNotIn("complete references", out)
+        self.assertEqual(out, body)
 
 
 if __name__ == "__main__":

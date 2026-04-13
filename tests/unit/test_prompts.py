@@ -239,12 +239,13 @@ class TestPrompts(unittest.TestCase):
         )
 
         persona_pos = result.find('PERSONA:')
-        # Match the guidance-mode GURBANI CONTEXT block (format changed)
-        context_pos = result.find('GURBANI CONTEXT (')
+        # SYSTEM_PROMPT / policy text mention "GURBANI CONTEXT (" in prose — match the real context header.
+        context_header = 'relevant shabad(s) — your response MUST be grounded in these; weave them naturally into conversation):'
+        context_pos = result.find(context_header)
         question_pos = result.find('USER\'S MESSAGE:')
 
         self.assertGreater(persona_pos, 0, "PERSONA: should be present")
-        self.assertGreater(context_pos, 0, "GURBANI CONTEXT should be present")
+        self.assertGreater(context_pos, 0, "GURBANI CONTEXT header should be present")
         self.assertGreater(question_pos, 0, "USER'S MESSAGE should be present")
         self.assertLess(persona_pos, context_pos)
         self.assertLess(context_pos, question_pos)

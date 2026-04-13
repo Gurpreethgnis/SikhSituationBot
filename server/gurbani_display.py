@@ -306,3 +306,64 @@ def ensure_guidance_grounded(
     if guidance_grounding_ok(response, shabads):
         return response
     return repair_guidance_with_canonical(response, shabads)
+
+
+def _response_contains_sttm_url(response: str, url: str) -> bool:
+    """True if the canonical STTM URL (or trivial variant) appears in the reply."""
+    if not url or not response:
+        return False
+    if url in response:
+        return True
+    if url.startswith("https://") and url.replace("https://", "http://", 1) in response:
+        return True
+    return False
+
+
+def ensure_all_sttm_links_for_retrieved_shabads(
+    response: str,
+    shabads: Optional[List[Dict[str, Any]]],
+) -> str:
+    """
+    If any retrieved shabad's SikhiToTheMax URL is missing from the reply body,
+    insert a short reference list before [SUGGESTIONS] so every retrieval has a link.
+
+    Intended for guidance mode when N shabads are in context; the model should
+    normally place each URL beside that shabad's Gurmukhi block—this is a safety net.
+    """
+    if not shabads or not str(response).strip():
+        return response
+    enriched: List[Dict[str, Any]] = []
+    for s in shabads:
+        sd = s if isinstance(s, dict) else _shabad_as_dict(s)
+        enriched.append(enriched_shabad_for_display(sd))
+
+    missing: List[tuple[str, str]] = []
+    for i, d in enumerate(enriched, start=1):
+        url = (_sttm_for_dict(d) or "").strip()
+        if not url:
+            continue
+        if _response_contains_sttm_url(response, url):
+            continue
+        src = (d.get("source") or "").strip()
+        sid = (d.get("shabad_id") or "").strip()
+        label = src or sid or f"Shabad {i}"
+        missing.append((label, url))
+
+    if not missing:
+        return response
+
+    lines = [
+        "",
+        "### ☬ SikhiToTheMax — complete references",
+        "",
+        "_Every shabad drawn from retrieval for this reply is listed below; each link matches the database._",
+        "",
+    ]
+    for label, url in missing:
+        lines.append(f"- [Open on SikhiToTheMax — {label}]({url})")
+    insert = "\n".join(lines)
+
+    if "[SUGGESTIONS]" in response:
+        pre, _sep, post = response.partition("[SUGGESTIONS]")
+        return pre.rstrip() + insert + "\n\n[SUGGESTIONS]" + post
+    return response.rstrip() + insert + "\n"
