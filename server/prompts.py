@@ -801,6 +801,30 @@ IMPORTANT: The user's message needs more context before you can offer meaningful
 Respond like a caring friend who wants to understand more before offering guidance. Be warm, brief, and genuinely curious."""
     else:
         # Default: Guidance mode - conversational dialogue with scripture-grounded wisdom
+        shabad_list = (
+            shabads
+            if isinstance(shabads, list)
+            else ([shabads] if isinstance(shabads, dict) else [])
+        )
+        n_guidance_shabads = len(shabad_list)
+        multi_shabad = n_guidance_shabads > 1
+        multi_scripture = (
+            "- **Every retrieved shabad:** Paste **Gurmukhi**, **English**, and **Roman** (if provided) **exactly** "
+            "as given in GURBANI CONTEXT for **each** numbered shabad—verbatim for every hit, not only the first. "
+            "You may use a short subheading per shabad (e.g. from its **Source:** line) or present them in clear sequence; "
+            "do not paraphrase scripture.\n"
+            "- **Reflection and synthesis** must draw from **all** retrieved shabads: explain how each one speaks to "
+            "their situation, then tie the set together (shared themes and contrasts). Do not imply wisdom came from "
+            "only one Ang if several are listed.\n"
+            "- If you use a ### 📜 Scriptural Context (Citations) list, include **every** shabad you discussed with "
+            "its **Source:** line; do not cite an Ang you never reflected on.\n"
+        )
+        single_scripture = (
+            "- In your scripture reference, paste **Gurmukhi**, **English**, and **Roman** (if provided) **exactly** "
+            "as given in GURBANI CONTEXT (verbatim). You may add line breaks; do not paraphrase scripture.\n"
+        )
+        scripture_bullets = multi_scripture if multi_shabad else single_scripture
+
         prompt = f"""{SYSTEM_PROMPT}
 {RESPONSE_FORM_POLICY}
 
@@ -811,7 +835,7 @@ You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 {style_block}
 
-GURBANI CONTEXT (relevant shabads to draw wisdom from — weave these naturally into conversation):
+GURBANI CONTEXT ({n_guidance_shabads} relevant shabad(s) to draw wisdom from — weave these naturally into conversation):
 {shabad_context}
 
 {history_block}USER'S MESSAGE: {user_query}
@@ -819,19 +843,24 @@ GURBANI CONTEXT (relevant shabads to draw wisdom from — weave these naturally 
 Respond as a genuine dialogue partner, not a template generator:
 - Acknowledge their specific situation first — show you heard them
 - Weave the Gurbani wisdom naturally into your response, as part of the conversation flow
-- In your scripture reference, paste **Gurmukhi** and **English** **exactly** as given for the **first** shabad in GURBANI CONTEXT (verbatim). You may add line breaks; do not paraphrase scripture.
-- For secondary shabads, discuss themes in your own words without fabricating lines
-- Offer 2-3 reflections specific to their situation (not generic spiritual advice)
+{scripture_bullets}- Offer reflections specific to their situation (not generic spiritual advice); when multiple shabads are provided, spread attention across **all** of them before summarizing.
 - Use a contemporary example or parallel if it helps make the teaching tangible
 - Close with something that invites further conversation — not a final pronouncement
 - End with the [SUGGESTIONS] block (3 items that naturally continue the dialogue)
 
 Write in flowing, natural prose. Use brief headings only when the response is long enough to need them for clarity. Do NOT use the rigid 5-part structure — let the conversation breathe."""
         if grounding_retry:
-            prompt += (
-                "\n\nSTRICT REMINDER: In the reference section, copy Gurmukhi and English "
-                "character-for-character from GURBANI CONTEXT (first shabad). Do not cite any "
-                "**Ang** number unless it appears in that context's **Source:** lines."
-            )
+            if multi_shabad:
+                prompt += (
+                    "\n\nSTRICT REMINDER: Copy Gurmukhi and English character-for-character from GURBANI CONTEXT "
+                    f"for **all {n_guidance_shabads}** shabads. Do not cite any **Ang** unless it appears in that "
+                    "shabad's **Source:** line."
+                )
+            else:
+                prompt += (
+                    "\n\nSTRICT REMINDER: In the reference section, copy Gurmukhi and English "
+                    "character-for-character from GURBANI CONTEXT. Do not cite any "
+                    "**Ang** number unless it appears in that context's **Source:** lines."
+                )
 
     return prompt

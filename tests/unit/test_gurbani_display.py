@@ -125,6 +125,52 @@ class TestGurbaniDisplay(unittest.TestCase):
         self.assertGreater(out.find("g" * 50), -1)
         self.assertLess(out.find("g" * 50), s_pos)
 
+    @patch("gurbani_display.fetch_banidb_shabad_display", return_value=None)
+    def test_repair_appends_all_missing_shabads_before_suggestions(self, _mock_fetch):
+        """When only the first shabad appears in prose, append verbatim blocks for the rest."""
+        shabads = [
+            {
+                "shabad_id": "sggs_1",
+                "gurmukhi": "a" * 50,
+                "english_translation": "alpha " * 15,
+                "source": "SGGS Ang 1",
+            },
+            {
+                "shabad_id": "sggs_2",
+                "gurmukhi": "b" * 50,
+                "english_translation": "beta " * 15,
+                "source": "SGGS Ang 2",
+            },
+        ]
+        body = "Here is " + ("a" * 50) + " and " + ("alpha " * 15) + "\n\n[SUGGESTIONS]\n- x\n"
+        out = repair_guidance_with_canonical(body, shabads)
+        # Shabad 1 already appears verbatim in prose; repair only appends the missing shabad(s).
+        self.assertIn("Shabad 2", out)
+        self.assertIn("b" * 50, out)
+        self.assertIn("beta ", out)
+        self.assertLess(out.find("b" * 50), out.rfind("[SUGGESTIONS]"))
+
+    @patch("gurbani_display.fetch_banidb_shabad_display", return_value=None)
+    def test_guidance_grounding_ok_requires_each_shabad(self, _mock_fetch):
+        shabads = [
+            {
+                "shabad_id": "sggs_1",
+                "gurmukhi": "x" * 50,
+                "english_translation": "ex " * 15,
+                "source": "SGGS Ang 1",
+            },
+            {
+                "shabad_id": "sggs_2",
+                "gurmukhi": "y" * 50,
+                "english_translation": "why " * 15,
+                "source": "SGGS Ang 2",
+            },
+        ]
+        only_first = ("x" * 50) + " " + ("ex " * 15) + " SGGS Ang 1"
+        self.assertFalse(guidance_grounding_ok(only_first, shabads))
+        both = only_first + " " + ("y" * 50) + " " + ("why " * 15) + " SGGS Ang 2"
+        self.assertTrue(guidance_grounding_ok(both, shabads))
+
 
 if __name__ == "__main__":
     unittest.main()
