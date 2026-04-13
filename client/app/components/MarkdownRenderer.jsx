@@ -7,7 +7,7 @@ const MarkdownRenderer = ({ content }) => {
   return (
     <div className="markdown-content">
       <ReactMarkdown>{content}</ReactMarkdown>
-      <style jsx global>{`
+      <style>{`
         .markdown-content p {
           margin-bottom: 1rem;
           line-height: 1.6;

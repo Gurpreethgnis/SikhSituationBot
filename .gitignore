@@ -56,3 +56,5 @@ docker-compose.yml
 .agent/workflows/push-pr.md
 .env*.local
 .env.vercel.production
+start-dev.ps1
+.github/prompts/start-dev.prompt.md
