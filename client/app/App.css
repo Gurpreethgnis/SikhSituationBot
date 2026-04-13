@@ -440,6 +440,22 @@
     line-height: 1.5;
 }
 
+.empty-state .welcome-greeting {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold-primary);
+    margin-bottom: 0.5rem;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+}
+
+.empty-state .welcome-tagline {
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    font-style: italic;
+    max-width: 450px;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

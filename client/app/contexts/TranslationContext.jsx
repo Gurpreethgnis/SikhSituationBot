@@ -5,7 +5,8 @@ import React, { createContext, useContext, useState, useCallback } from 'react'
 const translations = {
   en: {
     appName: 'Giani Ji',
-    tagline: 'Seek guidance from the Guru Granth Sahib for your life situations.',
+    welcomeGreeting: 'Waheguru Ji Ka Khalsa, Waheguru Ji Ki Fateh!',
+    tagline: 'I am here to share the timeless wisdom of Sri Guru Granth Sahib. What is on your heart today?',
     newChat: 'New Chat',
     conversations: 'Conversations',
     signInToSave: 'Sign in to save chats by conversation.',
@@ -127,8 +128,9 @@ const translations = {
     voiceNotConfigured: 'Voice unavailable (API Key missing).',
   },
   pa: {
-    appName: 'ਸਿੱਖ ਸਿਚੁਏਸ਼ਨ ਬੋਟ',
-    tagline: 'ਆਪਣੀ ਜ਼ਿੰਦਗੀ ਦੀਆਂ ਸਥਿਤੀਆਂ ਲਈ ਗੁਰੂ ਗ੍ਰੰਥ ਸਾਹਿਬ ਤੋਂ ਮਾਰਗਦਰਸ਼ਨ ਲਓ।',
+    appName: 'ਗਿਆਨੀ ਜੀ',
+    welcomeGreeting: 'ਵਾਹਿਗੁਰੂ ਜੀ ਕਾ ਖਾਲਸਾ, ਵਾਹਿਗੁਰੂ ਜੀ ਕੀ ਫਤਹਿ!',
+    tagline: 'ਮੈਂ ਸ੍ਰੀ ਗੁਰੂ ਗ੍ਰੰਥ ਸਾਹਿਬ ਦੀ ਅਨਮੋਲ ਬਾਣੀ ਸਾਂਝੀ ਕਰਨ ਲਈ ਹਾਜ਼ਰ ਹਾਂ। ਅੱਜ ਤੁਹਾਡੇ ਮਨ ਵਿੱਚ ਕੀ ਹੈ?',
     newChat: 'ਨਵੀਂ ਗੱਲਬਾਤ',
     conversations: 'ਗੱਲਬਾਤਾਂ',
     signInToSave: 'ਗੱਲਬਾਤ ਸੇਵ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
@@ -250,8 +252,9 @@ const translations = {
     voiceNotConfigured: 'ਵੌਇਸ ਉਪਲਬਧ ਨਹੀਂ (API ਕੁੰਜੀ ਗੈਰਹਾਜ਼ਰ)।',
   },
   hi: {
-    appName: 'सिख सिचुएशन बॉट',
-    tagline: 'अपने जीवन की स्थितियों के लिए गुरु ग्रंथ साहिब से मार्गदर्शन प्राप्त करें।',
+    appName: 'ज्ञानी जी',
+    welcomeGreeting: 'वाहेगुरु जी का खालसा, वाहेगुरु जी की फतेह!',
+    tagline: 'मैं श्री गुरु ग्रंथ साहिब की अनमोल बाणी साझा करने के लिए यहां हूं। आज आपके मन में क्या है?',
     newChat: 'नई चैट',
     conversations: 'बातचीत',
     signInToSave: 'चैट सेव करने के लिए साइन इन करें।',
@@ -363,8 +366,9 @@ const translations = {
     voiceNotConfigured: 'आवाज अनुपलब्ध (API Key गायब है)।',
   },
   zh: {
-    appName: '锡克情境机器人',
-    tagline: '从古鲁格兰特萨希布获取人生指导。',
+    appName: '智者吉',
+    welcomeGreeting: 'Waheguru Ji Ka Khalsa, Waheguru Ji Ki Fateh!',
+    tagline: '我在这里分享古鲁格兰特萨希布的永恒智慧。今天您心中有什么？',
     newChat: '新聊天',
     conversations: '对话',
     signInToSave: '登录以保存聊天。',
@@ -475,7 +479,8 @@ const translations = {
   },
   es: {
     appName: 'Giani Ji',
-    tagline: 'Busca orientación del Guru Granth Sahib para las situaciones de tu vida.',
+    welcomeGreeting: 'Waheguru Ji Ka Khalsa, Waheguru Ji Ki Fateh!',
+    tagline: 'Estoy aquí para compartir la sabiduría eterna de Sri Guru Granth Sahib. ¿Qué hay en tu corazón hoy?',
     newChat: 'Nueva conversación',
     conversations: 'Conversaciones',
     signInToSave: 'Inicia sesión para guardar conversaciones.',

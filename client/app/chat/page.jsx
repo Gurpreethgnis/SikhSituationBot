@@ -594,8 +594,9 @@ export default function ChatPage() {
                 </div>
               )}
               <Logo />
+              <p className="welcome-greeting">{t('welcomeGreeting')}</p>
               <h1>{t('appName')}</h1>
-              <p>{t('tagline')}</p>
+              <p className="welcome-tagline">{t('tagline')}</p>
               <p className="persona-from-profile-hint">
                 Response style follows your year of birth. Update it anytime in <Link href="/settings">Settings</Link>.
               </p>
