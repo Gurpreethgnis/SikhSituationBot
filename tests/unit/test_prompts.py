@@ -83,7 +83,7 @@ class TestPrompts(unittest.TestCase):
         self.assertIn('test english 1', result)
         self.assertIn('GURBANI CONTEXT', result)
         self.assertIn('MESSAGE:', result)
-        self.assertIn('RESPONSE FORM POLICY', result)
+        self.assertIn('RESPONSE GUIDELINES', result)
 
     def test_build_gemini_response_prompt_includes_user_memory(self):
         mem = "STORED CONTEXT from earlier signed-in conversations"
@@ -239,10 +239,14 @@ class TestPrompts(unittest.TestCase):
         )
 
         persona_pos = result.find('PERSONA:')
-        # SYSTEM_PROMPT also contains "GURBANI"; match the guidance-mode block only
-        context_pos = result.find('GURBANI CONTEXT (relevant shabads')
+        # SYSTEM_PROMPT / policy text mention "GURBANI CONTEXT (" in prose — match the real context header.
+        context_header = 'relevant shabad(s) — your response MUST be grounded in these; weave them naturally into conversation):'
+        context_pos = result.find(context_header)
         question_pos = result.find('USER\'S MESSAGE:')
 
+        self.assertGreater(persona_pos, 0, "PERSONA: should be present")
+        self.assertGreater(context_pos, 0, "GURBANI CONTEXT header should be present")
+        self.assertGreater(question_pos, 0, "USER'S MESSAGE should be present")
         self.assertLess(persona_pos, context_pos)
         self.assertLess(context_pos, question_pos)
 
@@ -301,9 +305,10 @@ class TestPrompts(unittest.TestCase):
         self.assertIn(state["length_mode"], ("short", "exploratory"))
 
     def test_response_form_policy_contains_required_rules(self):
-        self.assertIn("Conversational depth", RESPONSE_FORM_POLICY)
-        self.assertIn("Scripture integration", RESPONSE_FORM_POLICY)
+        self.assertIn("Conversation depth", RESPONSE_FORM_POLICY)
+        self.assertIn("Citation is mandatory", RESPONSE_FORM_POLICY)
         self.assertIn("Hard constraints", RESPONSE_FORM_POLICY)
+        self.assertIn("Contemplative Actions", RESPONSE_FORM_POLICY)
 
 
 if __name__ == '__main__':
