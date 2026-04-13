@@ -850,21 +850,22 @@ Respond like a wise elder at the Gurdwara who wants to understand before offerin
             if is_first_message else ""
         )
 
-        # Multi-shabad specific instructions
-        if multi_shabad:
-            shabad_instruction = f"""**IMPORTANT - MULTIPLE SHABADS ({n_guidance_shabads})**: You have been given {n_guidance_shabads} shabads. You MUST:
-- Cite EACH shabad with its Gurmukhi text, English translation, Source, and STTM link
-- Explain how EACH shabad speaks to the seeker's situation
-- Show how they complement each other or offer different perspectives
-- Do NOT focus on only one — give meaningful attention to ALL of them
-"""
-        else:
-            shabad_instruction = """**SHABAD CITATION**: You MUST include:
-- The Gurmukhi text (verbatim from GURBANI CONTEXT)
-- The English translation (verbatim)
-- The Source line (Ang, Raag, writer)
-- The SikhiToTheMax link
-"""
+        multi_scripture = (
+            "- **Every retrieved shabad:** Paste **Gurmukhi**, **English**, and **Roman** (if provided) **exactly** "
+            "as given in GURBANI CONTEXT for **each** numbered shabad—verbatim for every hit, not only the first. "
+            "You may use a short subheading per shabad (e.g. from its **Source:** line) or present them in clear sequence; "
+            "do not paraphrase scripture.\n"
+            "- **Reflection and synthesis** must draw from **all** retrieved shabads: explain how each one speaks to "
+            "their situation, then tie the set together (shared themes and contrasts). Do not imply wisdom came from "
+            "only one Ang if several are listed.\n"
+            "- If you use a ### 📜 Scriptural Context (Citations) list, include **every** shabad you discussed with "
+            "its **Source:** line; do not cite an Ang you never reflected on.\n"
+        )
+        single_scripture = (
+            "- In your scripture reference, paste **Gurmukhi**, **English**, and **Roman** (if provided) **exactly** "
+            "as given in GURBANI CONTEXT (verbatim). You may add line breaks; do not paraphrase scripture.\n"
+        )
+        scripture_bullets = multi_scripture if multi_shabad else single_scripture
 
         prompt = f"""{SYSTEM_PROMPT}
 {RESPONSE_FORM_POLICY}
@@ -876,23 +877,19 @@ You are helping someone as {persona}. {p_ctx['key_guidance']}
 Use {p_ctx['tone']}, {p_ctx['language']}, and {p_ctx['focus']}.
 {style_block}
 
-{greeting_instruction}GURBANI CONTEXT ({n_guidance_shabads} relevant shabad(s) — your response MUST be grounded in these):
+{greeting_instruction}GURBANI CONTEXT ({n_guidance_shabads} relevant shabad(s) — your response MUST be grounded in these; weave them naturally into conversation):
 {shabad_context}
 
 {history_block}USER'S MESSAGE: {user_query}
 
-{shabad_instruction}
-**RESPONSE STRUCTURE** (flow naturally, not rigidly):
-1. **Warm acknowledgment** — Show you understand their situation
-2. **Gurbani wisdom** — Share the shabad(s) with FULL citation (Gurmukhi + English + Source + STTM link)
-3. **Personal connection** — Explain how this teaching speaks to their specific situation
-4. **Contemplative Actions** — Give 2-3 practical ways to embody this wisdom:
-   - A reflection question to ponder
-   - A simple daily practice inspired by the shabad
-   - How to apply it in their situation
-5. **Closing thought** — An uplifting message connecting them to Waheguru's love and the Guru's wisdom
-
-End with the [SUGGESTIONS] block (3 natural conversation continuations specific to the shabads shared).
+Respond as a genuine dialogue partner, not a template generator:
+- Acknowledge their specific situation first — show you heard them
+- Weave the Gurbani wisdom naturally into your response, as part of the conversation flow
+{scripture_bullets}- Offer reflections specific to their situation (not generic spiritual advice); when multiple shabads are provided, spread attention across **all** of them before summarizing.
+- Use a contemporary example or parallel if it helps make the teaching tangible
+- **Flow** (naturally, not rigidly): **Warm acknowledgment** — show you understand their situation; **Gurbani wisdom** — share the shabad(s) with FULL citation (Gurmukhi + English + Source + STTM link), following the scripture rules above; **Personal connection** — how this teaching speaks to their situation; **Contemplative Actions** — 2–3 practical ways to embody this wisdom (a reflection question, a simple daily practice inspired by the shabad, how to apply it here); **Closing thought** — an uplifting note connecting them to Waheguru's love and the Guru's wisdom
+- Close with something that invites further conversation — not a final pronouncement
+- End with the [SUGGESTIONS] block: exactly 3 natural conversation continuations specific to the shabads you shared (not rigid \"I want to...\" phrasing)
 
 Write in flowing, conversational prose — like a wise elder at the Gurdwara, not a template."""
         if grounding_retry:
