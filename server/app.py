@@ -1738,9 +1738,9 @@ def ask():
             return jsonify(_finalize_ask_response_payload(payload)), 200
 
         # Default: Guidance mode - retrieve top shabads and provide guidance with summary
-        similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, persona=persona)
+        similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, persona=persona, exclude_parmaan_low_quality=True)
         if not similar_shabads:
-            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count)
+            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, exclude_parmaan_low_quality=True)
         if not similar_shabads:
             return jsonify({"error": "No matching wisdom found in database"}), 404
 

@@ -131,16 +131,28 @@ export default function VoiceMode({
 
       <div className="voice-mode-content">
         <div 
-          className={`voice-mode-orb orb-${state}`}
+          className={`voice-mode-avatar avatar-${state}`}
           onClick={handleOrbClick}
           role="button"
           aria-label={state === 'speaking' ? 'Click to interrupt' : 'Voice indicator'}
         >
-          <div className="orb-inner" />
-          <div className="orb-glow" />
-          <div className="orb-ring orb-ring-1" />
-          <div className="orb-ring orb-ring-2" />
-          <div className="orb-ring orb-ring-3" />
+          <div className="avatar-glow" />
+          <div className="avatar-figure">
+            <svg viewBox="0 0 100 100" className="avatar-svg">
+              {/* Turban */}
+              <ellipse cx="50" cy="28" rx="26" ry="18" className="avatar-turban" />
+              <path d="M24 28 Q30 15 50 12 Q70 15 76 28" className="avatar-turban-fold" />
+              {/* Face outline */}
+              <ellipse cx="50" cy="45" rx="16" ry="18" className="avatar-face" />
+              {/* Beard */}
+              <path d="M34 50 Q35 75 50 80 Q65 75 66 50" className="avatar-beard" />
+              {/* Body/shoulders */}
+              <path d="M25 95 Q25 75 35 70 L50 68 L65 70 Q75 75 75 95" className="avatar-body" />
+            </svg>
+          </div>
+          <div className="avatar-ring avatar-ring-1" />
+          <div className="avatar-ring avatar-ring-2" />
+          <div className="avatar-ring avatar-ring-3" />
         </div>
 
         <div className="voice-mode-status">
