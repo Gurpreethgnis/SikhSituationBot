@@ -1,2 +1,5 @@
+[phases.setup]
+aptPkgs = ["ffmpeg"]
+
 [start]
-cmd = "gunicorn server.app:app"
+cmd = "gunicorn server.app:app --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --timeout 120"
