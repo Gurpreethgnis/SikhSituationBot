@@ -44,7 +44,7 @@ def build_latin_first_letter_pattern(letters: List[str]) -> str:
     """
     if not letters:
         return ""
-    parts = [re.escape(L.lower()) + _ROMAN_OR_ENGLISH_WORD_TAIL for L in letters]
+    parts = [re.escape(L.lower()) + _LATIN_WORD_TAIL for L in letters]
     return "^" + _FIRST_LETTER_SEP.join(parts)
 
 
@@ -60,7 +60,7 @@ def build_english_first_letter_pattern(letters: List[str]) -> str:
     """Same as Latin but allow apostrophes inside English words."""
     if not letters:
         return ""
-    parts = [re.escape(L.lower()) + _ROMAN_OR_ENGLISH_WORD_TAIL for L in letters]
+    parts = [re.escape(L.lower()) + _LATIN_WORD_TAIL for L in letters]
     return "^" + _FIRST_LETTER_SEP.join(parts)
 
 
