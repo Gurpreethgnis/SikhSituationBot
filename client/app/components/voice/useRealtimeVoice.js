@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { apiBase, realtimeWsBaseFromEnv } from '../../../lib/api'
 
 /**
  * useRealtimeVoice
@@ -41,11 +42,31 @@ export function useRealtimeVoice({
   const isPlayingRef = useRef(false)
   const nextPlayTimeRef = useRef(0)
 
-  const getWsUrl = useCallback(() => {
-    if (wsUrl) return wsUrl
+  /**
+   * WebSocket must hit Flask directly when the UI is on Vercel (HTTP rewrites do not proxy WS).
+   * Order: explicit wsUrl prop → NEXT_PUBLIC_API_URL → /api/realtime/config.websocket_base → same-origin.
+   */
+  const resolveRealtimeWsOrigin = useCallback(async () => {
+    if (wsUrl) return wsUrl.replace(/\/$/, '')
+    const fromEnv = realtimeWsBaseFromEnv()
+    if (fromEnv) return fromEnv
+    try {
+      const base = apiBase()
+      const res = await fetch(`${base}/api/realtime/config`)
+      if (res.ok) {
+        const data = await res.json()
+        const w = (data.websocket_base || '').trim().replace(/\/$/, '')
+        if (w) {
+          if (w.startsWith('wss://') || w.startsWith('ws://')) return w
+          if (w.startsWith('https://')) return `wss://${w.slice(8)}`
+          if (w.startsWith('http://')) return `ws://${w.slice(7)}`
+        }
+      }
+    } catch {
+      /* fall through */
+    }
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
-    return `${proto}//${host}`
+    return `${proto}//${window.location.host}`
   }, [wsUrl])
 
   const initAudioContext = useCallback(async () => {
@@ -79,31 +100,64 @@ export function useRealtimeVoice({
       
       const source = ctx.createMediaStreamSource(stream)
       
-      await ctx.audioWorklet.addModule('/audio-worklet-processor.js').catch(() => {
+      const workletUrl = new URL('/audio-worklet-processor.js', window.location.origin).href
+      let useWorklet = false
+      try {
+        await ctx.audioWorklet.addModule(workletUrl)
+        useWorklet = true
+      } catch {
         console.warn('[RealtimeVoice] AudioWorklet not available, using ScriptProcessor fallback')
-      })
-      
+      }
+
+      if (useWorklet) {
+        const captureNode = new AudioWorkletNode(ctx, 'audio-capture-processor', {
+          numberOfInputs: 1,
+          numberOfOutputs: 1,
+          outputChannelCount: [1],
+          channelCount: 1
+        })
+        captureNode.port.onmessage = (ev) => {
+          if (!ev.data || ev.data.type !== 'audio') return
+          if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+          if (state !== 'listening') return
+          const pcm16 = ev.data.data
+          if (!(pcm16 instanceof Int16Array)) return
+          const base64Audio = arrayBufferToBase64(pcm16.buffer)
+          wsRef.current.send(JSON.stringify({
+            type: 'input_audio_buffer.append',
+            audio: base64Audio
+          }))
+        }
+        source.connect(captureNode)
+        const mute = ctx.createGain()
+        mute.gain.value = 0
+        captureNode.connect(mute)
+        mute.connect(ctx.destination)
+        workletNodeRef.current = captureNode
+        return true
+      }
+
       const bufferSize = 4096
       const scriptProcessor = ctx.createScriptProcessor(bufferSize, 1, 1)
-      
+
       scriptProcessor.onaudioprocess = (e) => {
         if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
         if (state !== 'listening') return
-        
+
         const inputData = e.inputBuffer.getChannelData(0)
         const pcm16 = float32ToPcm16(inputData)
         const base64Audio = arrayBufferToBase64(pcm16.buffer)
-        
+
         wsRef.current.send(JSON.stringify({
           type: 'input_audio_buffer.append',
           audio: base64Audio
         }))
       }
-      
+
       source.connect(scriptProcessor)
       scriptProcessor.connect(ctx.destination)
       workletNodeRef.current = scriptProcessor
-      
+
       return true
     } catch (err) {
       console.error('[RealtimeVoice] Microphone error:', err)
@@ -114,7 +168,15 @@ export function useRealtimeVoice({
 
   const stopMicrophone = useCallback(() => {
     if (workletNodeRef.current) {
-      workletNodeRef.current.disconnect()
+      const node = workletNodeRef.current
+      if (node.port && typeof node.port.close === 'function') {
+        try {
+          node.port.close()
+        } catch {
+          /* ignore */
+        }
+      }
+      node.disconnect()
       workletNodeRef.current = null
     }
     if (micStreamRef.current) {
@@ -189,7 +251,7 @@ export function useRealtimeVoice({
       return
     }
     
-    const base = getWsUrl()
+    const base = await resolveRealtimeWsOrigin()
     const url = `${base}/api/realtime/connect?token=${encodeURIComponent(token)}&voice=${encodeURIComponent(voice)}`
     
     try {
@@ -226,7 +288,7 @@ export function useRealtimeVoice({
       onError?.('connection_error')
       setState('idle')
     }
-  }, [token, voice, getWsUrl, startMicrophone, onError])
+  }, [token, voice, resolveRealtimeWsOrigin, startMicrophone, onError])
 
   const handleServerMessage = useCallback((data) => {
     const type = data.type

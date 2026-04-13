@@ -22,15 +22,21 @@ export default function VoiceButton({
 }) {
   const [serverVoiceEnabled, setServerVoiceEnabled] = useState(true)
   const [serverVoiceErrorVisible, setServerVoiceErrorVisible] = useState(false)
-  const [consentShown, setConsentShown] = useState(() => {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(VOICE_CONSENT_KEY) === 'true'
-    }
-    return false
-  })
+  // Must match SSR (false); reading localStorage in useEffect avoids React #418 hydration mismatch.
+  const [consentShown, setConsentShown] = useState(false)
 
   const { t } = useTranslation()
   const baseUrl = apiBase()
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(VOICE_CONSENT_KEY) === 'true') {
+        setConsentShown(true)
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   useEffect(() => {
     fetch(`${baseUrl}/api/realtime/config`)
