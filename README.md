@@ -1,4 +1,6 @@
-# SikhSituationBot 🪯
+# SikhSituationBot
+
+--- 🪯
 
 ## 🎯 What does this repo do?
 This repository contains the code for an AI-powered conversational web application. The bot acts as a specialized search engine and empathetic guide: users type or speak their current emotional state (e.g., "I feel anxious"), and the bot retrieves relevant historical verses (Shabads) from the Siri Guru Granth Sahib (SGGS) to provide comfort and perspective.

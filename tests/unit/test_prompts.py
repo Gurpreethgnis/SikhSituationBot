@@ -62,12 +62,12 @@ class TestPrompts(unittest.TestCase):
         # Check teen persona
         teen_context = PERSONA_CONTEXTS['teen']
         self.assertIn('teen', teen_context['context'].lower())
-        self.assertIn('youth', teen_context['response_style'].lower())
+        self.assertIn('relatable', teen_context['response_style'].lower())
 
         # Check adult persona
         adult_context = PERSONA_CONTEXTS['adult']
         self.assertIn('adult', adult_context['context'].lower())
-        self.assertIn('mature', adult_context['response_style'].lower())
+        self.assertIn('genuine', adult_context['response_style'].lower())
 
     def test_build_gemini_response_prompt_basic(self):
         """Test basic Gemini response prompt building."""
@@ -82,7 +82,7 @@ class TestPrompts(unittest.TestCase):
         self.assertIn('test gurmukhi 1', result)
         self.assertIn('test english 1', result)
         self.assertIn('GURBANI CONTEXT', result)
-        self.assertIn('QUESTION:', result)
+        self.assertIn('MESSAGE:', result)
         self.assertIn('RESPONSE FORM POLICY', result)
 
     def test_build_gemini_response_prompt_includes_user_memory(self):
@@ -240,8 +240,8 @@ class TestPrompts(unittest.TestCase):
 
         persona_pos = result.find('PERSONA:')
         # SYSTEM_PROMPT also contains "GURBANI"; match the guidance-mode block only
-        context_pos = result.find('GURBANI CONTEXT (one or more')
-        question_pos = result.find('USER\'S QUESTION:')
+        context_pos = result.find('GURBANI CONTEXT (relevant shabads')
+        question_pos = result.find('USER\'S MESSAGE:')
 
         self.assertLess(persona_pos, context_pos)
         self.assertLess(context_pos, question_pos)
@@ -301,8 +301,8 @@ class TestPrompts(unittest.TestCase):
         self.assertIn(state["length_mode"], ("short", "exploratory"))
 
     def test_response_form_policy_contains_required_rules(self):
-        self.assertIn("Short-form vs exploratory", RESPONSE_FORM_POLICY)
-        self.assertIn("Clarify vs answer", RESPONSE_FORM_POLICY)
+        self.assertIn("Conversational depth", RESPONSE_FORM_POLICY)
+        self.assertIn("Scripture integration", RESPONSE_FORM_POLICY)
         self.assertIn("Hard constraints", RESPONSE_FORM_POLICY)
 
 
