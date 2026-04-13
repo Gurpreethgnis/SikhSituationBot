@@ -9,6 +9,10 @@
  * 1) Set NEXT_PUBLIC_API_URL=https://your-flask-host (CORS must allow your Next origin), or
  * 2) Set FLASK_API_URL on the Next.js host at build time and leave NEXT_PUBLIC_API_URL unset
  *    (or set to "same-origin"). Next.js rewrites then proxy /ask and /api/* to Flask same-origin.
+ *
+ * Realtime voice WebSockets: Vercel rewrites are HTTP-only. Set NEXT_PUBLIC_API_URL to your Flask
+ * HTTPS URL so the client opens wss:// to the same host, or set FLASK_WEBSOCKET_PUBLIC_ORIGIN on
+ * Flask and return it from GET /api/realtime/config (see server/realtime_routes.py).
  */
 export function apiBase() {
   const raw = (process.env.NEXT_PUBLIC_API_URL || '').trim()
@@ -20,6 +24,25 @@ export function apiBase() {
   }
   /* Production: same-origin; requires FLASK_API_URL rewrites in next.config.mjs */
   return ''
+}
+
+/**
+ * WebSocket origin for Flask realtime voice (no path).
+ * Vercel HTTP rewrites do not upgrade browser WebSockets to Railway — the client must open
+ * wss:// directly to the Flask host when the UI is served from a different origin.
+ */
+export function realtimeWsBaseFromEnv() {
+  const raw = (process.env.NEXT_PUBLIC_API_URL || '').trim()
+  if (!raw || raw.toLowerCase() === 'same-origin') {
+    return ''
+  }
+  try {
+    const u = new URL(raw.includes('://') ? raw : `https://${raw}`)
+    const wsProto = u.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${wsProto}//${u.host}`
+  } catch {
+    return ''
+  }
 }
 
 export function authHeaders(token) {

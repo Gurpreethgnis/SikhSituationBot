@@ -257,28 +257,44 @@ def response_angs_match_sources(response: str, shabads: List[Dict[str, Any]]) ->
 def guidance_grounding_ok(response: str, shabads: Optional[List[Dict[str, Any]]]) -> bool:
     if not shabads:
         return True
-    primary = shabads[0]
-    if not response_contains_primary_gurbani(response, primary):
-        return False
     if not response_angs_match_sources(response, shabads):
         return False
+    for s in shabads:
+        sd = s if isinstance(s, dict) else _shabad_as_dict(s)
+        if not response_contains_primary_gurbani(response, sd):
+            return False
     return True
 
 
+def _shabad_substantive_chunks_in_response(response: str, shabad: Dict[str, Any]) -> bool:
+    """True if response already embeds this shabad's Gurmukhi (and English when long enough)."""
+    return response_contains_primary_gurbani(response, shabad)
+
+
 def repair_guidance_with_canonical(response: str, shabads: List[Dict[str, Any]]) -> str:
-    """Append verbatim primary (and note) before [SUGGESTIONS] so scripture matches DB."""
+    """Append verbatim DB blocks (only shabads missing from prose) before [SUGGESTIONS]."""
     note = (
         "\n\n### ☬ Timeless Shabad (Reference) — verbatim from database\n\n"
-        "_The following is repeated exactly from our retrieval so it matches the SikhiToTheMax link "
+        "_The following repeats exactly from our retrieval for each cited shabad so it matches the SikhiToTheMax link "
         "and source line; do not rely on paraphrased text above for scripture wording._\n\n"
     )
-    primary_block = canonical_shabad_markdown(enriched_shabad_for_display(shabads[0]), index=1)
-    insert = note + primary_block
+    enriched = [enriched_shabad_for_display(s) for s in shabads]
+    missing_blocks: List[str] = []
+    for i, s in enumerate(enriched, start=1):
+        if not _shabad_substantive_chunks_in_response(response, s):
+            missing_blocks.append(canonical_shabad_markdown(s, index=i))
+    if not missing_blocks:
+        return response
+    insert = note + "\n\n---\n\n".join(missing_blocks)
     if "[SUGGESTIONS]" in response:
         pre, sep, post = response.partition("[SUGGESTIONS]")
         return pre.rstrip() + insert + "\n\n[SUGGESTIONS]" + post
-    return (response.rstrip() + insert + "\n\n[SUGGESTIONS]\n- Continue reflecting on this shabad\n"
-            "- Explore related themes in Gurbani\n- Open the link above on SikhiToTheMax\n")
+    return (
+        response.rstrip()
+        + insert
+        + "\n\n[SUGGESTIONS]\n- Continue reflecting on these shabads\n"
+        "- Explore related themes in Gurbani\n- Open the links above on SikhiToTheMax\n"
+    )
 
 
 def ensure_guidance_grounded(

@@ -308,6 +308,24 @@ async def _relay_openai_to_client(openai_ws, client_ws, user_id: str):
         raise
 
 
+def _websocket_base_for_browser_clients() -> str:
+    """
+    Absolute wss:// origin for browsers that cannot upgrade WS through the Next.js host
+    (e.g. Vercel → HTTP rewrite only). Set FLASK_WEBSOCKET_PUBLIC_ORIGIN on Railway, e.g.
+    wss://your-service.up.railway.app — no path, no trailing slash.
+    """
+    raw = (os.environ.get("FLASK_WEBSOCKET_PUBLIC_ORIGIN") or "").strip().rstrip("/")
+    if not raw:
+        return ""
+    if raw.startswith("wss://") or raw.startswith("ws://"):
+        return raw
+    if raw.startswith("https://"):
+        return "wss://" + raw[len("https://") :]
+    if raw.startswith("http://"):
+        return "ws://" + raw[len("http://") :]
+    return ""
+
+
 @realtime_blueprint.route("/api/realtime/config", methods=["GET"])
 def realtime_config():
     """Return configuration for the realtime voice feature."""
@@ -317,6 +335,7 @@ def realtime_config():
     
     return jsonify({
         "enabled": enabled,
+        "websocket_base": _websocket_base_for_browser_clients(),
         "available_voices": AVAILABLE_VOICES,
         "default_voice": DEFAULT_VOICE,
         "voice_descriptions": {
