@@ -4,8 +4,11 @@ import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import json
 
-# Add server directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'server'))
+# Add server directory to path for imports (tests/unit -> repo root -> server)
+sys.path.insert(
+    0,
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "server")),
+)
 
 from prompts import (
     build_gemini_response_prompt,
@@ -65,8 +68,8 @@ class TestGeminiSynthesis(unittest.TestCase):
         """Test building Gemini prompt for adult persona."""
         prompt = build_gemini_response_prompt(self.user_query, self.sample_shabads, "adult")
 
-        # Should contain system prompt
-        self.assertIn("SikhSituationBot", prompt)
+        # Should contain system prompt identity
+        self.assertIn("Giani Ji", prompt)
 
         # Should contain user query
         self.assertIn(self.user_query, prompt)
@@ -79,7 +82,7 @@ class TestGeminiSynthesis(unittest.TestCase):
         self.assertIn("burning heat", prompt)
         self.assertIn("Fearless Lord", prompt)
         self.assertIn("CONVERSATIONAL STYLE", prompt)
-        self.assertIn("RESPONSE FORM POLICY", prompt)
+        self.assertIn("RESPONSE GUIDELINES", prompt)
 
     def test_build_gemini_response_prompt_child(self):
         """Test building Gemini prompt for child persona."""
@@ -120,7 +123,11 @@ class TestGeminiSynthesis(unittest.TestCase):
         )
         self.assertIn("situational guidance", prompt.lower())
         self.assertNotIn("vague or incomplete", prompt)
-        self.assertNotIn("GURBANI CONTEXT:", prompt)
+        # Guidance mode injects retrieved shabads under this header; situational must not.
+        self.assertNotIn(
+            "relevant shabad(s) — your response MUST be grounded in these",
+            prompt,
+        )
 
     def test_build_gemini_response_prompt_parmaan_metadata_only(self):
         """Parmaan mode: prompt must not inject full Gurmukhi/English into the LLM context."""
@@ -159,9 +166,9 @@ class TestGeminiSynthesis(unittest.TestCase):
 
     def test_system_prompt_content(self):
         """Test that system prompt contains key elements."""
-        self.assertIn("SikhSituationBot", SYSTEM_PROMPT)
+        self.assertIn("Giani Ji", SYSTEM_PROMPT)
         self.assertIn("Guru Granth Sahib", SYSTEM_PROMPT)
-        self.assertIn("compassionate", SYSTEM_PROMPT)
+        self.assertIn("warm", SYSTEM_PROMPT.lower())
         self.assertIn("wisdom", SYSTEM_PROMPT)
 
     @patch('prompts.model')
@@ -213,8 +220,8 @@ class TestGeminiSynthesis(unittest.TestCase):
 
         result = synthesize_gemini_response("test query", self.sample_shabads, "adult")
 
-        self.assertIn("Guru's wisdom", result)
-        self.assertIn("divine guidance", result)
+        self.assertIn("Giani Ji", result)
+        self.assertIn("Guru Granth Sahib", result)
 
 
 if __name__ == '__main__':

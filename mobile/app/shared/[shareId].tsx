@@ -85,7 +85,7 @@ export default function SharedChatScreen() {
         contentContainerStyle={s.list}
         renderItem={({ item }) => (
           <View style={s.message}>
-            <Text style={s.roleLabel}>{item.role === 'user' ? 'You' : 'Guru'}</Text>
+            <Text style={s.roleLabel}>{item.role === 'user' ? 'You' : 'Giani Ji'}</Text>
             <View style={[s.bubble, { backgroundColor: item.role === 'user' ? theme.colors.userBubble : theme.colors.assistantBubble }]}>
               <Markdown style={markdownStyles}>{item.content}</Markdown>
             </View>
