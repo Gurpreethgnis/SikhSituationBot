@@ -15,6 +15,38 @@ ShabadLike = Union[Dict[str, Any], Any]
 
 logger = logging.getLogger(__name__)
 
+_STTM_HTTP_RE = re.compile(r"https://www\.sikhitothemax\.org/shabad\?id=\d+", re.I)
+_STTM_LABELED_RE = re.compile(
+    r"SikhiToTheMax\s+link\s*:\s*(https://www\.sikhitothemax\.org/shabad\?id=\d+)\b",
+    re.I,
+)
+
+
+def prettify_sttm_links_in_prose(text: str) -> str:
+    """
+    Turn plain STTM URLs in model output into markdown links so ReactMarkdown renders
+    clickable anchors instead of raw https://… text.
+    """
+    if not text or "sikhitothemax.org" not in text.lower():
+        return text
+    out = _STTM_LABELED_RE.sub(r"[Open on SikhiToTheMax](\1)", text)
+    pieces: List[str] = []
+    last = 0
+    replaced_any = False
+    for m in _STTM_HTTP_RE.finditer(out):
+        s, e = m.start(), m.end()
+        url = m.group(0)
+        if s >= 2 and out[s - 2 : s] == "](":
+            continue
+        replaced_any = True
+        pieces.append(out[last:s])
+        pieces.append(f"[Open on SikhiToTheMax]({url})")
+        last = e
+    if not replaced_any:
+        return out
+    pieces.append(out[last:])
+    return "".join(pieces)
+
 
 def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
     if not shabad_id or not isinstance(shabad_id, str):

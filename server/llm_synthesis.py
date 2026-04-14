@@ -14,6 +14,7 @@ from gurbani_display import (
     ensure_guidance_grounded,
     guidance_grounding_ok,
     parmaan_canonical_section,
+    prettify_sttm_links_in_prose,
 )
 from models import LLMSettings, db
 from prompts import (
@@ -293,6 +294,9 @@ def synthesize_chat_response(
     if text and shabad_dicts and gm == "parmaan":
         text = parmaan_canonical_section(shabad_dicts) + "\n\n---\n\n" + str(text).strip()
 
+    if text and isinstance(text, str) and "sikhitothemax.org" in text.lower():
+        text = prettify_sttm_links_in_prose(text)
+
     if text and "[INSUFFICIENT_EVIDENCE]" in text:
         logger.warning(
             "METRIC: fallback_triggered | reason: model_refusal | [INSUFFICIENT_EVIDENCE] detected"
@@ -318,6 +322,8 @@ def synthesize_chat_response(
             fb = ensure_all_sttm_links_for_retrieved_shabads(fb, shabad_dicts)
         if shabad_dicts and gm == "parmaan" and isinstance(fb, str):
             fb = parmaan_canonical_section(shabad_dicts) + "\n\n---\n\n" + fb.strip()
+        if isinstance(fb, str) and "sikhitothemax.org" in fb.lower():
+            fb = prettify_sttm_links_in_prose(fb)
         return (fb, "gemini-fallback", "synthesize_gemini_response")
 
     return (text, provider, model_id)

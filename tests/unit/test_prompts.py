@@ -13,7 +13,8 @@ from prompts import (
     build_style_state,
     build_gemini_response_prompt,
     format_shabad_context,
-    get_persona_context
+    get_persona_context,
+    is_first_exchange_message,
 )
 from prompts import synthesize_gemini_response
 
@@ -165,6 +166,19 @@ class TestPrompts(unittest.TestCase):
         """Test formatting context for None input."""
         result = format_shabad_context(None)
         self.assertEqual(result, "No relevant Gurbani verses found.")
+
+    def test_is_first_exchange_message(self):
+        self.assertTrue(is_first_exchange_message([]))
+        self.assertTrue(is_first_exchange_message(None))
+        self.assertTrue(is_first_exchange_message([{"role": "user", "content": "Sat sri akaal"}]))
+        self.assertFalse(
+            is_first_exchange_message(
+                [
+                    {"role": "user", "content": "Hi"},
+                    {"role": "assistant", "content": "Waheguru Ji Ka Khalsa"},
+                ]
+            )
+        )
 
     def test_format_shabad_context_minimal_fields(self):
         """Test formatting context with minimal shabad fields."""

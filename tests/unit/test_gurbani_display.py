@@ -13,6 +13,7 @@ from gurbani_display import (
     format_parmaan_commentary_context,
     guidance_grounding_ok,
     parmaan_canonical_section,
+    prettify_sttm_links_in_prose,
     repair_guidance_with_canonical,
     response_angs_match_sources,
     response_contains_primary_gurbani,
@@ -200,6 +201,16 @@ class TestGurbaniDisplay(unittest.TestCase):
         self.assertIn(u20, out)
         self.assertLess(out.find(u20), out.rfind("[SUGGESTIONS]"))
         self.assertGreaterEqual(out.count(u10), 1)
+
+    def test_prettify_sttm_labeled_line(self):
+        raw = "English: hello\nSikhiToTheMax link: https://www.sikhitothemax.org/shabad?id=99\n\nMore."
+        out = prettify_sttm_links_in_prose(raw)
+        self.assertIn("[Open on SikhiToTheMax](https://www.sikhitothemax.org/shabad?id=99)", out)
+        self.assertNotIn("SikhiToTheMax link:", out)
+
+    def test_prettify_skips_already_markdown(self):
+        md = "See [Open on SikhiToTheMax](https://www.sikhitothemax.org/shabad?id=1) for more."
+        self.assertEqual(prettify_sttm_links_in_prose(md), md)
 
     @patch("gurbani_display.fetch_banidb_shabad_display", return_value=None)
     def test_ensure_all_sttm_noop_when_all_urls_present(self, _mock_fetch):
