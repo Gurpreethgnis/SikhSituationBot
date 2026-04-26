@@ -1,8 +1,11 @@
 [phases.setup]
 aptPkgs = ["ffmpeg"]
 
+[phases.build]
+cmds = ["pip install -r requirements.txt"]
+
 [variables]
-PYTHONPATH = "."
+PYTHONPATH = "/app"
 
 [start]
-cmd = "sh -c \"export PYTHONPATH=$PYTHONPATH:. && gunicorn main:app --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --timeout 120\""
+cmd = "gunicorn main:app --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --timeout 120 --bind 0.0.0.0:$PORT"
