@@ -1,6 +1,16 @@
 import json
 import logging
 import os
+import sys
+
+# Ensure current and parent directories are in path for Railway/Nixpacks modules
+# This fixes ModuleNotFoundError: No module named 'server' without needing dashbord env vars
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+if "/app" not in sys.path:
+    sys.path.append("/app")
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -302,37 +312,52 @@ if not is_testing:
             db.create_all()
             # Migration: add shabad count columns if they don't exist
             from sqlalchemy import text, inspect
-            inspector = inspect(db.engine)
-            columns = [col['name'] for col in inspector.get_columns('llm_settings')]
-            if 'guidance_shabad_count' not in columns:
-                db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN guidance_shabad_count INTEGER DEFAULT 3"))
-                db.session.commit()
-                logger.info("Added guidance_shabad_count column to llm_settings")
-            if 'parmaan_shabad_count' not in columns:
-                db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN parmaan_shabad_count INTEGER DEFAULT 5"))
-                db.session.commit()
-                logger.info("Added parmaan_shabad_count column to llm_settings")
-            # Shabad content quality (Parmaan search / Raag header stubs)
-            if "shabads" in inspector.get_table_names():
-                sh_cols = [c["name"] for c in inspector.get_columns("shabads")]
-                if "is_header_only" not in sh_cols:
-                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN is_header_only BOOLEAN"))
-                    db.session.commit()
-                    logger.info("Added is_header_only column to shabads")
-                if "verse_count" not in sh_cols:
-                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN verse_count INTEGER"))
-                    db.session.commit()
-                    logger.info("Added verse_count column to shabads")
-                if "content_length" not in sh_cols:
-                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN content_length INTEGER"))
-                    db.session.commit()
-                    logger.info("Added content_length column to shabads")
-            if "messages" in inspector.get_table_names():
-                msg_cols = [c["name"] for c in inspector.get_columns("messages")]
-                if "was_fallback" not in msg_cols:
-                    db.session.execute(text("ALTER TABLE messages ADD COLUMN was_fallback BOOLEAN DEFAULT FALSE NOT NULL"))
-                    db.session.commit()
-                    logger.info("Added was_fallback column to messages")
+            try:
+                inspector = inspect(db.engine)
+                # llm_settings check
+                if "llm_settings" in inspector.get_table_names():
+                    columns = [col['name'] for col in inspector.get_columns('llm_settings')]
+                    if 'guidance_shabad_count' not in columns:
+                        db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN guidance_shabad_count INTEGER DEFAULT 3"))
+                        db.session.commit()
+                        logger.info("Added guidance_shabad_count column to llm_settings")
+                    if 'parmaan_shabad_count' not in columns:
+                        db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN parmaan_shabad_count INTEGER DEFAULT 5"))
+                        db.session.commit()
+                        logger.info("Added parmaan_shabad_count column to llm_settings")
+                
+                # Shabad content quality check - wrap specifically as 'vector' type columns can cause inspector to crash
+                if "shabads" in inspector.get_table_names():
+                    try:
+                        sh_cols = [c["name"] for c in inspector.get_columns("shabads")]
+                        if "is_header_only" not in sh_cols:
+                            db.session.execute(text("ALTER TABLE shabads ADD COLUMN is_header_only BOOLEAN"))
+                            db.session.commit()
+                            logger.info("Added is_header_only column to shabads")
+                        if "verse_count" not in sh_cols:
+                            db.session.execute(text("ALTER TABLE shabads ADD COLUMN verse_count INTEGER"))
+                            db.session.commit()
+                            logger.info("Added verse_count column to shabads")
+                        if "content_length" not in sh_cols:
+                            db.session.execute(text("ALTER TABLE shabads ADD COLUMN content_length INTEGER"))
+                            db.session.commit()
+                            logger.info("Added content_length column to shabads")
+                    except Exception as inner_e:
+                        logger.warning("Could not inspect 'shabads' table columns (likely due to pgvector type mismatch): %s", inner_e)
+
+                # messages check
+                if "messages" in inspector.get_table_names():
+                    try:
+                        msg_cols = [c["name"] for c in inspector.get_columns("messages")]
+                        if "was_fallback" not in msg_cols:
+                            db.session.execute(text("ALTER TABLE messages ADD COLUMN was_fallback BOOLEAN DEFAULT FALSE NOT NULL"))
+                            db.session.commit()
+                            logger.info("Added was_fallback column to messages")
+                    except Exception as inner_e:
+                        logger.warning("Could not inspect 'messages' table columns: %s", inner_e)
+
+            except Exception as e:
+                logger.error("Database inspection failed: %s", e)
 
             ensure_llm_settings_row()
         except Exception as e:
