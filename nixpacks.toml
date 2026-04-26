@@ -2,4 +2,4 @@
 aptPkgs = ["ffmpeg"]
 
 [start]
-cmd = "gunicorn server.app:app --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --timeout 120"
+cmd = "PYTHONPATH=. gunicorn main:app --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --timeout 120"
