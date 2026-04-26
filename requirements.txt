@@ -2,7 +2,9 @@ google-cloud-aiplatform
 python-dotenv
 flask
 flask-sqlalchemy
+flask-migrate
 pgvector
 psycopg2-binary
 sentence-transformers
+requests
 pytest
