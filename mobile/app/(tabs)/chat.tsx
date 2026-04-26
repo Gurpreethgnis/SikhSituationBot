@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
+import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -21,6 +22,8 @@ import ParmaanControls from '../../components/ParmaanControls';
 import DisambiguationList from '../../components/DisambiguationList';
 import Sidebar from '../../components/Sidebar';
 import FeedbackModal from '../../components/FeedbackModal';
+import VoiceButton from '../../components/VoiceButton';
+import VoiceMode from '../../components/VoiceMode';
 import * as Clipboard from 'expo-clipboard';
 import { Share } from 'react-native';
 
@@ -75,6 +78,11 @@ export default function ChatScreen() {
   // Feedback
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackContent, setFeedbackContent] = useState('');
+
+  // Voice
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
   const base = apiBase();
@@ -154,6 +162,52 @@ export default function ChatScreen() {
       setChats(prev => prev.filter(c => c.id !== chatId));
       if (activeChatId === chatId) { setActiveChatId(null); setMessages([]); }
     } catch { /* ignore */ }
+  };
+
+  const handleSpeak = async (content: string, index: number) => {
+    if (speakingIndex === index) {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      setSpeakingIndex(null);
+      return;
+    }
+
+    setSpeakingIndex(index);
+    try {
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+      }
+      const r = await fetch(`${base}/api/voice/synthesize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+        body: JSON.stringify({ text: content, voice: user?.preferred_voice || 'alloy' }),
+      });
+      if (!r.ok) throw new Error('Synthesis failed');
+      
+      // We can't stream directly to expo-av easily without a file path or a custom buffer
+      // So we'll save it to a temp file or use a data URI if short enough, 
+      // but expo-av Sound.createAsync can take a URI objects.
+      // Easiest is to use the direct URL since it's an MP3 stream.
+      // But fetch requires headers. Expo Sound.createAsync can take headers!
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: `${base}/api/voice/synthesize`, headers: authHeaders(token) as any, method: 'POST', body: JSON.stringify({ text: content, voice: user?.preferred_voice || 'alloy' }) } as any,
+        { shouldPlay: true }
+      );
+      soundRef.current = sound;
+      sound.setOnPlaybackStatusUpdate((status: any) => {
+        if (status.didJustFinish) {
+          setSpeakingIndex(null);
+          sound.unloadAsync();
+          soundRef.current = null;
+        }
+      });
+    } catch (err: any) {
+      Alert.alert('Audio Error', 'Could not play audio response.');
+      setSpeakingIndex(null);
+    }
   };
 
   // ------------------------------------------------------------------
@@ -355,6 +409,8 @@ export default function ChatScreen() {
             message={item}
             onFeedback={(content) => { setFeedbackContent(content); setFeedbackOpen(true); }}
             onDisambiguationSelect={handleAnchorPick}
+            onSpeak={(c) => handleSpeak(c, index)}
+            speaking={speakingIndex === index}
           />
         )}
         ListFooterComponent={
@@ -420,7 +476,10 @@ export default function ChatScreen() {
               : t('typeYourMessage')
           }
           leftSlot={
-            <GuidanceModePicker mode={guidanceMode} onModeChange={(m) => { setGuidanceMode(m); setParmaanSearchResults([]); }} disabled={loading} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <GuidanceModePicker mode={guidanceMode} onModeChange={(m) => { setGuidanceMode(m); setParmaanSearchResults([]); }} disabled={loading} />
+              <VoiceButton onPress={() => setVoiceOpen(true)} disabled={loading} />
+            </View>
           }
         />
       </View>
@@ -431,6 +490,12 @@ export default function ChatScreen() {
         token={token}
         onClose={() => setFeedbackOpen(false)}
       />
+
+      <VoiceMode
+        visible={voiceOpen}
+        onClose={() => setVoiceOpen(false)}
+        token={token}
+      />
     </SafeAreaView>
   );
 }
@@ -438,21 +503,21 @@ export default function ChatScreen() {
 function makeStyles(theme: ReturnType<typeof useTheme>['theme']) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-    headerBtn: { padding: 6, minWidth: 40, alignItems: 'center' },
+    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border, backgroundColor: theme.colors.background },
+    headerBtn: { padding: 8, minWidth: 44, alignItems: 'center' },
     headerCenter: { flex: 1, alignItems: 'center' },
-    headerTitle: { color: theme.colors.text, fontWeight: '600', fontSize: 15 },
-    emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-    khandaLarge: { fontSize: 72, marginBottom: 16 },
-    emptyTitle: { fontSize: 22, fontWeight: '700', color: theme.colors.text, marginBottom: 8 },
-    emptySubtitle: { fontSize: 14, color: theme.colors.textMuted, textAlign: 'center', lineHeight: 22 },
-    shabadCount: { marginTop: 16, fontSize: 12, color: theme.colors.textMuted },
+    headerTitle: { color: theme.colors.primary, fontWeight: '800', fontSize: 17, letterSpacing: -0.5 },
+    emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
+    khandaLarge: { fontSize: 80, marginBottom: 20, color: theme.colors.primary },
+    emptyTitle: { fontSize: 24, fontWeight: '800', color: theme.colors.text, marginBottom: 10 },
+    emptySubtitle: { fontSize: 16, color: theme.colors.textMuted, textAlign: 'center', lineHeight: 24, paddingHorizontal: 20 },
+    shabadCount: { marginTop: 24, fontSize: 13, color: theme.colors.textMuted, fontWeight: '500' },
     loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingVertical: 14 },
     loadingText: { color: theme.colors.textMuted, fontSize: 14, fontStyle: 'italic' },
     suggestionsBar: { paddingHorizontal: 14, paddingVertical: 8, gap: 8 },
     suggestionsList: { maxHeight: 52, flexGrow: 0 },
-    suggestionChip: { backgroundColor: theme.colors.surfaceAlt, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: theme.colors.border },
-    suggestionText: { color: theme.colors.text, fontSize: 13 },
-    footer: { borderTopWidth: 1, borderTopColor: theme.colors.border, paddingHorizontal: 10, paddingBottom: 8, paddingTop: 6 },
+    suggestionChip: { backgroundColor: theme.colors.surfaceAlt, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: theme.colors.primary, shadowColor: theme.colors.primary, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
+    suggestionText: { color: theme.colors.text, fontSize: 13, fontWeight: '600' },
+    footer: { paddingHorizontal: 12, paddingBottom: 12, paddingTop: 6, backgroundColor: 'transparent' },
   });
 }

@@ -10,6 +10,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_migrate import Migrate
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -29,7 +30,7 @@ from llm_synthesis import (
     synthesize_chat_response,
 )
 from gurbani_content_quality import recompute_quality_for_stored_row
-from models import Chat, LLMSettings, Message, Shabad, User, UserMemory, db
+from models import Chat, LLMSettings, Message, PushToken, Shabad, User, UserMemory, db
 from prompts import (
     FALLBACK_RESPONSE,
     LANGUAGE_INSTRUCTIONS,
@@ -285,6 +286,7 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
+migrate = Migrate(app, db)
 
 if is_testing:
     with app.app_context():
@@ -712,6 +714,38 @@ def patch_me():
             u.preferred_voice = voice
     db.session.commit()
     return jsonify({"user": u.to_dict()}), 200
+
+
+@app.route("/api/push-token", methods=["POST"])
+@require_auth
+def register_push_token():
+    """Register an Expo push token for the authenticated user (mobile)."""
+    data = request.get_json(silent=True) or {}
+    token = (data.get("push_token") or "").strip()
+    platform = (data.get("platform") or "").strip().lower()
+    if not token:
+        return jsonify({"error": "token required"}), 400
+
+    existing = PushToken.query.filter_by(token=token).first()
+    if existing:
+        existing.user_id = request.user_id
+        existing.platform = platform
+        existing.updated_at = datetime.utcnow()
+    else:
+        new_token = PushToken(
+            user_id=request.user_id,
+            token=token,
+            platform=platform
+        )
+        db.session.add(new_token)
+
+    try:
+        db.session.commit()
+        return jsonify({"ok": True}), 201
+    except Exception as e:
+        db.session.rollback()
+        logger.error("register_push_token failed: %s", e)
+        return jsonify({"error": "Could not register token"}), 500
 
 
 # --- Threads / active thread resume ---
@@ -1863,6 +1897,61 @@ def random_shabads():
     limit = request.args.get("limit", default=3, type=int)
     shabads = get_random_shabads(limit=limit)
     return jsonify({"shabads": [s.to_api_dict() for s in shabads]}), 200
+
+
+# --- Admin Push Notifications ---
+@app.route("/api/admin/push-all", methods=["POST"])
+@require_admin
+def admin_push_all():
+    """Send a push notification to all users who have a registered token."""
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "Giani Ji").strip()
+    body = (data.get("body") or "").strip()
+    if not body:
+        return jsonify({"error": "body required"}), 400
+
+    from models import PushToken
+    from notifications import send_push_notifications
+
+    tokens = [pt.token for pt in PushToken.query.all()]
+    if not tokens:
+        return jsonify({"ok": True, "sent": 0}), 200
+
+    res = send_push_notifications(tokens, title, body)
+    return jsonify({"ok": True, "sent": len(tokens), "raw": res}), 200
+
+
+@app.route("/api/admin/push-single", methods=["POST"])
+@require_admin
+def admin_push_single():
+    """Send a push notification to a specific user base on email or ID."""
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    user_id = data.get("user_id")
+    title = (data.get("title") or "Giani Ji").strip()
+    body = (data.get("body") or "").strip()
+
+    if not body:
+        return jsonify({"error": "body required"}), 400
+
+    from models import PushToken, User
+    from notifications import send_push_notifications
+
+    user = None
+    if user_id:
+        user = User.query.get(user_id)
+    elif email:
+        user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    tokens = [pt.token for pt in user.push_tokens]
+    if not tokens:
+        return jsonify({"error": "User has no registered devices"}), 400
+
+    res = send_push_notifications(tokens, title, body)
+    return jsonify({"ok": True, "sent": len(tokens), "raw": res}), 200
 
 
 if __name__ == "__main__":

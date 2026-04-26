@@ -373,6 +373,35 @@
         display: none;
     }
 }
+.message-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.message-action-btn:hover {
+  background: var(--surface-glass-hover);
+  color: var(--gold-light);
+  opacity: 1;
+}
+
+.message-action-btn.speaking {
+  color: var(--gold-light);
+  animation: pulse-gold 1.5s infinite;
+  opacity: 1;
+}
+
+@keyframes pulse-gold {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
 
 .message-content {
     padding: 1.25rem 1.5rem;

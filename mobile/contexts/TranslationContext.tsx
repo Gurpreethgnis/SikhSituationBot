@@ -90,6 +90,10 @@ const EN_STRINGS = {
   loadingSharedChat: 'Loading conversation…',
   sharedChatNotFound: 'Conversation not found or no longer shared.',
   errorGeneric: 'Something went wrong. Please try again.',
+  connecting: 'Connecting...',
+  listening: "I'm listening...",
+  thinking: 'Thinking...',
+  speaking: 'Speaking...',
 };
 
 const PA_STRINGS: Partial<typeof EN_STRINGS> = {

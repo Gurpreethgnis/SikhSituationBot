@@ -63,6 +63,8 @@ export default function AdminHomePage() {
         <Link href="/admin/interactions">Interactions log</Link>
         {' · '}
         <Link href="/admin/llm">LLM settings</Link>
+        {' · '}
+        <Link href="/admin/notifications">Push notifications</Link>
       </p>
     </div>
   )

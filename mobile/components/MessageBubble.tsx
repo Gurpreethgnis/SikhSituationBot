@@ -25,9 +25,11 @@ interface MessageProps {
   };
   onFeedback?: (content: string) => void;
   onDisambiguationSelect?: (candidate: any, originalQuery?: string) => void;
+  onSpeak?: (content: string) => void;
+  speaking?: boolean;
 }
 
-export default function MessageBubble({ message, onFeedback, onDisambiguationSelect }: MessageProps) {
+export default function MessageBubble({ message, onFeedback, onDisambiguationSelect, onSpeak, speaking }: MessageProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const isUser = message.role === 'user';
@@ -46,14 +48,14 @@ export default function MessageBubble({ message, onFeedback, onDisambiguationSel
   const s = makeStyles(theme, isUser);
 
   const markdownStyles = {
-    body: { color: theme.colors.text, fontSize: 15, lineHeight: 22 },
-    heading1: { color: theme.colors.primary, fontWeight: '700' as const },
-    heading2: { color: theme.colors.text, fontWeight: '700' as const, fontSize: 16 },
-    heading3: { color: theme.colors.text, fontWeight: '600' as const },
-    strong: { color: theme.colors.text, fontWeight: '700' as const },
-    blockquote: { borderLeftColor: theme.colors.primary, borderLeftWidth: 3, paddingLeft: 12, opacity: 0.9, marginLeft: 0 },
-    code_inline: { backgroundColor: theme.colors.surfaceAlt, color: theme.colors.primary, fontFamily: 'monospace' } as any,
-    fence: { backgroundColor: theme.colors.surfaceAlt, borderRadius: 8, padding: 10 } as any,
+    body: { color: isUser ? theme.colors.primaryText : theme.colors.text, fontSize: 16, lineHeight: 24 },
+    heading1: { color: isUser ? theme.colors.primaryText : theme.colors.primary, fontWeight: '800' as const, fontSize: 20 },
+    heading2: { color: isUser ? theme.colors.primaryText : theme.colors.text, fontWeight: '700' as const, fontSize: 18 },
+    heading3: { color: isUser ? theme.colors.primaryText : theme.colors.text, fontWeight: '600' as const, fontSize: 16 },
+    strong: { color: isUser ? theme.colors.primaryText : theme.colors.text, fontWeight: '800' as const },
+    blockquote: { borderLeftColor: isUser ? theme.colors.primaryText : theme.colors.primary, borderLeftWidth: 4, paddingLeft: 12, opacity: 0.9, marginLeft: 0 },
+    code_inline: { backgroundColor: isUser ? 'rgba(0,0,0,0.1)' : theme.colors.background, color: isUser ? theme.colors.primaryText : theme.colors.primary, fontFamily: 'monospace', paddingHorizontal: 4 } as any,
+    fence: { backgroundColor: isUser ? 'rgba(0,0,0,0.1)' : theme.colors.background, borderRadius: 8, padding: 12, marginVertical: 8 } as any,
     // Gurmukhi class applied via custom rules below
   };
 
@@ -65,6 +67,11 @@ export default function MessageBubble({ message, onFeedback, onDisambiguationSel
           <TouchableOpacity onPress={handleCopy} style={s.actionBtn}>
             <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={14} color={theme.colors.textMuted} />
           </TouchableOpacity>
+          {!isUser && message.content && !message.isDisambiguation && onSpeak && (
+            <TouchableOpacity onPress={() => onSpeak(message.content)} style={s.actionBtn}>
+              <Ionicons name={speaking ? "stop-circle-outline" : "volume-medium-outline"} size={16} color={speaking ? theme.colors.primary : theme.colors.textMuted} />
+            </TouchableOpacity>
+          )}
           {!isUser && message.content && !message.isDisambiguation && onFeedback && (
             <TouchableOpacity onPress={() => onFeedback(message.content)} style={s.actionBtn}>
               <Ionicons name="flag-outline" size={14} color={theme.colors.textMuted} />
@@ -116,24 +123,29 @@ function makeStyles(theme: ReturnType<typeof useTheme>['theme'], isUser: boolean
     toolbarActions: { flexDirection: 'row', gap: 6 },
     actionBtn: { padding: 4 },
     bubble: {
-      backgroundColor: isUser ? theme.colors.userBubble : theme.colors.assistantBubble,
-      borderRadius: 14,
+      backgroundColor: isUser ? theme.colors.primary : theme.colors.surfaceAlt,
+      borderRadius: 18,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      padding: 14,
+      padding: 16,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
     },
-    disambigList: { marginTop: 12, gap: 8 },
+    disambigList: { marginTop: 12, gap: 10 },
     disambigBtn: {
-      backgroundColor: theme.colors.surfaceAlt,
-      borderRadius: 10,
-      padding: 12,
+      backgroundColor: theme.colors.background,
+      borderRadius: 12,
+      padding: 14,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
-    disambigMeta: { fontSize: 11, color: theme.colors.primary, fontWeight: '600', marginBottom: 4 },
-    disambigGurmukhi: { fontSize: 15, color: theme.colors.text, lineHeight: 22 },
-    disambigRoman: { fontSize: 12, color: theme.colors.textMuted, marginTop: 4, fontStyle: 'italic' },
-    sttmLink: { marginTop: 10 },
-    sttmText: { color: theme.colors.primary, fontSize: 13, fontWeight: '600' },
+    disambigMeta: { fontSize: 11, color: theme.colors.primary, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase' },
+    disambigGurmukhi: { fontSize: 16, color: theme.colors.text, lineHeight: 24 },
+    disambigRoman: { fontSize: 13, color: theme.colors.textMuted, marginTop: 6 },
+    sttmLink: { marginTop: 12, alignSelf: 'flex-start' },
+    sttmText: { color: isUser ? theme.colors.primaryText : theme.colors.primary, fontSize: 13, fontWeight: '700', textDecorationLine: 'underline' },
   });
 }
