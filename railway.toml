@@ -1,2 +1,6 @@
 [build]
 builder = "NIXPACKS"
+
+[deploy]
+startCommand = "PYTHONPATH=. /opt/venv/bin/gunicorn main:app --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --timeout 120"
+restartPolicyType = "ON_FAILURE"
