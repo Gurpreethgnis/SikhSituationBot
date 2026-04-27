@@ -5,6 +5,11 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
+try:
+    from pgvector.sqlalchemy import Vector as PgVector
+except ImportError:
+    PgVector = None
+
 db = SQLAlchemy()
 
 
@@ -224,7 +229,7 @@ class Shabad(db.Model):
     verse_count = Column(Integer, nullable=True)
     content_length = Column(Integer, nullable=True)
 
-    embedding = Column(Text)  # JSON-encoded embedding for cross-db compatibility
+    embedding = Column(PgVector() if PgVector is not None else Text)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
