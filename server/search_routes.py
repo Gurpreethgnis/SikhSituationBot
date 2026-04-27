@@ -21,6 +21,11 @@ def search_gurbani():
 
     if not query:
         return jsonify({"results": []}), 200
+    
+    # SECURITY: Block purely wildcard queries (DoS mitigation)
+    # If the query contains *only* % or _ or \ after stripping, or is just the escape char
+    if query in ('%', '_', '\\') or all(c in ('%', '_', '\\', ' ') for c in query):
+        return jsonify({"error": "Invalid search query (wildcards only)"}), 400
 
     try:
         rows = []

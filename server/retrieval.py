@@ -16,10 +16,18 @@ _GURMUKHI_LADDER_ALTERNATIVES = {
 # Between "words" in Gurmukhi / romanization / English lines in the DB
 _FIRST_LETTER_SEP = r"(?:[\s\u00a0]+|[,;.:!?\u0964\u0965|]+)+"
 
-# After the ladder letter: BaniDB / steek romanization uses macrons (mā), IAST, hyphens (ka-o), etc.
-# ASCII-only [a-z]* misses those lines and breaks parity with SikhiToTheMax for queries like "mlddp".
-_ROMAN_OR_ENGLISH_WORD_TAIL = r"[^\s,;.:!?\u0964\u0965|]*"
+_LATIN_WORD_TAIL = r"[a-z\(\)\-]*"
+_ENGLISH_WORD_TAIL = r"[a-z'\-]*"
 _GURMUKHI_WORD_TAIL = r"[\u0a00-\u0a7f]*"
+
+
+def sanitize_like_filter(search_term: str) -> str:
+    """Escape SQLAlchemy LIKE wildcards (% and _) to avoid 'LIKE injection' (issue audit)."""
+    if not isinstance(search_term, str):
+        return ""
+    # SECURITY: Escape % and _ and \ in user input for LIKE patterns.
+    # Note: SQLite and Postgres both treat backslash as escape char by default in SQLAlchemy.
+    return search_term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 def _gurmukhi_char_class(typed: str) -> str:
@@ -36,7 +44,7 @@ def build_latin_first_letter_pattern(letters: List[str]) -> str:
     """
     if not letters:
         return ""
-    parts = [re.escape(L.lower()) + _ROMAN_OR_ENGLISH_WORD_TAIL for L in letters]
+    parts = [re.escape(L.lower()) + _LATIN_WORD_TAIL for L in letters]
     return "^" + _FIRST_LETTER_SEP.join(parts)
 
 
@@ -52,7 +60,7 @@ def build_english_first_letter_pattern(letters: List[str]) -> str:
     """Same as Latin but allow apostrophes inside English words."""
     if not letters:
         return ""
-    parts = [re.escape(L.lower()) + _ROMAN_OR_ENGLISH_WORD_TAIL for L in letters]
+    parts = [re.escape(L.lower()) + _LATIN_WORD_TAIL for L in letters]
     return "^" + _FIRST_LETTER_SEP.join(parts)
 
 
@@ -134,6 +142,11 @@ def find_shabads_by_first_letters(query: str, limit: int = 20) -> List[Shabad]:
                 # One regex OR: romanization ~* pat OR english ~* pat_eng
                 pat_roman = build_latin_first_letter_pattern(letters)
                 pat_eng = build_english_first_letter_pattern(letters)
+                
+                # SECURITY: Block extremely broad regex patterns (DoS mitigation)
+                if pat_roman in ("^.*", ".*") or len(letters) < 2:
+                    return []
+
                 rows = (
                     base.filter(
                         or_(
@@ -191,7 +204,8 @@ def _filter_shabad_matches_token(base, token: str):
         variants = latin_token_search_variants(token)
     token_clauses = []
     for v in variants:
-        pattern = f"%{v}%"
+        # SECURITY: sanitize sub-token to prevent LIKE injections
+        pattern = f"%{sanitize_like_filter(v)}%"
         token_clauses.append(
             or_(
                 Shabad.gurmukhi.ilike(pattern),
@@ -326,11 +340,14 @@ def browse_shabads(
     try:
         q = Shabad.query
         if source:
-            q = q.filter(Shabad.source.ilike(f"%{source}%"))
+            # SECURITY: sanitize user-provided source for LIKE
+            s_val = f"%{sanitize_like_filter(source)}%"
+            q = q.filter(Shabad.source.ilike(s_val))
         if persona:
             q = q.filter(Shabad.recommended_persona.in_([persona, "any"]))
         if search:
-            term = f"%{search}%"
+            # SECURITY: sanitize user-provided search term for LIKE
+            term = f"%{sanitize_like_filter(search)}%"
             q = q.filter(
                 or_(
                     Shabad.gurmukhi.ilike(term),

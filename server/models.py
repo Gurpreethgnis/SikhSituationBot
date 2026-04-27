@@ -2,9 +2,7 @@ import os
 from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
@@ -33,6 +31,8 @@ class User(db.Model):
     # Cross-session memory (issue #42): optional facts extracted from chats
     memory_enabled = Column(Boolean, default=True, nullable=False)
     memory_retention_days = Column(Integer, default=90, nullable=False)
+    # Voice preference for Realtime API TTS
+    preferred_voice = Column(String(20), default="coral", nullable=False)
 
     chats = relationship("Chat", back_populates="user", lazy="dynamic", cascade="all, delete-orphan")
     memories = relationship(
@@ -58,6 +58,7 @@ class User(db.Model):
             "last_login": self.last_login.isoformat() if self.last_login else None,
             "memory_enabled": bool(self.memory_enabled),
             "memory_retention_days": int(self.memory_retention_days or 90),
+            "preferred_voice": self.preferred_voice or "coral",
         }
         if include_sensitive:
             d["is_active"] = self.is_active
@@ -185,6 +186,21 @@ class LLMSettings(db.Model):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class PushToken(db.Model):
+    """FCM/Expo push tokens for mobile notifications."""
+
+    __tablename__ = "push_tokens"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token = Column(String(500), nullable=False, unique=True, index=True)
+    platform = Column(String(20))  # ios | android
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", backref=db.backref("push_tokens", lazy="dynamic", cascade="all, delete-orphan"))
+
+
 class Shabad(db.Model):
     """
     Model for storing Gurbani verses with vector embeddings for semantic search.
@@ -201,14 +217,14 @@ class Shabad(db.Model):
     source = Column(String(100))
     recommended_persona = Column(String(20), default="any")
 
-    context_tags = Column(ARRAY(String))
+    context_tags = Column(Text)  # JSON-encoded string for cross-db compatibility
 
     # Content quality (Raag/Mehla header stubs vs full shabads) — see gurbani_content_quality.py
     is_header_only = Column(Boolean, nullable=True)
     verse_count = Column(Integer, nullable=True)
     content_length = Column(Integer, nullable=True)
 
-    embedding = Column(Vector())
+    embedding = Column(Text)  # JSON-encoded embedding for cross-db compatibility
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

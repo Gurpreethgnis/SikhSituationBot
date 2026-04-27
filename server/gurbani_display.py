@@ -15,6 +15,38 @@ ShabadLike = Union[Dict[str, Any], Any]
 
 logger = logging.getLogger(__name__)
 
+_STTM_HTTP_RE = re.compile(r"https://www\.sikhitothemax\.org/shabad\?id=\d+", re.I)
+_STTM_LABELED_RE = re.compile(
+    r"SikhiToTheMax\s+link\s*:\s*(https://www\.sikhitothemax\.org/shabad\?id=\d+)\b",
+    re.I,
+)
+
+
+def prettify_sttm_links_in_prose(text: str) -> str:
+    """
+    Turn plain STTM URLs in model output into markdown links so ReactMarkdown renders
+    clickable anchors instead of raw https://… text.
+    """
+    if not text or "sikhitothemax.org" not in text.lower():
+        return text
+    out = _STTM_LABELED_RE.sub(r"[Open on SikhiToTheMax](\1)", text)
+    pieces: List[str] = []
+    last = 0
+    replaced_any = False
+    for m in _STTM_HTTP_RE.finditer(out):
+        s, e = m.start(), m.end()
+        url = m.group(0)
+        if s >= 2 and out[s - 2 : s] == "](":
+            continue
+        replaced_any = True
+        pieces.append(out[last:s])
+        pieces.append(f"[Open on SikhiToTheMax]({url})")
+        last = e
+    if not replaced_any:
+        return out
+    pieces.append(out[last:])
+    return "".join(pieces)
+
 
 def _sttm_link_from_shabad_id(shabad_id: Optional[str]) -> str:
     if not shabad_id or not isinstance(shabad_id, str):
@@ -62,8 +94,12 @@ def fetch_banidb_shabad_display(shabad_id_int: int) -> Optional[Dict[str, str]]:
         import banidb  # noqa: WPS433 — optional runtime dep in workers without banidb
     except ImportError:
         return None
+    # SECURITY HARDENING: Ensure shabad_id is a strict integer to prevent malformed BaniDB calls
     try:
-        raw_shabad = banidb.shabad(shabad_id_int)
+        sh_id = int(shabad_id_int)
+        if sh_id < 0:
+             return None
+        raw_shabad = banidb.shabad(sh_id)
     except Exception as e:
         logger.debug("BaniDB shabad %s: %s", shabad_id_int, e)
         return None
@@ -253,28 +289,44 @@ def response_angs_match_sources(response: str, shabads: List[Dict[str, Any]]) ->
 def guidance_grounding_ok(response: str, shabads: Optional[List[Dict[str, Any]]]) -> bool:
     if not shabads:
         return True
-    primary = shabads[0]
-    if not response_contains_primary_gurbani(response, primary):
-        return False
     if not response_angs_match_sources(response, shabads):
         return False
+    for s in shabads:
+        sd = s if isinstance(s, dict) else _shabad_as_dict(s)
+        if not response_contains_primary_gurbani(response, sd):
+            return False
     return True
 
 
+def _shabad_substantive_chunks_in_response(response: str, shabad: Dict[str, Any]) -> bool:
+    """True if response already embeds this shabad's Gurmukhi (and English when long enough)."""
+    return response_contains_primary_gurbani(response, shabad)
+
+
 def repair_guidance_with_canonical(response: str, shabads: List[Dict[str, Any]]) -> str:
-    """Append verbatim primary (and note) before [SUGGESTIONS] so scripture matches DB."""
+    """Append verbatim DB blocks (only shabads missing from prose) before [SUGGESTIONS]."""
     note = (
         "\n\n### ☬ Timeless Shabad (Reference) — verbatim from database\n\n"
-        "_The following is repeated exactly from our retrieval so it matches the SikhiToTheMax link "
+        "_The following repeats exactly from our retrieval for each cited shabad so it matches the SikhiToTheMax link "
         "and source line; do not rely on paraphrased text above for scripture wording._\n\n"
     )
-    primary_block = canonical_shabad_markdown(enriched_shabad_for_display(shabads[0]), index=1)
-    insert = note + primary_block
+    enriched = [enriched_shabad_for_display(s) for s in shabads]
+    missing_blocks: List[str] = []
+    for i, s in enumerate(enriched, start=1):
+        if not _shabad_substantive_chunks_in_response(response, s):
+            missing_blocks.append(canonical_shabad_markdown(s, index=i))
+    if not missing_blocks:
+        return response
+    insert = note + "\n\n---\n\n".join(missing_blocks)
     if "[SUGGESTIONS]" in response:
         pre, sep, post = response.partition("[SUGGESTIONS]")
         return pre.rstrip() + insert + "\n\n[SUGGESTIONS]" + post
-    return (response.rstrip() + insert + "\n\n[SUGGESTIONS]\n- Continue reflecting on this shabad\n"
-            "- Explore related themes in Gurbani\n- Open the link above on SikhiToTheMax\n")
+    return (
+        response.rstrip()
+        + insert
+        + "\n\n[SUGGESTIONS]\n- Continue reflecting on these shabads\n"
+        "- Explore related themes in Gurbani\n- Open the links above on SikhiToTheMax\n"
+    )
 
 
 def ensure_guidance_grounded(
@@ -286,3 +338,64 @@ def ensure_guidance_grounded(
     if guidance_grounding_ok(response, shabads):
         return response
     return repair_guidance_with_canonical(response, shabads)
+
+
+def _response_contains_sttm_url(response: str, url: str) -> bool:
+    """True if the canonical STTM URL (or trivial variant) appears in the reply."""
+    if not url or not response:
+        return False
+    if url in response:
+        return True
+    if url.startswith("https://") and url.replace("https://", "http://", 1) in response:
+        return True
+    return False
+
+
+def ensure_all_sttm_links_for_retrieved_shabads(
+    response: str,
+    shabads: Optional[List[Dict[str, Any]]],
+) -> str:
+    """
+    If any retrieved shabad's SikhiToTheMax URL is missing from the reply body,
+    insert a short reference list before [SUGGESTIONS] so every retrieval has a link.
+
+    Intended for guidance mode when N shabads are in context; the model should
+    normally place each URL beside that shabad's Gurmukhi block—this is a safety net.
+    """
+    if not shabads or not str(response).strip():
+        return response
+    enriched: List[Dict[str, Any]] = []
+    for s in shabads:
+        sd = s if isinstance(s, dict) else _shabad_as_dict(s)
+        enriched.append(enriched_shabad_for_display(sd))
+
+    missing: List[tuple[str, str]] = []
+    for i, d in enumerate(enriched, start=1):
+        url = (_sttm_for_dict(d) or "").strip()
+        if not url:
+            continue
+        if _response_contains_sttm_url(response, url):
+            continue
+        src = (d.get("source") or "").strip()
+        sid = (d.get("shabad_id") or "").strip()
+        label = src or sid or f"Shabad {i}"
+        missing.append((label, url))
+
+    if not missing:
+        return response
+
+    lines = [
+        "",
+        "### ☬ SikhiToTheMax — complete references",
+        "",
+        "_Every shabad drawn from retrieval for this reply is listed below; each link matches the database._",
+        "",
+    ]
+    for label, url in missing:
+        lines.append(f"- [Open on SikhiToTheMax — {label}]({url})")
+    insert = "\n".join(lines)
+
+    if "[SUGGESTIONS]" in response:
+        pre, _sep, post = response.partition("[SUGGESTIONS]")
+        return pre.rstrip() + insert + "\n\n[SUGGESTIONS]" + post
+    return response.rstrip() + insert + "\n"

@@ -26,6 +26,13 @@
         "backgroundColor": "#1a1625"
       },
       "package": "com.gianiji.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["BROWSABLE", "DEFAULT"],
+          "data": [{ "scheme": "com.gianiji.app" }]
+        }
+      ],
       "permissions": [
         "NOTIFICATIONS",
         "RECEIVE_BOOT_COMPLETED",
@@ -38,8 +45,17 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "expo-router",
       "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#1a1625",
+          "imageResizeMode": "contain"
+        }
+      ],
       [
         "expo-notifications",
         {

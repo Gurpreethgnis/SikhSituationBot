@@ -52,3 +52,9 @@ SikhSituationBot.code-workspace
 tmp/setup_local_db.py
 client/npm_install_log.txt
 docker-compose.yml
+.agent/workflows/start-dev.md
+.agent/workflows/push-pr.md
+.env*.local
+.env.vercel.production
+start-dev.ps1
+.github/prompts/start-dev.prompt.md

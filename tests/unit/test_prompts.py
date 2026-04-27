@@ -13,7 +13,8 @@ from prompts import (
     build_style_state,
     build_gemini_response_prompt,
     format_shabad_context,
-    get_persona_context
+    get_persona_context,
+    is_first_exchange_message,
 )
 from prompts import synthesize_gemini_response
 
@@ -62,12 +63,12 @@ class TestPrompts(unittest.TestCase):
         # Check teen persona
         teen_context = PERSONA_CONTEXTS['teen']
         self.assertIn('teen', teen_context['context'].lower())
-        self.assertIn('youth', teen_context['response_style'].lower())
+        self.assertIn('relatable', teen_context['response_style'].lower())
 
         # Check adult persona
         adult_context = PERSONA_CONTEXTS['adult']
         self.assertIn('adult', adult_context['context'].lower())
-        self.assertIn('mature', adult_context['response_style'].lower())
+        self.assertIn('genuine', adult_context['response_style'].lower())
 
     def test_build_gemini_response_prompt_basic(self):
         """Test basic Gemini response prompt building."""
@@ -82,8 +83,8 @@ class TestPrompts(unittest.TestCase):
         self.assertIn('test gurmukhi 1', result)
         self.assertIn('test english 1', result)
         self.assertIn('GURBANI CONTEXT', result)
-        self.assertIn('QUESTION:', result)
-        self.assertIn('RESPONSE FORM POLICY', result)
+        self.assertIn('MESSAGE:', result)
+        self.assertIn('RESPONSE GUIDELINES', result)
 
     def test_build_gemini_response_prompt_includes_user_memory(self):
         mem = "STORED CONTEXT from earlier signed-in conversations"
@@ -166,6 +167,19 @@ class TestPrompts(unittest.TestCase):
         result = format_shabad_context(None)
         self.assertEqual(result, "No relevant Gurbani verses found.")
 
+    def test_is_first_exchange_message(self):
+        self.assertTrue(is_first_exchange_message([]))
+        self.assertTrue(is_first_exchange_message(None))
+        self.assertTrue(is_first_exchange_message([{"role": "user", "content": "Sat sri akaal"}]))
+        self.assertFalse(
+            is_first_exchange_message(
+                [
+                    {"role": "user", "content": "Hi"},
+                    {"role": "assistant", "content": "Waheguru Ji Ka Khalsa"},
+                ]
+            )
+        )
+
     def test_format_shabad_context_minimal_fields(self):
         """Test formatting context with minimal shabad fields."""
         minimal_shabad = {'id': 1, 'gurmukhi': 'test', 'english': 'test'}
@@ -239,10 +253,14 @@ class TestPrompts(unittest.TestCase):
         )
 
         persona_pos = result.find('PERSONA:')
-        # SYSTEM_PROMPT also contains "GURBANI"; match the guidance-mode block only
-        context_pos = result.find('GURBANI CONTEXT (one or more')
-        question_pos = result.find('USER\'S QUESTION:')
+        # SYSTEM_PROMPT / policy text mention "GURBANI CONTEXT (" in prose — match the real context header.
+        context_header = 'relevant shabad(s) — your response MUST be grounded in these; weave them naturally into conversation):'
+        context_pos = result.find(context_header)
+        question_pos = result.find('USER\'S MESSAGE:')
 
+        self.assertGreater(persona_pos, 0, "PERSONA: should be present")
+        self.assertGreater(context_pos, 0, "GURBANI CONTEXT header should be present")
+        self.assertGreater(question_pos, 0, "USER'S MESSAGE should be present")
         self.assertLess(persona_pos, context_pos)
         self.assertLess(context_pos, question_pos)
 
@@ -301,9 +319,10 @@ class TestPrompts(unittest.TestCase):
         self.assertIn(state["length_mode"], ("short", "exploratory"))
 
     def test_response_form_policy_contains_required_rules(self):
-        self.assertIn("Short-form vs exploratory", RESPONSE_FORM_POLICY)
-        self.assertIn("Clarify vs answer", RESPONSE_FORM_POLICY)
+        self.assertIn("Conversation depth", RESPONSE_FORM_POLICY)
+        self.assertIn("Citation is mandatory", RESPONSE_FORM_POLICY)
         self.assertIn("Hard constraints", RESPONSE_FORM_POLICY)
+        self.assertIn("Contemplative Actions", RESPONSE_FORM_POLICY)
 
 
 if __name__ == '__main__':

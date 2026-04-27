@@ -5,7 +5,8 @@ import React, { createContext, useContext, useState, useCallback } from 'react'
 const translations = {
   en: {
     appName: 'Giani Ji',
-    tagline: 'Seek guidance from the Guru Granth Sahib for your life situations.',
+    welcomeGreeting: 'Waheguru Ji Ka Khalsa, Waheguru Ji Ki Fateh!',
+    tagline: 'I am here to share the timeless wisdom of Sri Guru Granth Sahib. What is on your heart today?',
     newChat: 'New Chat',
     conversations: 'Conversations',
     signInToSave: 'Sign in to save chats by conversation.',
@@ -19,7 +20,7 @@ const translations = {
     share: 'Share',
     seekingWisdom: 'Seeking Wisdom...',
     you: 'You',
-    guru: 'Guru',
+    guru: 'Giani Ji',
     guidanceMode: 'Guidance Mode',
     parmaanMode: 'Parmaan Mode',
     guidanceLabel: 'Guidance',
@@ -114,10 +115,22 @@ const translations = {
     feedbackSignInRequired: 'Sign in to send feedback.',
     feedbackCancel: 'Cancel',
     feedbackClose: 'Close',
+    voiceListening: 'Listening…',
+    voiceTranscribing: 'Transcribing…',
+    voiceProcessing: 'Thinking…',
+    voiceSpeaking: 'Speaking…',
+    voiceConsentTitle: 'Enable Voice Mode?',
+    voiceConsentText: 'Your spoken queries will be sent to OpenAI Whisper for transcription. Audio is processed in-memory and never stored on our servers.',
+    voiceConsentAllow: 'Allow',
+    voiceConsentLater: 'Later',
+    voiceMicDenied: 'Mic blocked.',
+    voiceRetry: 'Retry',
+    voiceNotConfigured: 'Voice unavailable (API Key missing).',
   },
   pa: {
-    appName: 'ਸਿੱਖ ਸਿਚੁਏਸ਼ਨ ਬੋਟ',
-    tagline: 'ਆਪਣੀ ਜ਼ਿੰਦਗੀ ਦੀਆਂ ਸਥਿਤੀਆਂ ਲਈ ਗੁਰੂ ਗ੍ਰੰਥ ਸਾਹਿਬ ਤੋਂ ਮਾਰਗਦਰਸ਼ਨ ਲਓ।',
+    appName: 'ਗਿਆਨੀ ਜੀ',
+    welcomeGreeting: 'ਵਾਹਿਗੁਰੂ ਜੀ ਕਾ ਖਾਲਸਾ, ਵਾਹਿਗੁਰੂ ਜੀ ਕੀ ਫਤਹਿ!',
+    tagline: 'ਮੈਂ ਸ੍ਰੀ ਗੁਰੂ ਗ੍ਰੰਥ ਸਾਹਿਬ ਦੀ ਅਨਮੋਲ ਬਾਣੀ ਸਾਂਝੀ ਕਰਨ ਲਈ ਹਾਜ਼ਰ ਹਾਂ। ਅੱਜ ਤੁਹਾਡੇ ਮਨ ਵਿੱਚ ਕੀ ਹੈ?',
     newChat: 'ਨਵੀਂ ਗੱਲਬਾਤ',
     conversations: 'ਗੱਲਬਾਤਾਂ',
     signInToSave: 'ਗੱਲਬਾਤ ਸੇਵ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
@@ -131,7 +144,7 @@ const translations = {
     share: 'ਸਾਂਝਾ ਕਰੋ',
     seekingWisdom: 'ਗਿਆਨ ਲੱਭ ਰਿਹਾ ਹੈ...',
     you: 'ਤੁਸੀਂ',
-    guru: 'ਗੁਰੂ',
+    guru: 'ਗਿਆਨੀ ਜੀ',
     guidanceMode: 'ਮਾਰਗਦਰਸ਼ਨ ਮੋਡ',
     parmaanMode: 'ਪ੍ਰਮਾਣ ਮੋਡ',
     guidanceLabel: 'ਮਾਰਗਦਰਸ਼ਨ',
@@ -226,10 +239,22 @@ const translations = {
     feedbackSignInRequired: 'ਫੀਡਬੈਕ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
     feedbackCancel: 'ਰੱਦ ਕਰੋ',
     feedbackClose: 'ਬੰਦ ਕਰੋ',
+    voiceListening: 'ਸੁਣ ਰਿਹਾ ਹੈ…',
+    voiceTranscribing: 'ਲਿਖ ਰਿਹਾ ਹੈ…',
+    voiceProcessing: 'ਸੋਚ ਰਿਹਾ ਹੈ…',
+    voiceSpeaking: 'ਬੋਲ ਰਿਹਾ ਹੈ…',
+    voiceConsentTitle: 'ਵੌਇਸ ਮੋਡ ਚਾਲੂ ਕਰੀਏ?',
+    voiceConsentText: 'ਤੁਹਾਡੇ ਬੋਲੇ ਗਏ ਸਵਾਲਾਂ ਨੂੰ ਟ੍ਰਾਂਸਕ੍ਰਿਪਸ਼ਨ ਲਈ OpenAI Whisper ਕੋਲ ਭੇਜਿਆ ਜਾਵੇਗਾ। ਆਡੀਓ ਮੈਮੋਰੀ ਵਿੱਚ ਪ੍ਰੋਸੈਸ ਕੀਤੀ ਜਾਂਦੀ ਹੈ ਅਤੇ ਸਾਡੇ ਸਰਵਰਾਂ ਤੇ ਕਦੇ ਵੀ ਸਟੋਰ ਨਹੀਂ ਕੀਤੀ ਜਾਂਦੀ।',
+    voiceConsentAllow: 'ਗੱਲਬਾਤ ਜਾਰੀ ਰੱਖੋ',
+    voiceConsentLater: 'ਬਾਅਦ ਵਿੱਚ',
+    voiceMicDenied: 'ਮਾਈਕ੍ਰੋਫੋਨ ਬੰਦ ਹੈ।',
+    voiceRetry: 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
+    voiceNotConfigured: 'ਵੌਇਸ ਉਪਲਬਧ ਨਹੀਂ (API ਕੁੰਜੀ ਗੈਰਹਾਜ਼ਰ)।',
   },
   hi: {
-    appName: 'सिख सिचुएशन बॉट',
-    tagline: 'अपने जीवन की स्थितियों के लिए गुरु ग्रंथ साहिब से मार्गदर्शन प्राप्त करें।',
+    appName: 'ज्ञानी जी',
+    welcomeGreeting: 'वाहेगुरु जी का खालसा, वाहेगुरु जी की फतेह!',
+    tagline: 'मैं श्री गुरु ग्रंथ साहिब की अनमोल बाणी साझा करने के लिए यहां हूं। आज आपके मन में क्या है?',
     newChat: 'नई चैट',
     conversations: 'बातचीत',
     signInToSave: 'चैट सेव करने के लिए साइन इन करें।',
@@ -243,7 +268,7 @@ const translations = {
     share: 'शेयर करें',
     seekingWisdom: 'ज्ञान ढूंढ रहा है...',
     you: 'आप',
-    guru: 'गुरु',
+    guru: 'गिआनी जी',
     guidanceMode: 'मार्गदर्शन मोड',
     parmaanMode: 'प्रमाण मोड',
     guidanceLabel: 'मार्गदर्शन',
@@ -338,10 +363,12 @@ const translations = {
     feedbackSignInRequired: 'प्रतिक्रिया के लिए साइन इन करें।',
     feedbackCancel: 'रद्द करें',
     feedbackClose: 'बंद करें',
+    voiceNotConfigured: 'आवाज अनुपलब्ध (API Key गायब है)।',
   },
   zh: {
-    appName: '锡克情境机器人',
-    tagline: '从古鲁格兰特萨希布获取人生指导。',
+    appName: '智者吉',
+    welcomeGreeting: 'Waheguru Ji Ka Khalsa, Waheguru Ji Ki Fateh!',
+    tagline: '我在这里分享古鲁格兰特萨希布的永恒智慧。今天您心中有什么？',
     newChat: '新聊天',
     conversations: '对话',
     signInToSave: '登录以保存聊天。',
@@ -355,7 +382,7 @@ const translations = {
     share: '分享',
     seekingWisdom: '寻求智慧...',
     you: '你',
-    guru: '古鲁',
+    guru: 'Giani Ji',
     guidanceMode: '指导模式',
     parmaanMode: '经典模式',
     guidanceLabel: '指导',
@@ -448,10 +475,12 @@ const translations = {
     feedbackSignInRequired: '请登录后发送反馈。',
     feedbackCancel: '取消',
     feedbackClose: '关闭',
+    voiceNotConfigured: '语音不可用 (缺少 API 密钥)。',
   },
   es: {
     appName: 'Giani Ji',
-    tagline: 'Busca orientación del Guru Granth Sahib para las situaciones de tu vida.',
+    welcomeGreeting: 'Waheguru Ji Ka Khalsa, Waheguru Ji Ki Fateh!',
+    tagline: 'Estoy aquí para compartir la sabiduría eterna de Sri Guru Granth Sahib. ¿Qué hay en tu corazón hoy?',
     newChat: 'Nueva conversación',
     conversations: 'Conversaciones',
     signInToSave: 'Inicia sesión para guardar conversaciones.',
@@ -465,7 +494,7 @@ const translations = {
     share: 'Compartir',
     seekingWisdom: 'Buscando sabiduría...',
     you: 'Tú',
-    guru: 'Guru',
+    guru: 'Giani Ji',
     guidanceMode: 'Modo Orientación',
     parmaanMode: 'Modo Parmaan',
     guidanceLabel: 'Orientación',
@@ -560,6 +589,11 @@ const translations = {
     feedbackSignInRequired: 'Inicia sesión para enviar comentarios.',
     feedbackCancel: 'Cancelar',
     feedbackClose: 'Cerrar',
+    voiceListening: 'Escuchando...',
+    voiceTranscribing: 'Transcribiendo...',
+    voiceProcessing: 'Pensando...',
+    voiceSpeaking: 'Hablando...',
+    voiceNotConfigured: 'Voz no disponible (falta clave API).',
   },
 }
 
@@ -568,9 +602,13 @@ const TranslationContext = createContext(null)
 export function TranslationProvider({ children }) {
   const [uiLanguage, setUiLanguage] = useState('en')
 
-  const t = useCallback((key) => {
+  const t = useCallback((key, params = {}) => {
     const langTranslations = translations[uiLanguage] || translations.en
-    return langTranslations[key] || translations.en[key] || key
+    let text = langTranslations[key] || translations.en[key] || key
+    Object.keys(params).forEach(p => {
+      text = text.replace(`{${p}}`, params[p])
+    })
+    return text
   }, [uiLanguage])
 
   const changeUiLanguage = useCallback((lang) => {

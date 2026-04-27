@@ -15,6 +15,9 @@ import FeedbackModal from '../components/FeedbackModal.jsx'
 import { apiBase, authHeaders } from '../../lib/api'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { useTranslation, SUPPORTED_UI_LANGUAGES } from '../contexts/TranslationContext.jsx'
+import VoiceButton from '../components/voice/VoiceButton.jsx'
+import VoiceMode from '../components/voice/VoiceMode.jsx'
+import { useAudioPlayer } from '../components/voice/useAudioPlayer.js'
 import '../App.css'
 import '../parmaans/parmaans.css'
 
@@ -79,6 +82,10 @@ export default function ChatPage() {
   const [parmaanSearchLoading, setParmaanSearchLoading] = useState(false)
   const [parmaanSearchErr, setParmaanSearchErr] = useState('')
   const [parmaanLookupSearchEmpty, setParmaanLookupSearchEmpty] = useState(false)
+  const [voiceModeOpen, setVoiceModeOpen] = useState(false)
+  const [preferredVoice, setPreferredVoice] = useState('coral')
+  const [speakingIndex, setSpeakingIndex] = useState(null)
+  const { play: playAudio, stop: stopAudio, isPlaying: isAudioPlaying } = useAudioPlayer()
 
   const messagesEndRef = useRef(null)
   const baseUrl = apiBase()
@@ -202,6 +209,32 @@ export default function ChatPage() {
     }
   }
 
+  const handleSpeakMessage = async (text, index) => {
+    if (speakingIndex === index) {
+      stopAudio()
+      setSpeakingIndex(null)
+      return
+    }
+    
+    setSpeakingIndex(index)
+    try {
+      const res = await fetch(`${baseUrl}/api/voice/synthesize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ text, voice: preferredVoice === 'coral' ? 'fable' : 'alloy' }),
+      })
+      if (!res.ok) throw new Error('TTS failed')
+      await playAudio(res)
+    } catch (err) {
+      console.error('TTS error:', err)
+    } finally {
+      setSpeakingIndex(null)
+    }
+  }
+
   useEffect(() => {
     if (!token) return
     let cancelled = false
@@ -216,6 +249,7 @@ export default function ChatPage() {
         if (u?.preferred_theme && themes.some((t) => t.id === u.preferred_theme)) {
           setTheme(u.preferred_theme)
         }
+        if (u?.preferred_voice) setPreferredVoice(u.preferred_voice)
       } catch {
         /* ignore */
       }
@@ -589,8 +623,9 @@ export default function ChatPage() {
                 </div>
               )}
               <Logo />
+              <p className="welcome-greeting">{t('welcomeGreeting')}</p>
               <h1>{t('appName')}</h1>
-              <p>{t('tagline')}</p>
+              <p className="welcome-tagline">{t('tagline')}</p>
               <p className="persona-from-profile-hint">
                 Response style follows your year of birth. Update it anytime in <Link href="/settings">Settings</Link>.
               </p>
@@ -614,14 +649,25 @@ export default function ChatPage() {
                         !msg.isDisambiguation &&
                         typeof msg.content === 'string' &&
                         msg.content.trim() !== '' && (
-                          <FeedbackButton
-                            label={t('feedbackButton')}
-                            disabled={loading}
-                            onClick={() => {
-                              setFeedbackResponseContent(msg.content)
-                              setFeedbackOpen(true)
-                            }}
-                          />
+                          <>
+                            <button
+                              type="button"
+                              className={`message-action-btn ${speakingIndex === index ? 'speaking' : ''}`}
+                              onClick={() => handleSpeakMessage(msg.content, index)}
+                              title={speakingIndex === index ? t('stop') : t('listen')}
+                              disabled={loading}
+                            >
+                              {speakingIndex === index ? '⏹' : '🔊'}
+                            </button>
+                            <FeedbackButton
+                              label={t('feedbackButton')}
+                              disabled={loading}
+                              onClick={() => {
+                                setFeedbackResponseContent(msg.content)
+                                setFeedbackOpen(true)
+                              }}
+                            />
+                          </>
                         )}
                     </div>
                   </div>
@@ -772,6 +818,12 @@ export default function ChatPage() {
                     setParmaanPillValue(v)
                     setParmaanLookupSearchEmpty(false)
                   }}
+                  endAdornment={
+                    <VoiceButton
+                      onActivate={() => setVoiceModeOpen(true)}
+                      disabled={loading}
+                    />
+                  }
                   placeholder={
                     parmaanComposerAction === 'line'
                       ? t('parmaanLinePlaceholder')
@@ -836,6 +888,12 @@ export default function ChatPage() {
                     variant="embed"
                   />
                 }
+                endAdornment={
+                  <VoiceButton
+                    onActivate={() => setVoiceModeOpen(true)}
+                    disabled={loading}
+                  />
+                }
               />
             )}
             <p className="footer-disclaimer" aria-live="polite">
@@ -852,6 +910,18 @@ export default function ChatPage() {
           token={token}
           baseUrl={baseUrl}
           t={t}
+        />
+
+        <VoiceMode
+          isOpen={voiceModeOpen}
+          onClose={() => setVoiceModeOpen(false)}
+          token={token}
+          voice={preferredVoice}
+          onMessage={(role, text) => {
+            if (role === 'user') {
+              handleSend(text)
+            }
+          }}
         />
       </main>
     </div>

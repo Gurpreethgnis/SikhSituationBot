@@ -135,13 +135,13 @@ export default function SettingsScreen() {
         {/* Theme */}
         <Text style={s.sectionLabel}>Theme</Text>
         <View style={s.themeRow}>
-          {THEMES.map(th => (
+          {themes.map(th => (
             <TouchableOpacity
               key={th.id}
               style={[s.themeChip, { backgroundColor: th.colors.primary }, theme.id === th.id && s.themeChipActive]}
               onPress={() => setThemeId(th.id)}
             >
-              <Text style={s.themeChipText}>{th.label}</Text>
+              <Text style={[s.themeChipText, { color: th.colors.primaryText }]}>{th.label.split(' ')[0]}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -215,10 +215,10 @@ function makeStyles(theme: ReturnType<typeof useTheme>['theme']) {
     hint: { fontSize: 13, color: theme.colors.textMuted, marginBottom: 10, lineHeight: 18 },
     pickerWrap: { backgroundColor: theme.colors.inputBg, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border, marginBottom: 4, overflow: 'hidden' },
     picker: { color: theme.colors.text, height: 50 },
-    themeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 4 },
-    themeChip: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20, opacity: 0.7 },
-    themeChipActive: { opacity: 1, borderWidth: 2, borderColor: '#ffffff44' },
-    themeChipText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+    themeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+    themeChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, minWidth: 80, alignItems: 'center' },
+    themeChipActive: { borderWidth: 2, borderColor: theme.colors.text },
+    themeChipText: { fontWeight: '700', fontSize: 13 },
     switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
     switchLabel: { fontSize: 15, color: theme.colors.text, flex: 1 },
     retentionRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },

@@ -1,6 +1,16 @@
 import json
 import logging
 import os
+import sys
+
+# Ensure current and parent directories are in path for Railway/Nixpacks modules
+# This fixes ModuleNotFoundError: No module named 'server' without needing dashbord env vars
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+if "/app" not in sys.path:
+    sys.path.append("/app")
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -10,6 +20,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_migrate import Migrate
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -29,7 +40,7 @@ from llm_synthesis import (
     synthesize_chat_response,
 )
 from gurbani_content_quality import recompute_quality_for_stored_row
-from models import Chat, LLMSettings, Message, Shabad, User, UserMemory, db
+from models import Chat, LLMSettings, Message, PushToken, Shabad, User, UserMemory, db
 from prompts import (
     FALLBACK_RESPONSE,
     LANGUAGE_INSTRUCTIONS,
@@ -49,6 +60,7 @@ from retrieval import (
     get_shabad_by_id,
     get_shabad_by_pk,
     search_similar_shabads,
+    sanitize_like_filter,
 )
 from user_memory import (
     format_memory_context_for_prompt,
@@ -67,6 +79,8 @@ from feedback_github import (
     upload_feedback_screenshot,
 )
 from search_routes import search_blueprint
+from voice_routes import voice_blueprint
+from realtime_routes import realtime_blueprint, init_realtime_routes
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
@@ -237,6 +251,13 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 
 app = Flask(__name__)
 app.register_blueprint(search_blueprint)
+app.register_blueprint(voice_blueprint)
+app.register_blueprint(realtime_blueprint)
+
+from flask_sock import Sock
+sock = Sock(app)
+init_realtime_routes(sock)
+
 CORS(
     app,
     resources={
@@ -275,6 +296,7 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
+migrate = Migrate(app, db)
 
 if is_testing:
     with app.app_context():
@@ -290,37 +312,52 @@ if not is_testing:
             db.create_all()
             # Migration: add shabad count columns if they don't exist
             from sqlalchemy import text, inspect
-            inspector = inspect(db.engine)
-            columns = [col['name'] for col in inspector.get_columns('llm_settings')]
-            if 'guidance_shabad_count' not in columns:
-                db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN guidance_shabad_count INTEGER DEFAULT 3"))
-                db.session.commit()
-                logger.info("Added guidance_shabad_count column to llm_settings")
-            if 'parmaan_shabad_count' not in columns:
-                db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN parmaan_shabad_count INTEGER DEFAULT 5"))
-                db.session.commit()
-                logger.info("Added parmaan_shabad_count column to llm_settings")
-            # Shabad content quality (Parmaan search / Raag header stubs)
-            if "shabads" in inspector.get_table_names():
-                sh_cols = [c["name"] for c in inspector.get_columns("shabads")]
-                if "is_header_only" not in sh_cols:
-                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN is_header_only BOOLEAN"))
-                    db.session.commit()
-                    logger.info("Added is_header_only column to shabads")
-                if "verse_count" not in sh_cols:
-                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN verse_count INTEGER"))
-                    db.session.commit()
-                    logger.info("Added verse_count column to shabads")
-                if "content_length" not in sh_cols:
-                    db.session.execute(text("ALTER TABLE shabads ADD COLUMN content_length INTEGER"))
-                    db.session.commit()
-                    logger.info("Added content_length column to shabads")
-            if "messages" in inspector.get_table_names():
-                msg_cols = [c["name"] for c in inspector.get_columns("messages")]
-                if "was_fallback" not in msg_cols:
-                    db.session.execute(text("ALTER TABLE messages ADD COLUMN was_fallback BOOLEAN DEFAULT FALSE NOT NULL"))
-                    db.session.commit()
-                    logger.info("Added was_fallback column to messages")
+            try:
+                inspector = inspect(db.engine)
+                # llm_settings check
+                if "llm_settings" in inspector.get_table_names():
+                    columns = [col['name'] for col in inspector.get_columns('llm_settings')]
+                    if 'guidance_shabad_count' not in columns:
+                        db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN guidance_shabad_count INTEGER DEFAULT 3"))
+                        db.session.commit()
+                        logger.info("Added guidance_shabad_count column to llm_settings")
+                    if 'parmaan_shabad_count' not in columns:
+                        db.session.execute(text("ALTER TABLE llm_settings ADD COLUMN parmaan_shabad_count INTEGER DEFAULT 5"))
+                        db.session.commit()
+                        logger.info("Added parmaan_shabad_count column to llm_settings")
+                
+                # Shabad content quality check - wrap specifically as 'vector' type columns can cause inspector to crash
+                if "shabads" in inspector.get_table_names():
+                    try:
+                        sh_cols = [c["name"] for c in inspector.get_columns("shabads")]
+                        if "is_header_only" not in sh_cols:
+                            db.session.execute(text("ALTER TABLE shabads ADD COLUMN is_header_only BOOLEAN"))
+                            db.session.commit()
+                            logger.info("Added is_header_only column to shabads")
+                        if "verse_count" not in sh_cols:
+                            db.session.execute(text("ALTER TABLE shabads ADD COLUMN verse_count INTEGER"))
+                            db.session.commit()
+                            logger.info("Added verse_count column to shabads")
+                        if "content_length" not in sh_cols:
+                            db.session.execute(text("ALTER TABLE shabads ADD COLUMN content_length INTEGER"))
+                            db.session.commit()
+                            logger.info("Added content_length column to shabads")
+                    except Exception as inner_e:
+                        logger.warning("Could not inspect 'shabads' table columns (likely due to pgvector type mismatch): %s", inner_e)
+
+                # messages check
+                if "messages" in inspector.get_table_names():
+                    try:
+                        msg_cols = [c["name"] for c in inspector.get_columns("messages")]
+                        if "was_fallback" not in msg_cols:
+                            db.session.execute(text("ALTER TABLE messages ADD COLUMN was_fallback BOOLEAN DEFAULT FALSE NOT NULL"))
+                            db.session.commit()
+                            logger.info("Added was_fallback column to messages")
+                    except Exception as inner_e:
+                        logger.warning("Could not inspect 'messages' table columns: %s", inner_e)
+
+            except Exception as e:
+                logger.error("Database inspection failed: %s", e)
 
             ensure_llm_settings_row()
         except Exception as e:
@@ -418,78 +455,9 @@ def health_check():
     ), 200
 
 
-# --- Voice Interaction (OpenAI) ---
-@app.route("/api/voice/transcribe", methods=["POST"])
-@require_auth
-def transcribe_audio():
-    """
-    STT: Transcribe audio file from mobile/web using OpenAI Whisper.
-    Expects 'audio' file in multipart/form-data.
-    """
-    openai_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPEN_API_KEY")
-    if not openai_key:
-        return jsonify({"error": "Voice transcription not configured (missing API key)"}), 503
-
-    if 'audio' not in request.files:
-        return jsonify({"error": "No audio file provided"}), 400
-
-    audio_file = request.files['audio']
-    if audio_file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=openai_key)
-
-        # Transcribe using Whisper
-        # Note: Whisper expects a file with a supported extension (e.g. .m4a, .mp3, .wav)
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file
-        )
-
-        return jsonify({"text": transcript.text}), 200
-    except Exception as e:
-        logger.error("Voice transcription failed: %s", e)
-        return jsonify({"error": "Transcription failed"}), 500
-
-
-@app.route("/api/voice/synthesize", methods=["POST"])
-@require_auth
-def synthesize_speech():
-    """
-    TTS: Convert text to speech using OpenAI TTS.
-    Expects JSON: { "text": "...", "voice": "alloy" }
-    """
-    openai_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPEN_API_KEY")
-    if not openai_key:
-        return jsonify({"error": "Voice synthesis not configured (missing API key)"}), 503
-
-    data = request.get_json(silent=True) or {}
-    text = (data.get("text") or "").strip()
-    voice = (data.get("voice") or "alloy").strip()
-
-    if not text:
-        return jsonify({"error": "Text is required"}), 400
-
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=openai_key)
-
-        # Generate speech
-        response = client.audio.speech.create(
-            model="tts-1",
-            voice=voice,
-            input=text
-        )
-
-        # Return audio stream directly or save to cloud (returning direct stream for now)
-        # In production, you might want to cache this or upload to S3/GCS.
-        return response.content, 200, {'Content-Type': 'audio/mpeg'}
-    except Exception as e:
-        logger.error("Speech synthesis failed: %s", e)
-        return jsonify({"error": "Synthesis failed"}), 500
-
+# Voice STT/TTS is implemented only in voice_blueprint (voice_routes.py). Duplicate
+# @app.route handlers here previously required JWT on transcribe while the web
+# VoiceButton called the API without Authorization, causing production failures.
 
 @app.route("/api/stats/knowledge", methods=["GET"])
 def knowledge_stats():
@@ -764,8 +732,45 @@ def patch_me():
                 u.memory_retention_days = rd
         except (TypeError, ValueError):
             pass
+    if "preferred_voice" in data:
+        voice = str(data["preferred_voice"]).lower().strip()
+        valid_voices = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"]
+        if voice in valid_voices:
+            u.preferred_voice = voice
     db.session.commit()
     return jsonify({"user": u.to_dict()}), 200
+
+
+@app.route("/api/push-token", methods=["POST"])
+@require_auth
+def register_push_token():
+    """Register an Expo push token for the authenticated user (mobile)."""
+    data = request.get_json(silent=True) or {}
+    token = (data.get("push_token") or "").strip()
+    platform = (data.get("platform") or "").strip().lower()
+    if not token:
+        return jsonify({"error": "token required"}), 400
+
+    existing = PushToken.query.filter_by(token=token).first()
+    if existing:
+        existing.user_id = request.user_id
+        existing.platform = platform
+        existing.updated_at = datetime.utcnow()
+    else:
+        new_token = PushToken(
+            user_id=request.user_id,
+            token=token,
+            platform=platform
+        )
+        db.session.add(new_token)
+
+    try:
+        db.session.commit()
+        return jsonify({"ok": True}), 201
+    except Exception as e:
+        db.session.rollback()
+        logger.error("register_push_token failed: %s", e)
+        return jsonify({"error": "Could not register token"}), 500
 
 
 # --- Threads / active thread resume ---
@@ -1269,7 +1274,9 @@ def admin_interactions():
         .order_by(desc(Message.created_at))
     )
     if user_email:
-        q = q.filter(User.email.ilike(f"%{user_email}%"))
+        # SECURITY: sanitize admin search input to prevent LIKE injection
+        email_pat = f"%{sanitize_like_filter(user_email)}%"
+        q = q.filter(User.email.ilike(email_pat))
 
     total = q.count()
     rows = q.offset((page - 1) * per_page).limit(per_page).all()
@@ -1790,9 +1797,9 @@ def ask():
             return jsonify(_finalize_ask_response_payload(payload)), 200
 
         # Default: Guidance mode - retrieve top shabads and provide guidance with summary
-        similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, persona=persona)
+        similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, persona=persona, exclude_parmaan_low_quality=True)
         if not similar_shabads:
-            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count)
+            similar_shabads = search_similar_shabads(query_embedding=query_vector, limit=guidance_shabad_count, exclude_parmaan_low_quality=True)
         if not similar_shabads:
             return jsonify({"error": "No matching wisdom found in database"}), 404
 
@@ -1915,6 +1922,61 @@ def random_shabads():
     limit = request.args.get("limit", default=3, type=int)
     shabads = get_random_shabads(limit=limit)
     return jsonify({"shabads": [s.to_api_dict() for s in shabads]}), 200
+
+
+# --- Admin Push Notifications ---
+@app.route("/api/admin/push-all", methods=["POST"])
+@require_admin
+def admin_push_all():
+    """Send a push notification to all users who have a registered token."""
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "Giani Ji").strip()
+    body = (data.get("body") or "").strip()
+    if not body:
+        return jsonify({"error": "body required"}), 400
+
+    from models import PushToken
+    from notifications import send_push_notifications
+
+    tokens = [pt.token for pt in PushToken.query.all()]
+    if not tokens:
+        return jsonify({"ok": True, "sent": 0}), 200
+
+    res = send_push_notifications(tokens, title, body)
+    return jsonify({"ok": True, "sent": len(tokens), "raw": res}), 200
+
+
+@app.route("/api/admin/push-single", methods=["POST"])
+@require_admin
+def admin_push_single():
+    """Send a push notification to a specific user base on email or ID."""
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    user_id = data.get("user_id")
+    title = (data.get("title") or "Giani Ji").strip()
+    body = (data.get("body") or "").strip()
+
+    if not body:
+        return jsonify({"error": "body required"}), 400
+
+    from models import PushToken, User
+    from notifications import send_push_notifications
+
+    user = None
+    if user_id:
+        user = User.query.get(user_id)
+    elif email:
+        user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    tokens = [pt.token for pt in user.push_tokens]
+    if not tokens:
+        return jsonify({"error": "User has no registered devices"}), 400
+
+    res = send_push_notifications(tokens, title, body)
+    return jsonify({"ok": True, "sent": len(tokens), "raw": res}), 200
 
 
 if __name__ == "__main__":

@@ -1,7 +1,12 @@
 'use client'
 
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
+import dynamic from 'next/dynamic'
+import React from 'react'
+
+const ReactMarkdown = dynamic(() => import('react-markdown').then((m) => m.default), {
+  ssr: false,
+  loading: () => <div className="markdown-content markdown-content--loading" aria-hidden="true" />
+})
 
 const MarkdownRenderer = ({ content }) => {
   const markdown =

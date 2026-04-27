@@ -1,0 +1,57 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\sarab\.gemini\antigravity\scratch\SikhSituationBot
+plugins: anyio-4.12.1
+collected 3 items
+
+server\tests\test_sql_injection.py .F.                                   [100%]
+
+================================== FAILURES ===================================
+___________ test_admin_interaction_wildcard_injection_is_sanitized ____________
+server\tests\test_sql_injection.py:73: in test_admin_interaction_wildcard_injection_is_sanitized
+    with patch('app.User.query') as mock_user_query:
+         ^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\unittest\mock.py:1459: in get_original
+    original = getattr(target, name, DEFAULT)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\model.py:23: in __get__
+    cls, session=cls.__fsa__.session()  # type: ignore[arg-type]
+                 ^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\scoping.py:218: in __call__
+    sess = self.registry()
+           ^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\_collections.py:629: in __call__
+    key = self.scopefunc()
+          ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_sqlalchemy\session.py:111: in _app_ctx_id
+    return id(app_ctx._get_current_object())  # type: ignore[attr-defined]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\local.py:519: in _get_current_object
+    raise RuntimeError(unbound_message) from None
+E   RuntimeError: Working outside of application context.
+E   
+E   This typically means that you attempted to use functionality that needed
+E   the current application. To solve this, set up an application context
+E   with app.app_context(). See the documentation for more information.
+============================== warnings summary ===============================
+server\llm_synthesis.py:60
+  C:\Users\sarab\.gemini\antigravity\scratch\SikhSituationBot\server\llm_synthesis.py:60: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    if LLMSettings.query.get(1) is not None:
+
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:3624
+server/tests/test_sql_injection.py::test_search_wildcard_injection_is_blocked
+server/tests/test_sql_injection.py::test_search_wildcard_injection_is_blocked
+server/tests/test_sql_injection.py::test_admin_interaction_wildcard_injection_is_sanitized
+server/tests/test_sql_injection.py::test_admin_interaction_wildcard_injection_is_sanitized
+server/tests/test_sql_injection.py::test_regex_ladder_complexity_injection_is_safe
+server/tests/test_sql_injection.py::test_regex_ladder_complexity_injection_is_safe
+  C:\Users\sarab\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:3624: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED server/tests/test_sql_injection.py::test_admin_interaction_wildcard_injection_is_sanitized
+=================== 1 failed, 2 passed, 8 warnings in 8.13s ===================

@@ -95,7 +95,7 @@ export default function Sidebar({
 
           {/* New chat */}
           <TouchableOpacity style={s.newChatBtn} onPress={onNewChat}>
-            <Ionicons name="add-circle-outline" size={18} color={theme.colors.primaryText} />
+            <Ionicons name="add" size={20} color={theme.colors.primary} />
             <Text style={s.newChatText}>{t('newChat')}</Text>
           </TouchableOpacity>
 
@@ -135,12 +135,12 @@ function makeStyles(theme: ReturnType<typeof useTheme>['theme']) {
   return StyleSheet.create({
     overlay: { flex: 1, flexDirection: 'row' },
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-    drawer: { width: 300, backgroundColor: theme.colors.surface, borderRightWidth: 1, borderRightColor: theme.colors.border },
-    drawerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-    drawerTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.text },
+    drawer: { width: 300, backgroundColor: theme.colors.background, borderRightWidth: 1, borderRightColor: theme.colors.border },
+    drawerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+    drawerTitle: { fontSize: 18, fontWeight: '800', color: theme.colors.primary, letterSpacing: -0.5 },
     closeBtn: { padding: 4 },
-    newChatBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: 14, backgroundColor: theme.colors.primary, borderRadius: 12, padding: 13 },
-    newChatText: { color: theme.colors.primaryText, fontWeight: '700', fontSize: 15 },
+    newChatBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, margin: 16, backgroundColor: theme.colors.surfaceAlt, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: theme.colors.border },
+    newChatText: { color: theme.colors.text, fontWeight: '700', fontSize: 15 },
     chatList: { flex: 1, paddingHorizontal: 10 },
     groupLabel: { fontSize: 11, fontWeight: '700', color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 14, marginBottom: 6, paddingHorizontal: 8 },
     chatRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },

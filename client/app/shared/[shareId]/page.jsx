@@ -57,7 +57,7 @@ export default async function SharedChatPage({ params }) {
       <div className="shared-thread">
         {(messages || []).map((m, i) => (
           <article key={m.id || i} className={`shared-msg shared-msg--${m.role}`}>
-            <div className="shared-msg-label">{m.role === 'user' ? 'You' : 'Guru'}</div>
+            <div className="shared-msg-label">{m.role === 'user' ? 'You' : 'Giani Ji'}</div>
             <div className="shared-msg-body">
               <MarkdownRenderer content={m.content || ''} />
               <SharedMessageCopy
