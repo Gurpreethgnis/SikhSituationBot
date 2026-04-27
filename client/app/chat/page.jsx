@@ -261,7 +261,7 @@ export default function ChatPage() {
       setMessages(
         loaded.map((m) => ({
           role: m.role,
-          content: m.content,
+          content: typeof m.content === 'string' ? m.content : m.content == null ? '' : String(m.content),
           shabad: m.shabad
             ? {
                 text: m.shabad.gurmukhi,

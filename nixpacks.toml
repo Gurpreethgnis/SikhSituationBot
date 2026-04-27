@@ -1,2 +1,11 @@
+[phases.setup]
+aptPkgs = ["ffmpeg"]
+
+[phases.build]
+cmds = ["pip install --upgrade pip", "pip install -r requirements.txt"]
+
+[variables]
+PYTHONPATH = "/app"
+
 [start]
-cmd = "gunicorn server.app:app"
+cmd = "python -m gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 --threads 4 --timeout 120 main:app"

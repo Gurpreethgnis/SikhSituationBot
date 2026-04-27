@@ -4,9 +4,11 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
 const MarkdownRenderer = ({ content }) => {
+  const markdown =
+    typeof content === 'string' ? content : content == null ? '' : String(content)
   return (
     <div className="markdown-content">
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown>{markdown}</ReactMarkdown>
       <style jsx global>{`
         .markdown-content p {
           margin-bottom: 1rem;
