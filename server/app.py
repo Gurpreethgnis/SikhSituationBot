@@ -312,6 +312,20 @@ if not is_testing:
             db.create_all()
             # Migration: add shabad count columns if they don't exist
             from sqlalchemy import text, inspect
+
+            def _pg_column_names_via_information_schema(connection, table_name: str) -> set:
+                """Column names without ORM reflection (avoids SAWarning on pgvector `vector` columns)."""
+                rows = connection.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_catalog = current_database() "
+                        "AND table_schema = current_schema() "
+                        "AND table_name = :tn"
+                    ),
+                    {"tn": table_name},
+                ).fetchall()
+                return {row[0] for row in rows}
+
             try:
                 inspector = inspect(db.engine)
                 # llm_settings check
@@ -326,10 +340,14 @@ if not is_testing:
                         db.session.commit()
                         logger.info("Added parmaan_shabad_count column to llm_settings")
                 
-                # Shabad content quality check - wrap specifically as 'vector' type columns can cause inspector to crash
+                # Shabad table: use information_schema on Postgres — inspector warns on unknown `vector` type.
                 if "shabads" in inspector.get_table_names():
                     try:
-                        sh_cols = [c["name"] for c in inspector.get_columns("shabads")]
+                        if db.engine.dialect.name == "postgresql":
+                            with db.engine.connect() as _conn:
+                                sh_cols = _pg_column_names_via_information_schema(_conn, "shabads")
+                        else:
+                            sh_cols = {c["name"] for c in inspector.get_columns("shabads")}
                         if "is_header_only" not in sh_cols:
                             db.session.execute(text("ALTER TABLE shabads ADD COLUMN is_header_only BOOLEAN"))
                             db.session.commit()
