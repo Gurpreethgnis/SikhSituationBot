@@ -9,10 +9,12 @@ const ReactMarkdown = dynamic(() => import('react-markdown').then((m) => m.defau
 })
 
 const MarkdownRenderer = ({ content }) => {
+  const markdown =
+    typeof content === 'string' ? content : content == null ? '' : String(content)
   return (
     <div className="markdown-content">
-      <ReactMarkdown>{content}</ReactMarkdown>
-      <style>{`
+      <ReactMarkdown>{markdown}</ReactMarkdown>
+      <style jsx global>{`
         .markdown-content p {
           margin-bottom: 1rem;
           line-height: 1.6;
